@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+<!-- Google Apps Script compatible -->
 <head>
+<base target="_top">
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta name="theme-color" content="#050A14"/>
@@ -2429,46 +2431,128 @@ window.InventoryEngine = (() => {
     exportarAnalise,
   };
 
-  // Gráfico novo do dashboard
+  // Gráfico do dashboard — por rotativo (R1, R2, R3...)
   window._dashChart2=null; window._dashMode2='rot';
   function _drawNewChart(hist){
     var canvas=document.getElementById('mainDashChart');
     if(!canvas||typeof Chart==='undefined') return;
-    var M=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-    var dR=new Array(12).fill(0),dD=new Array(12).fill(0),dA=new Array(12).fill(0),dV=new Array(12).fill(0),cM=new Array(12).fill(0);
-    (hist||[]).forEach(function(r){
-      if(!r.date) return;
-      var m=new Date(r.date).getMonth();
-      dR[m]++;
-      (r.items||[]).forEach(function(it){
-        var s=parseFloat(it.sis)||0,c=it.cnt!==null&&it.cnt!==undefined?parseFloat(it.cnt):null;
-        if(c!==null){cM[m]++;if(c!==s)dD[m]++;}
-      });
+    // Garantir tamanho do canvas
+    if (!canvas.parentElement.offsetHeight) canvas.style.height='200px';
+
+    // Usar histFilt filtrado pelo período
+    var fonte = hist || window._lastHistFilt || state.history;
+    if (!fonte || !fonte.length) {
+      if(window._dashChart2) { window._dashChart2.destroy(); window._dashChart2=null; }
+      var ctx2=canvas.getContext('2d');
+      ctx2.clearRect(0,0,canvas.width,canvas.height);
+      ctx2.fillStyle='#3A5070'; ctx2.font='13px Inter,sans-serif';
+      ctx2.textAlign='center'; ctx2.fillText('Nenhum rotativo no período', canvas.width/2, canvas.height/2);
+      return;
+    }
+
+    // Ordenar por data
+    var sorted = fonte.slice().sort(function(a,b){ return new Date(a.date)-new Date(b.date); });
+
+    // Labels: R1, R2, R3... com data abaixo
+    var labels = sorted.map(function(r,i){
+      var d = r.date ? new Date(r.date) : null;
+      var dt = d ? d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) : '';
+      return 'R'+(i+1)+' '+dt;
     });
-    // Valor financeiro por mês (das ocorrências)
+
+    // Dados por rotativo — calcular sempre dos itens para garantir
+    function _calcStats(r) {
+      if (!r) return {diverg:0,ok:0,total:0};
+      if (r.stats && r.stats.total) return r.stats;
+      var tot=0,ok=0,div=0;
+      (r.items||[]).forEach(function(it){
+        if(it.cnt===null||it.cnt===undefined) return;
+        tot++; var d=Number(it.cnt)!==Number(it.sis||0); if(d) div++; else ok++;
+      });
+      return {total:tot,ok:ok,diverg:div};
+    }
+    var dR = sorted.map(function(r,i){ return i+1; });
+    var dD = sorted.map(function(r){ return _calcStats(r).diverg; });
+    var dA = sorted.map(function(r){ var s=_calcStats(r); return s.total?Math.round(s.ok/s.total*100):100; });
+    // Valor total do rotativo = soma de (runit * sis) de todos os itens
+    var dV = sorted.map(function(r){
+      var total = 0;
+      (r.items||[]).forEach(function(it){
+        var ru = it.runit || it.rUnit || it.preco || 0;
+        var sis = it.sis || 0;
+        if (!ru && it.val && sis > 0) ru = it.val / sis;
+        total += ru * sis;
+      });
+      return Math.round(total * 100) / 100;
+    });
+
+    // Somar impacto financeiro das ocorrências por rotativo
     try {
       var ocorrs=JSON.parse(localStorage.getItem('rp_ocorrencias')||'[]');
       ocorrs.forEach(function(oc){
-        if(!oc.data||!oc.impactoFin) return;
-        var m=new Date(oc.data).getMonth();
-        dV[m]+=oc.impactoFin||0;
+        if(!oc.impactoFin || !oc.rotativoId) return;
+        sorted.forEach(function(r,i){
+          if(String(r.id)===String(oc.rotativoId)) dV[i]+=(oc.impactoFin||0);
+        });
       });
     } catch(e){}
-    for(var i=0;i<12;i++) dA[i]=cM[i]>0?Math.round(((cM[i]-dD[i])/cM[i])*100):0;
+
     if(window._dashChart2) window._dashChart2.destroy();
     var mode=window._dashMode2||'rot';
     var cols={rot:'#00FFB2',div:'#FF3B5C',acc:'#4A90E2',val:'#FFB020'};
-    var dd={rot:dR,div:dD,acc:dA,val:dV};
+    var dd={rot:dD.map(function(_,i){ return i+1; }),div:dD,acc:dA,val:dV};
     var cc=cols[mode]||'#00FFB2';
-    var yLbl=mode==='val'?'R$':mode==='acc'?'%':'';
-    window._dashChart2=new Chart(canvas,{type:'line',
-      data:{labels:M,datasets:[{data:dd[mode]||dR,borderColor:cc,backgroundColor:cc+'22',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:cc}]},
-      options:{responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return (yLbl?yLbl+' ':'')+ctx.parsed.y;}}}},
+    var yLbl=mode==='val'?'R$':mode==='acc'?'%':mode==='div'?'diverg':'nº';
+
+    // Tipo de gráfico: linha para acurácia/valor, barras para divergências/rotativos
+    var tipo = (mode==='acc'||mode==='val') ? 'line' : 'bar';
+
+    window._dashChart2=new Chart(canvas,{
+      type: tipo,
+      data:{
+        labels: labels,
+        datasets:[{
+          data: dd[mode]||dd.rot,
+          borderColor: cc,
+          backgroundColor: tipo==='bar' ? cc+'99' : cc+'22',
+          fill: tipo==='line',
+          tension: .4,
+          pointRadius: 4,
+          pointBackgroundColor: cc,
+          borderWidth: tipo==='bar' ? 0 : 2,
+          borderRadius: tipo==='bar' ? 6 : 0,
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{callbacks:{
+            label:function(ctx){
+              var v=ctx.parsed.y;
+              if(mode==='val') return 'R$ '+v.toLocaleString('pt-BR');
+              if(mode==='acc') return v+'%';
+              if(mode==='div') return v+' divergência'+(v!==1?'s':'');
+              return 'Rotativo '+ctx.parsed.y;
+            }
+          }}
+        },
         scales:{
-          x:{grid:{color:'rgba(0,200,150,.05)'},ticks:{color:'#4A6080',font:{size:10}}},
-          y:{grid:{color:'rgba(0,200,150,.05)'},ticks:{color:'#4A6080',font:{size:10},callback:function(v){return yLbl?yLbl+v:v;}}}
-        }}});
+          x:{grid:{color:'rgba(0,200,150,.05)'},ticks:{color:'#4A6080',font:{size:9},maxRotation:45}},
+          y:{
+            grid:{color:'rgba(0,200,150,.05)'},
+            ticks:{color:'#4A6080',font:{size:10},callback:function(v){
+              if(mode==='val') return 'R$'+v;
+              if(mode==='acc') return v+'%';
+              return v;
+            }},
+            min: mode==='acc' ? 0 : undefined,
+            max: mode==='acc' ? 100 : undefined,
+          }
+        }
+      }
+    });
   }
 
 })();
@@ -2970,7 +3054,7 @@ window.App = (function() {
       else if (/^centro/.test(h))                               colCentro   = i;
       else if (/^dep|^deposito/.test(h))                        colDeposito = i;
       else if (/val.*unit|r.*unit|unit.*val|preco/.test(h))     colValUnit  = i;
-      else if (/val.*total|total.*val|val.*utiliz|utiliz.*val/.test(h)) colValTotal = i;
+      else if (/val.*total|total.*val|val.*utiliz|utiliz.*val|val\.utiliz/.test(h)) colValTotal = i;
       else if (/^cont|contagem/.test(h))                        colContagem = i;
       else if (/desvio.*sku|desv.*qtd|desv.*mat/.test(h))       colDesvioSku= i;
       else if (/desvio.*r|desv.*fin|desv.*val/.test(h))         colDesvioRS = i;
@@ -3242,8 +3326,24 @@ window.App = (function() {
   function diffStatus(it) { const d=diffVal(it); if(d===null||d===0) return 'ok'; return d>0?'pos':'neg'; }
   function diffBadge(it)  { const d=diffVal(it), s=diffStatus(it); if(s==='ok') return '<span class="badge badge-ok">OK</span>'; if(s==='pos') return '<span class="badge badge-pos">+'+d+'</span>'; return '<span class="badge badge-neg">'+d+'</span>'; }
   function padId(n)       { return String(n).padStart(7, '0'); }
-  function fmtDate(d)     { return new Date(d).toLocaleDateString('pt-BR', {day:'2-digit', month:'short', year:'numeric'}); }
-  function fmtTime(d)     { return new Date(d).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'}); }
+  function fmtDate(d) {
+    if (!d) return '—';
+    var dt = new Date(d);
+    // Se for número serial do Excel (dias desde 1900)
+    if (isNaN(dt.getTime()) || (typeof d === 'number' && d < 100000)) {
+      // Excel serial: dias desde 01/01/1900
+      var excelEpoch = new Date(1900, 0, 1);
+      dt = new Date(excelEpoch.getTime() + (Number(d) - 2) * 86400000);
+    }
+    if (isNaN(dt.getTime())) return String(d).substring(0,10);
+    return dt.toLocaleDateString('pt-BR', {day:'2-digit', month:'short', year:'numeric'});
+  }
+  function fmtTime(d) {
+    if (!d) return '—';
+    var dt = new Date(d);
+    if (isNaN(dt.getTime())) return '—';
+    return dt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+  }
   function esc(s)         { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
 
   // ── RENDER TABLE ──────────────────────────────────────────
@@ -3615,17 +3715,26 @@ window.App = (function() {
     var histFilt = state.history.filter(function(r){
       if(!r.date) return true;
       var d = new Date(r.date);
+      if(isNaN(d.getTime())) return true; // data inválida — inclui
       if(fMes!=='' && d.getMonth()!==parseInt(fMes)) return false;
       if(fAno!=='' && d.getFullYear()!==parseInt(fAno)) return false;
-      if(fIni && r.date.substring(0,10)<fIni) return false;
-      if(fFim && r.date.substring(0,10)>fFim) return false;
+      if(fIni || fFim) {
+        var ds = d.toISOString().substring(0,10);
+        if(fIni && ds<fIni) return false;
+        if(fFim && ds>fFim) return false;
+      }
       return true;
     });
+    window._lastHistFilt = histFilt;
     const n = histFilt.length;
     const agg = { div:0, ok:0, neg:0, pos:0, tot:0 };
-    histFilt.forEach(r => { agg.div+=r.stats.diverg; agg.ok+=r.stats.ok; agg.neg+=r.stats.neg; agg.pos+=r.stats.pos; agg.tot+=r.stats.total; });
+    histFilt.forEach(function(r) {
+      var s = r.stats || {diverg:0,ok:0,neg:0,pos:0,total:0};
+      agg.div+=s.diverg||0; agg.ok+=s.ok||0;
+      agg.neg+=s.neg||0; agg.pos+=s.pos||0; agg.tot+=s.total||0;
+    });
     const acc = agg.tot ? Math.round(agg.ok/agg.tot*100) : 0;
-    const freq = buildFreq(histFilt);
+    const freq = buildFreq(histFilt || []);
     const freqArr = Object.values(freq);
     const recCnt = freqArr.filter(f => f.div >= 2).length;
 
@@ -3644,20 +3753,22 @@ window.App = (function() {
     // KPIs unificados — inclui valor financeiro
     var kg = document.getElementById('kpiGrid');
     if (kg) {
-      var totItens = 0, skuSet = new Set(), valorTotal = 0;
+      var totItens = 0, skuSet = new Set(), valorTotal = 0, totalDivQtd = 0;
       histFilt.forEach(function(r) {
         (r.items||[]).forEach(function(it) {
           totItens++;
           skuSet.add(it.mat||'');
-          // Valor financeiro: impactoFin das ocorrências vinculadas ao rotativo
+          // Somar qtd divergente absoluta como impacto operacional
+          if (it.cnt !== null && it.cnt !== undefined && Number(it.cnt) !== Number(it.sis)) {
+            totalDivQtd += Math.abs(Number(it.cnt) - Number(it.sis||0));
+          }
         });
-        valorTotal += (r.valorTotal || 0);
       });
-      // Buscar valor das ocorrências do período
+      // Buscar impacto financeiro das ocorrências do período
       try {
         var ocorrs = JSON.parse(localStorage.getItem('rp_ocorrencias')||'[]');
         ocorrs.forEach(function(oc) {
-          if (!oc.data) return;
+          if (!oc.data || !oc.impactoFin) return;
           var d = new Date(oc.data);
           if (fMes !== '' && d.getMonth() !== parseInt(fMes)) return;
           if (fAno !== '' && d.getFullYear() !== parseInt(fAno)) return;
@@ -3667,9 +3778,12 @@ window.App = (function() {
         });
       } catch(e) {}
 
+      // Mostrar impacto financeiro se houver, senão mostrar qtd divergente
       var valorFmt = valorTotal > 0
         ? 'R$' + valorTotal.toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0})
-        : 'R$ 0';
+        : totalDivQtd > 0
+          ? totalDivQtd + ' un'
+          : '—';
 
       var kpis = [
         {l:'Rotativos',    v:n,          c:'var(--acid)',  i:'📋'},
@@ -3678,7 +3792,7 @@ window.App = (function() {
         {l:'Acuracidade',  v:acc+'%',    c:acc>=98?'var(--green)':acc>=90?'var(--amber)':'var(--red)', i:'✅'},
         {l:'Total Itens',  v:totItens,   c:'var(--blue)',  i:'📦'},
         {l:'Conformes',    v:agg.ok,     c:'var(--green)', i:'✓'},
-        {l:'Impacto (R$)', v:valorFmt,   c:'var(--amber)', i:'💰'},
+        {l: valorTotal>0 ? 'Impacto (R$)' : totalDivQtd>0 ? 'Qtd Divergente' : 'Impacto', v:valorFmt, c:'var(--amber)', i:'💰'},
       ];
       kg.innerHTML = kpis.map(function(k) {
         return '<div style="background:var(--c1);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;position:relative;overflow:hidden">'
@@ -3726,8 +3840,13 @@ window.App = (function() {
           +'<td style="padding:5px 8px;font-family:monospace;color:var(--acid);font-size:11px">'+esc(d.mat)+'</td>'
           +'<td style="padding:5px 8px;text-align:center"><span style="background:rgba(255,59,92,.12);color:var(--red);padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700">'+d.n+'x</span></td></tr>';
       }).join(''):'<tr><td colspan="3" style="padding:14px;text-align:center;color:var(--t3)">Sem divergências</td></tr>';}
-    // Gráfico
-    if (typeof _drawNewChart === "function") { _drawNewChart(histFilt); } else { console.warn("[dash] _drawNewChart não definida"); }
+    // Gráfico — delay para garantir que o canvas está visível no DOM
+    window._lastHistFilt = histFilt;
+    setTimeout(function() {
+      if (typeof _drawNewChart === "function") {
+        _drawNewChart(histFilt);
+      }
+    }, 100);
   }
 
   function setText(id, val) { const el=document.getElementById(id); if(el) el.textContent=val; }
@@ -3882,10 +4001,14 @@ window.App = (function() {
         + '<div class="hist-info" style="flex:1">'
         + '<div class="hist-date" onclick="App.loadRotativo('+r.id+')" style="cursor:pointer">'+fmtDate(r.date).toUpperCase()+' <span style="font-size:11px;color:var(--t3);font-family:JetBrains Mono,monospace">'+fmtTime(r.date)+'</span></div>'
         + '<div class="hist-meta" onclick="App.loadRotativo('+r.id+')" style="cursor:pointer">'+esc(r.op)+' &middot; '+s.total+' itens &middot; Cód: <span style="color:var(--acid);font-family:JetBrains Mono,monospace">'+regCode(r.id)+'</span></div>'
-        + '<input placeholder="Adicionar descrição..." value="'+esc(r.obs||'')+'" '
-          + 'onchange="App.salvarObsRotativo('+r.id+',this.value)" '
-          + 'onclick="event.stopPropagation()" '
-          + 'style="margin-top:5px;width:100%;background:rgba(0,200,150,.04);border:1px solid var(--bd);border-radius:5px;padding:4px 8px;font-size:10px;color:var(--t2);outline:none;font-family:Inter,sans-serif"/>'
+        + '<div style="display:flex;gap:4px;margin-top:5px" onclick="event.stopPropagation()">'
+          + '<input id="obs_'+r.id+'" placeholder="Adicionar descrição do rotativo..." value="'+esc(r.obs||'')+'" '
+            + 'onblur="App.salvarObsRotativo('+r.id+',this.value)" '
+            + 'onkeydown="if(event.keyCode==13){App.salvarObsRotativo('+r.id+',this.value);this.blur();}" '
+            + 'style="flex:1;background:rgba(0,200,150,.04);border:1px solid var(--bd);border-radius:5px;padding:4px 8px;font-size:10px;color:var(--t2);outline:none;font-family:Inter,sans-serif"/>'
+          + '<button onclick="var inp=this.previousElementSibling;App.salvarObsRotativo('+r.id+',inp.value)" '
+            + 'style="background:rgba(0,255,178,.15);border:1px solid rgba(0,255,178,.4);border-radius:5px;padding:5px 12px;font-size:11px;font-weight:700;color:var(--acid);cursor:pointer;white-space:nowrap;min-width:60px">💾 Salvar</button>'
+          + '</div>'
         + '</div>'
         + '<div class="hist-stats" onclick="App.loadRotativo('+r.id+')" style="cursor:pointer">'
         + '<div class="hist-stat"><div class="hist-stat-val" style="color:var(--green)">'+s.ok+'</div><div class="hist-stat-lbl">OK</div></div>'
@@ -3895,7 +4018,13 @@ window.App = (function() {
         + '<span class="badge '+(s.diverg>0?'badge-neg':'badge-ok')+'" onclick="App.loadRotativo('+r.id+')" style="cursor:pointer">'+(s.diverg>0?s.diverg+' DIV.':'OK')+'</span>'
         + (s.diverg>0?'<button onclick="window.auditarDiv('+r.id+')" style="background:rgba(255,59,92,.08);border:1px solid rgba(255,59,92,.2);border-radius:5px;padding:3px 8px;font-size:11px;font-weight:700;color:var(--red);cursor:pointer;margin-left:4px">⚠ Auditar</button>':'')
         + '<button onclick="window.gerarRelatorioCombinado('+r.id+')" style="background:rgba(92,64,51,.1);border:1px solid rgba(92,64,51,.3);border-radius:6px;color:#8B5E3C;font-size:10px;font-weight:700;cursor:pointer;padding:4px 8px;margin-left:4px">📄 Relatório</button>'
-        + '<button onclick="App.confirmDeleteHist('+r.id+')" title="Excluir" style="background:none;border:none;cursor:pointer;color:var(--t3);padding:4px 8px;border-radius:5px;font-size:16px;margin-left:4px" class="del-hist-btn">🗑</button>'
+        + '<button onclick="App.toggleLockHist('+r.id+')" title="'+(r.locked?'🔒 Travado — clique para destravar':'Clique para travar e proteger contra exclusão')+'" '
+          + 'style="background:'+(r.locked?'rgba(255,59,92,.12)':'rgba(0,0,0,0)')+';border:1px solid '+(r.locked?'rgba(255,59,92,.4)':'rgba(100,120,140,.2)')+';cursor:pointer;color:'+(r.locked?'var(--red)':'#3A5070')+';padding:4px 8px;border-radius:5px;font-size:14px;margin-left:4px" '
+          + 'title="'+(r.locked?'Travado — clique para destravar':'Desbloqueado — clique para travar')+'">'+( r.locked?'🔒':'🔓')+'</button>'
+        + '<button onclick="App.confirmDeleteHist('+r.id+')" title="Excluir" '
+          + (r.locked ? 'disabled style="background:none;border:none;cursor:not-allowed;color:var(--bd);padding:4px 8px;border-radius:5px;font-size:16px;margin-left:4px;opacity:.3"'
+                      : 'style="background:none;border:none;cursor:pointer;color:var(--t3);padding:4px 8px;border-radius:5px;font-size:16px;margin-left:4px"')
+          + ' class="del-hist-btn">🗑</button>'
         + '</div>';
     });
     el.innerHTML = rows;
@@ -3908,6 +4037,7 @@ window.App = (function() {
       if (String(state.history[hi].id) === String(id)) { foundIdx = hi; break; }
     }
     if (foundIdx < 0) { toast('Registro não encontrado','er'); return; }
+    if (state.history[foundIdx].locked) { toast('🔒 Rotativo travado — destrave primeiro para excluir','er'); return; }
     var r  = state.history[foundIdx];
     var rn = state.history.length - foundIdx;
 
@@ -3988,10 +4118,43 @@ window.App = (function() {
     const rot = state.history.find(r => String(r.id) === String(id));
     if (!rot) return;
     state.items = JSON.parse(JSON.stringify(rot.items));
+    // Recalcular runit/val/desvRS se estiverem faltando
+    state.items.forEach(function(it) {
+      var sis = it.sis !== null && it.sis !== undefined ? Number(it.sis) : 0;
+      var cnt = it.cnt !== null && it.cnt !== undefined ? Number(it.cnt) : sis;
+      if ((!it.runit || it.runit === 0) && it.val && sis > 0) it.runit = it.val / sis;
+      if (it.runit && it.runit > 0 && (!it.val || it.val === 0)) it.val = it.runit * sis;
+      if (it.runit && it.runit > 0) it.desvRS = Math.round((cnt - sis) * it.runit * 100) / 100;
+    });
     if (rot.img) { state.capImg = rot.img; save(); }
+
+    state._rotativoCarregadoId = rot.id; // guardar qual rotativo está carregado
+    // Aplicar travamento individual do rotativo
+    if (rot.locked) {
+      state._locked = true;  // travar a tabela
+    } else {
+      state._locked = false; // garantir desbloqueado
+    }
+
     save(); renderTable(); updateTableCounts(); renderPreview(); showSaveBar();
     navigate('table');
-    toast('R' + (state.history.length - state.history.indexOf(rot)) + ' carregado', 'in');
+
+    var rn = state.history.length - state.history.indexOf(rot);
+    if (rot.locked) {
+      // Atualizar badge e botão de travar
+      var b  = document.getElementById('invStatusBadge');
+      var bt = document.getElementById('btnTravar');
+      if (b)  { b.style.cssText='display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(255,59,92,.1);border:1px solid rgba(255,59,92,.25);color:var(--red)'; b.textContent='🔒 TRAVADO'; }
+      if (bt) { bt.textContent='🔓 Desbloquear'; bt.style.background='rgba(255,59,92,.1)'; bt.style.borderColor='rgba(255,59,92,.3)'; bt.style.color='var(--red)'; bt.onclick=window.invDesbloquear; }
+      toast('R'+rn+' carregado — 🔒 TRAVADO (somente leitura)', 'wa');
+    } else {
+      // Garantir visual desbloqueado
+      var b  = document.getElementById('invStatusBadge');
+      var bt = document.getElementById('btnTravar');
+      if (b)  { b.style.cssText='display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(0,255,178,.08);border:1px solid rgba(0,255,178,.15);color:var(--acid)'; b.textContent='● ABERTO'; }
+      if (bt) { bt.textContent='🔒 Travar'; bt.style.background=''; bt.style.borderColor=''; bt.style.color=''; bt.onclick=window.invTravar; }
+      toast('R'+rn+' carregado', 'in');
+    }
   }
 
   // ── DEPOTS ────────────────────────────────────────────────
@@ -4765,7 +4928,23 @@ window.App = (function() {
         operador:rot.op, empresa:rot.emp, total:rot.stats.total,
         divergencias:rot.stats.diverg, ok:rot.stats.ok, falta:rot.stats.neg,
         excesso:rot.stats.pos, acuracia:rot.stats.acuracia||0,
-        items: rot.items.map(it=>({ material:it.mat, descricao:it.desc, sistema:it.sis!==null?it.sis:'', contagem:it.cnt!==null?it.cnt:'OK', diferenca:diffVal(it)!==null?diffVal(it):'OK', status:diffStatus(it).toUpperCase(), localizacao:it.loc||'' }))
+        items: rot.items.map(function(it){
+          var sis = it.sis!==null&&it.sis!==undefined ? Number(it.sis) : 0;
+          var cnt = it.cnt!==null&&it.cnt!==undefined ? Number(it.cnt) : sis;
+          var ru  = it.runit || it.rUnit || 0;
+          if (!ru && it.val && sis>0) ru = it.val/sis;
+          var valUtil  = ru ? Math.round(sis*ru*100)/100 : (it.val||'');
+          var desvioR  = ru ? Math.round((cnt-sis)*ru*100)/100 : '';
+          var d = diffVal(it); var s = diffStatus(it);
+          return {
+            material: it.mat, descricao: it.desc,
+            sistema: sis, contagem: cnt!==sis||it.cnt!==null?cnt:'OK',
+            diferenca: d!==null?d:'OK', status: s.toUpperCase(),
+            localizacao: it.loc||'',
+            valUtilizLivre: valUtil, rUnit: ru||'', desvioR: desvioR,
+            um: it.um||'UNT', centro: it.centro||'CF50', deposito: it.deposito||'0060'
+          };
+        })
       }};
       const sdot = document.getElementById('syncDot');
       const stxt = document.getElementById('syncTxt');
@@ -4804,105 +4983,252 @@ window.App = (function() {
     toast('Excel exportado', 'ok');
   }
 
+  // ── Aplicar estilo de cabeçalho numa aba ──
+  function _xlsxEstiloHeader(ws, nCols, corHex) {
+    var cor = corHex || '1A3A5C';
+    for (var c = 0; c < nCols; c++) {
+      var addr = XLSX.utils.encode_cell({r:0, c:c});
+      if (!ws[addr]) continue;
+      ws[addr].s = {
+        font: { bold:true, color:{rgb:'FFFFFF'}, sz:11 },
+        fill: { fgColor:{rgb:cor}, patternType:'solid' },
+        alignment: { horizontal:'center', vertical:'center', wrapText:true },
+        border: { bottom:{style:'thin',color:{rgb:'AAAAAA'}} }
+      };
+    }
+  }
+
+  // ── Aplicar zebra (linhas alternadas) ──
+  function _xlsxZebra(ws, nRows, nCols, startRow) {
+    for (var r = startRow||1; r < nRows; r++) {
+      for (var c = 0; c < nCols; c++) {
+        var addr = XLSX.utils.encode_cell({r:r, c:c});
+        if (!ws[addr]) ws[addr] = {t:'s', v:''};
+        if (r % 2 === 0) {
+          ws[addr].s = ws[addr].s || {};
+          ws[addr].s.fill = { fgColor:{rgb:'EEF4FB'}, patternType:'solid' };
+        }
+        ws[addr].s = ws[addr].s || {};
+        ws[addr].s.alignment = { vertical:'center' };
+      }
+    }
+  }
+
   function exportAnalyticsXLSX() {
     if (!window.XLSX) { toast('Aguarde XLSX carregar...','wa'); return; }
     if (!state.history.length) { toast('Sem dados para exportar', 'er'); return; }
-    var wb   = XLSX.utils.book_new();
-    var now  = new Date();
+    var wb  = XLSX.utils.book_new();
+    var now = new Date();
     var dtStr = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
-    var op   = state.cfg.op  || 'Operador';
-    var emp  = state.cfg.emp || 'Almoxarifado';
-
-    // ── Aba RESUMO ──
+    var op  = state.cfg.op  || 'Operador';
+    var emp = state.cfg.emp || 'Almoxarifado';
     var freq = buildFreq();
     var totDiv=0, totOk=0, totAll=0;
     state.history.forEach(function(r){ totDiv+=r.stats.diverg; totOk+=r.stats.ok; totAll+=r.stats.total; });
     var acc = totAll ? Math.round(totOk/totAll*100) : 0;
+
+    // ── Aba RESUMO ──
     var resData = [
-      ['ROTATIVO APP PRO — RELATÓRIO DE INVENTÁRIO'],[''],
-      ['Operador:', op],       ['Empresa:', emp],
-      ['Data:', dtStr],        [''],
-      ['Total de Rotativos:',  state.history.length],
-      ['Total de Itens:',      totAll],
-      ['Total Divergências:',  totDiv],
-      ['Acurácia Geral:',      acc + '%'],
-      [''],
-      ['Gerado por: RotativoApp Pro v8.0']
+      ['ROTATIVO APP PRO — RELATÓRIO DE INVENTÁRIO', ''],
+      ['', ''],
+      ['Empresa / Setor:', emp],
+      ['Operador:', op],
+      ['Data de geração:', dtStr],
+      ['', ''],
+      ['INDICADOR', 'VALOR'],
+      ['Total de Rotativos', state.history.length],
+      ['Total de Itens Conferidos', totAll],
+      ['Total de Divergências', totDiv],
+      ['Itens Conformes', totOk],
+      ['Acurácia Geral', acc + '%'],
+      ['', ''],
+      ['Gerado por RotativoApp Pro v8.0', ''],
     ];
     var wsRes = XLSX.utils.aoa_to_sheet(resData);
-    wsRes['!cols'] = [{wch:28},{wch:30}];
-    wsRes['A1'] && (wsRes['A1'].s = { font:{bold:true,sz:14}, fill:{fgColor:{rgb:'001A40'}} });
-    XLSX.utils.book_append_sheet(wb, wsRes, 'Resumo');
+    wsRes['!cols'] = [{wch:30},{wch:30}];
+    // Título
+    if (wsRes['A1']) wsRes['A1'].s = { font:{bold:true,sz:15,color:{rgb:'FFFFFF'}}, fill:{fgColor:{rgb:'0D2137'},patternType:'solid'}, alignment:{horizontal:'left'} };
+    // Header da tabela de indicadores
+    ['A7','B7'].forEach(function(addr) {
+      if (wsRes[addr]) wsRes[addr].s = { font:{bold:true,sz:11,color:{rgb:'FFFFFF'}}, fill:{fgColor:{rgb:'1A5276'},patternType:'solid'}, alignment:{horizontal:'center'} };
+    });
+    // Zebra nos indicadores
+    for (var ri=7; ri<=12; ri++) {
+      var addrA = 'A'+ri, addrB = 'B'+ri;
+      var cor = ri%2===0 ? 'D6EAF8' : 'FFFFFF';
+      [addrA,addrB].forEach(function(a){ if(wsRes[a]){ wsRes[a].s=wsRes[a].s||{}; wsRes[a].s.fill={fgColor:{rgb:cor},patternType:'solid'}; } });
+    }
+    wsRes['!merges'] = [{s:{r:0,c:0},e:{r:0,c:1}}];
+    XLSX.utils.book_append_sheet(wb, wsRes, '📊 Resumo');
 
-    // ── Aba TODOS OS ITENS ──
-    var allData = [['#','ROTATIVO','DATA','HORA','OPERADOR','MATERIAL','DESCRICAO','SISTEMA','CONTAGEM','DIFERENCA','STATUS','LOCALIZACAO']];
+    // ── Aba ROTATIVOS ──
+    var rotData = [['#','ROTATIVO','DATA','HORA','OPERADOR','TOTAL ITENS','DIVERGÊNCIAS','CONFORMES','ACURÁCIA %']];
+    state.history.slice().reverse().forEach(function(r, i) {
+      var rn = i+1;
+      rotData.push([rn, 'R'+rn, fmtDate(r.date), fmtTime(r.date), esc(r.op),
+        r.stats.total, r.stats.diverg, r.stats.ok,
+        r.stats.total ? Math.round(r.stats.ok/r.stats.total*100)+'%' : '—']);
+    });
+    var wsRots = XLSX.utils.aoa_to_sheet(rotData);
+    wsRots['!cols'] = [{wch:5},{wch:8},{wch:14},{wch:8},{wch:18},{wch:12},{wch:14},{wch:12},{wch:12}];
+    wsRots['!autofilter'] = {ref:'A1:I1'};
+    _xlsxEstiloHeader(wsRots, 9, '1A5276');
+    _xlsxZebra(wsRots, rotData.length, 9);
+    XLSX.utils.book_append_sheet(wb, wsRots, '📋 Rotativos');
+
+    // ── Aba BASE (formato SAP / planilha original) ──
+    var baseData = [[
+      'Rotativo','Data Mov','Data Inv','Auditor',
+      'Material','Texto breve material',
+      'Centro','Depósito','Utilização livre','Val.utiliz.livre','UM básica',
+      'Posição no depósito','R$ Unit','Contagem','Desvio SKU','Desvio R$','Observações'
+    ]];
+    state.history.slice().reverse().forEach(function(r, ri) {
+      var dataMov = r.date ? new Date(r.date).toLocaleDateString('pt-BR') : '';
+      var dataInv = r.date ? new Date(new Date(r.date).getTime()+86400000).toLocaleDateString('pt-BR') : '';
+      r.items.forEach(function(it) {
+        var d = diffVal(it);
+        var sis = it.sis!==null&&it.sis!==undefined ? Number(it.sis) : 0;
+        var cnt = it.cnt!==null&&it.cnt!==undefined ? Number(it.cnt) : sis;
+        var desvioSku = cnt - sis;
+        var rUnit = it.runit || it.preco || it.rUnit || 0;
+        // Se não tem rUnit mas tem val e sis, calcular: val/sis
+        if (!rUnit && it.val && sis > 0) rUnit = it.val / sis;
+        var valUtil = rUnit ? Math.round(sis * rUnit * 100) / 100 : (it.val || '');
+        var desvioR = rUnit ? Math.round(desvioSku * rUnit * 100) / 100 : '';
+        baseData.push([
+          'R'+(ri+1), dataMov, dataInv, esc(r.op||''),
+          it.mat||'', it.desc||'',
+          'CF50','0060',
+          sis, valUtil, it.um||'UNT',
+          it.loc||'', rUnit||'', cnt,
+          desvioSku, desvioR, it.obs||''
+        ]);
+      });
+    });
+    var wsBase = XLSX.utils.aoa_to_sheet(baseData);
+    wsBase['!cols'] = [{wch:8},{wch:12},{wch:12},{wch:14},{wch:14},{wch:44},{wch:7},{wch:8},{wch:12},{wch:14},{wch:8},{wch:16},{wch:10},{wch:10},{wch:10},{wch:10},{wch:20}];
+    wsBase['!autofilter'] = {ref:'A1:Q1'};
+    _xlsxEstiloHeader(wsBase, 17, '1A3A5C');
+    _xlsxZebra(wsBase, baseData.length, 17);
+    XLSX.utils.book_append_sheet(wb, wsBase, '📋 Base');
+
+    // ── Aba TODOS OS ITENS (formato resumido) ──
+    var allData = [['#','ROTATIVO','DATA','HORA','OPERADOR','MATERIAL','DESCRIÇÃO','SISTEMA','CONTAGEM','DIFERENÇA','STATUS','LOCALIZAÇÃO']];
     var seq = 1;
-    state.history.forEach(function(r, ri) {
+    state.history.slice().reverse().forEach(function(r, ri) {
       r.items.forEach(function(it) {
         var d=diffVal(it), s=diffStatus(it);
-        allData.push([seq++, 'R'+(state.history.length-ri), fmtDate(r.date), fmtTime(r.date), esc(r.op), it.mat||'', it.desc||'', it.sis!==null?it.sis:'', it.cnt!==null?it.cnt:'OK', d!==null?d:'OK', s.toUpperCase(), it.loc||'']);
+        allData.push([seq++, 'R'+(ri+1), fmtDate(r.date), fmtTime(r.date), esc(r.op),
+          it.mat||'', it.desc||'',
+          it.sis!==null?it.sis:'',
+          it.cnt!==null?it.cnt:'OK',
+          d!==null?d:'OK', s.toUpperCase(), it.loc||'']);
       });
     });
     var wsAll = XLSX.utils.aoa_to_sheet(allData);
-    wsAll['!cols'] = [{wch:5},{wch:8},{wch:14},{wch:8},{wch:16},{wch:14},{wch:44},{wch:9},{wch:9},{wch:9},{wch:10},{wch:14}];
-    wsAll['!autofilter'] = { ref: 'A1:L1' };
-    XLSX.utils.book_append_sheet(wb, wsAll, 'Todos os Itens');
+    wsAll['!cols'] = [{wch:5},{wch:8},{wch:12},{wch:8},{wch:16},{wch:14},{wch:44},{wch:9},{wch:9},{wch:9},{wch:10},{wch:14}];
+    wsAll['!autofilter'] = {ref:'A1:L1'};
+    _xlsxEstiloHeader(wsAll, 12, '1A5276');
+    _xlsxZebra(wsAll, allData.length, 12);
+    XLSX.utils.book_append_sheet(wb, wsAll, '📦 Todos os Itens');
 
-    // ── Aba DIVERGENCIAS ──
-    var divData = [['#','ROTATIVO','DATA','MATERIAL','DESCRICAO','SISTEMA','CONTAGEM','DIFERENCA','STATUS','LOCALIZACAO']];
+    // ── Aba DIVERGÊNCIAS ──
+    var divData = [['#','ROTATIVO','DATA','MATERIAL','DESCRIÇÃO','SISTEMA','CONTAGEM','DIFERENÇA','STATUS','LOCALIZAÇÃO']];
     var seq2 = 1;
-    state.history.forEach(function(r, ri) {
+    state.history.slice().reverse().forEach(function(r, ri) {
       r.items.filter(function(it){ return diffStatus(it)!=='ok'; }).forEach(function(it) {
         var d=diffVal(it), s=diffStatus(it);
-        divData.push([seq2++, 'R'+(state.history.length-ri), fmtDate(r.date), it.mat||'', it.desc||'', it.sis!==null?it.sis:'', it.cnt!==null?it.cnt:'OK', d!==null?d:'', s.toUpperCase(), it.loc||'']);
+        divData.push([seq2++, 'R'+(ri+1), fmtDate(r.date),
+          it.mat||'', it.desc||'',
+          it.sis!==null?it.sis:'',
+          it.cnt!==null?it.cnt:'OK',
+          d!==null?d:'', s.toUpperCase(), it.loc||'']);
       });
     });
     var wsDiv = XLSX.utils.aoa_to_sheet(divData);
-    wsDiv['!cols'] = [{wch:5},{wch:8},{wch:14},{wch:14},{wch:44},{wch:9},{wch:9},{wch:9},{wch:10},{wch:14}];
-    wsDiv['!autofilter'] = { ref: 'A1:J1' };
-    XLSX.utils.book_append_sheet(wb, wsDiv, 'Divergencias');
+    wsDiv['!cols'] = [{wch:5},{wch:8},{wch:12},{wch:14},{wch:44},{wch:9},{wch:9},{wch:9},{wch:10},{wch:14}];
+    wsDiv['!autofilter'] = {ref:'A1:J1'};
+    _xlsxEstiloHeader(wsDiv, 10, 'C0392B');
+    _xlsxZebra(wsDiv, divData.length, 10);
+    XLSX.utils.book_append_sheet(wb, wsDiv, '⚠ Divergências');
 
-    // ── Aba ANALISE ──
-    var anlData = [['#','MATERIAL','DESCRICAO','ROTATIVOS','DIVERGENCIAS','TAXA OK%','TOTAL FALTA','TOTAL EXCESSO','ULTIMA DIV.']];
+    // ── Aba ANÁLISE POR SKU ──
+    var anlData = [['#','MATERIAL','DESCRIÇÃO','QTD ROTATIVOS','DIVERGÊNCIAS','TAXA OK %','TOTAL FALTA','TOTAL EXCESSO','ÚLT. DIVERGÊNCIA']];
     var seq3 = 1;
     Object.values(freq).sort(function(a,b){ return b.div-a.div; }).forEach(function(f) {
       var okP = f.count ? Math.round((f.count-f.div)/f.count*100) : 100;
-      anlData.push([seq3++, f.mat, f.desc, f.count, f.div, okP+'%', f.negSum, f.posSum, f.lastDate ? fmtDate(f.lastDate) : '']);
+      anlData.push([seq3++, f.mat, f.desc, f.count, f.div, okP+'%', f.negSum||0, f.posSum||0, f.lastDate ? fmtDate(f.lastDate) : '']);
     });
     var wsAnl = XLSX.utils.aoa_to_sheet(anlData);
-    wsAnl['!cols'] = [{wch:5},{wch:14},{wch:44},{wch:10},{wch:13},{wch:10},{wch:12},{wch:13},{wch:14}];
-    wsAnl['!autofilter'] = { ref: 'A1:I1' };
-    XLSX.utils.book_append_sheet(wb, wsAnl, 'Analise');
+    wsAnl['!cols'] = [{wch:5},{wch:14},{wch:44},{wch:14},{wch:14},{wch:10},{wch:13},{wch:13},{wch:16}];
+    wsAnl['!autofilter'] = {ref:'A1:I1'};
+    _xlsxEstiloHeader(wsAnl, 9, '1E8449');
+    _xlsxZebra(wsAnl, anlData.length, 9);
+    XLSX.utils.book_append_sheet(wb, wsAnl, '📈 Análise por SKU');
 
-    // ── Aba por Rotativo (último) ──
+    // ── Aba ÚLTIMO ROTATIVO (detalhado) ──
     if (state.history.length) {
-      var rot = state.history[0];
-      var rData = [['ROTATIVO APP PRO — ' + fmtDate(rot.date).toUpperCase()],
-        ['Operador: '+esc(rot.op)+'  |  Acurácia: '+rot.stats.acuracia+'%  |  Itens: '+rot.stats.total+'  |  Divergências: '+rot.stats.diverg],[''],
-        ['MATERIAL','DESCRICAO','SISTEMA','CONTAGEM','DIFERENCA','STATUS','LOCALIZACAO']];
+      var rot = state.history[state.history.length-1];
+      var rn  = state.history.length;
+      var cabRot = [
+        ['ROTATIVO APP PRO — DETALHAMENTO R'+rn, '', '', '', '', '', ''],
+        ['Data: '+fmtDate(rot.date)+'  |  Hora: '+fmtTime(rot.date)+'  |  Operador: '+esc(rot.op), '', '', '', '', '', ''],
+        ['Acurácia: '+rot.stats.acuracia+'%  |  Total: '+rot.stats.total+' itens  |  Divergências: '+rot.stats.diverg+'  |  Conformes: '+rot.stats.ok, '', '', '', '', '', ''],
+        ['', '', '', '', '', '', ''],
+        ['MATERIAL','DESCRIÇÃO','SISTEMA','CONTAGEM','DIFERENÇA','STATUS','LOCALIZAÇÃO']
+      ];
       rot.items.forEach(function(it) {
         var d=diffVal(it), s=diffStatus(it);
-        rData.push([it.mat||'', it.desc||'', it.sis!==null?it.sis:'', it.cnt!==null?it.cnt:'OK', d!==null?d:'OK', s.toUpperCase(), it.loc||'']);
+        cabRot.push([it.mat||'', it.desc||'', it.sis!==null?it.sis:'', it.cnt!==null?it.cnt:'OK', d!==null?d:'OK', s.toUpperCase(), it.loc||'']);
       });
-      var wsRot = XLSX.utils.aoa_to_sheet(rData);
+      var wsRot = XLSX.utils.aoa_to_sheet(cabRot);
       wsRot['!cols'] = [{wch:14},{wch:44},{wch:9},{wch:9},{wch:9},{wch:10},{wch:14}];
-      XLSX.utils.book_append_sheet(wb, wsRot, 'Ultimo Rotativo');
+      wsRot['!merges'] = [{s:{r:0,c:0},e:{r:0,c:6}},{s:{r:1,c:0},e:{r:1,c:6}},{s:{r:2,c:0},e:{r:2,c:6}}];
+      if (wsRot['A1']) wsRot['A1'].s = { font:{bold:true,sz:14,color:{rgb:'FFFFFF'}}, fill:{fgColor:{rgb:'0D2137'},patternType:'solid'} };
+      _xlsxEstiloHeader(wsRot, 7, '1A5276');  // linha 5 = índice 4
+      _xlsxZebra(wsRot, cabRot.length, 7, 5);
+      XLSX.utils.book_append_sheet(wb, wsRot, '🔍 Último Rotativo');
     }
 
-    XLSX.writeFile(wb, 'rotativo_'+emp.replace(/\s+/g,'_')+'_'+now.toISOString().slice(0,10)+'.xlsx');
-    toast('Excel profissional exportado!', 'ok');
+    var fname = 'RotativoApp_'+emp.replace(/\s+/g,'_')+'_'+now.toISOString().slice(0,10)+'.xlsx';
+    XLSX.writeFile(wb, fname);
+    toast('Excel exportado com formatação profissional!', 'ok');
   }
 
   function exportHistXLSX() { exportAnalyticsXLSX(); }
 
   function exportAllCSV() {
     if (!state.history.length) { toast('Sem histórico', 'er'); return; }
-    const rows = ['Rotativo,Data,Hora,Operador,Material,Descricao,Sistema,Contagem,Diferenca,Status,Localizacao'];
-    state.history.forEach((r,ri) => r.items.forEach(it => { const d=diffVal(it),s=diffStatus(it); rows.push(['"R'+(state.history.length-ri)+'"','"'+fmtDate(r.date)+'"','"'+fmtTime(r.date)+'"','"'+(r.op||'')+'"','"'+(it.mat||'')+'"','"'+(it.desc||'')+'"',it.sis!==null?it.sis:'',it.cnt!==null?it.cnt:'OK',d!==null?d:'OK',s.toUpperCase(),'"'+(it.loc||'')+'"'].join(',')); }));
-    const blob = new Blob(['\uFEFF'+rows.join('\n')], { type:'text/csv;charset=utf-8;' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-    a.download = 'rotativos_historico_'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
-    toast('CSV exportado', 'ok');
+    function q(v) { return '"' + String(v||'').replace(/"/g,'""') + '"'; }
+    var rows = ['Rotativo,Data Mov,Data Inv,Auditor,Material,Texto breve material,Centro,Deposito,Utilizacao livre,Val.utiliz.livre,UM basica,Posicao no deposito,R$ Unit,Contagem,Desvio SKU,Desvio R$,Observacoes'];
+    state.history.slice().reverse().forEach(function(r, ri) {
+      var dataMov = r.date ? new Date(r.date).toLocaleDateString('pt-BR') : '';
+      var dataInv = r.date ? new Date(new Date(r.date).getTime()+86400000).toLocaleDateString('pt-BR') : '';
+      r.items.forEach(function(it) {
+        var sis = it.sis!==null&&it.sis!==undefined ? Number(it.sis) : 0;
+        var cnt = it.cnt!==null&&it.cnt!==undefined ? Number(it.cnt) : sis;
+        var desvioSku = cnt - sis;
+        var rUnit = it.runit || it.rUnit || it.preco || 0;
+        if (!rUnit && it.val && sis > 0) rUnit = it.val / sis;
+        var valUtil = rUnit ? Math.round(sis * rUnit * 100) / 100 : (it.val || '');
+        var desvioR  = rUnit ? Math.round(desvioSku * rUnit * 100) / 100 : '';
+        rows.push([
+          q('R'+(ri+1)), q(dataMov), q(dataInv), q(r.op||''),
+          q(it.mat||''), q(it.desc||''),
+          q(it.centro||'CF50'), q(it.deposito||'0060'),
+          sis, valUtil, q(it.um||'UNT'),
+          q(it.loc||''), rUnit||'', cnt,
+          desvioSku, desvioR, q(it.obs||'')
+        ].join(','));
+      });
+    });
+    var blob = new Blob(['\uFEFF'+rows.join('\n')], { type:'text/csv;charset=utf-8;' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'rotativos_historico_'+new Date().toISOString().slice(0,10)+'.csv';
+    a.click();
+    toast('CSV exportado no formato SAP!', 'ok');
   }
 
   function exportAuditPDF() {
@@ -5542,11 +5868,53 @@ window.App = (function() {
 
 
 
+    toggleLockHist: function(id) {
+      var idx = state.history.findIndex(function(r){ return String(r.id)===String(id); });
+      if (idx < 0) return;
+      var r = state.history[idx];
+
+      if (!r.locked) {
+        // Travar — não pede senha
+        r.locked = true;
+        save(); renderHistory();
+        toast('🔒 Rotativo travado — protegido contra exclusão', 'ok');
+      } else {
+        // Destravar — pede senha se configurada
+        var senha = state.cfg && state.cfg.senha ? state.cfg.senha.trim() : '';
+        if (!senha) {
+          r.locked = false;
+          save(); renderHistory();
+          toast('🔓 Rotativo destravado', 'ok');
+        } else {
+          // Abrir modal pedindo senha
+          openModal('🔓 Destravar Rotativo',
+            '<div style="text-align:center;padding:10px 0 6px">'
+              + '<div style="font-size:13px;color:var(--t2);margin-bottom:14px">Digite a senha para destravar este rotativo</div>'
+              + '<input type="password" id="senhaDestravar" class="field-input" placeholder="Senha..." style="text-align:center;font-size:14px;letter-spacing:3px;max-width:200px;margin:0 auto;display:block" autofocus/>'
+            + '</div>',
+            [
+              { label:'Cancelar', cls:'cbtn-outline', fn: closeModal },
+              { label:'🔓 Destravar', cls:'cbtn-primary', fn: function() {
+                var inp = document.getElementById('senhaDestravar');
+                if (inp && inp.value === senha) {
+                  r.locked = false;
+                  save(); renderHistory(); closeModal();
+                  toast('🔓 Rotativo destravado', 'ok');
+                } else {
+                  toast('Senha incorreta', 'er');
+                }
+              }}
+            ], '380px');
+        }
+      }
+    },
+
     salvarObsRotativo: function(id, obs) {
       var idx = state.history.findIndex(function(r){ return String(r.id)===String(id); });
       if (idx < 0) return;
       state.history[idx].obs = obs;
       save();
+      toast('Descrição salva!', 'ok');
     },
 
     abrirResetFabrica: function() {
@@ -5603,7 +5971,7 @@ window.App = (function() {
       window._dashMode2=mode;
       document.querySelectorAll('[id^="ctab"]').forEach(function(b){b.style.color='';b.style.borderColor='';});
       if(btn){btn.style.color='var(--acid)';btn.style.borderColor='var(--acid)';}
-      if(typeof renderDashboard==='function') renderDashboard(); else _drawNewChart(state.history);
+      if(typeof renderDashboard==='function') renderDashboard(); else _drawNewChart(window._lastHistFilt||state.history);
     },
 
   };
@@ -8295,16 +8663,25 @@ function exportOcorrenciasPDF() {
 window.invTravar = function() {
   var st = window._appState; if(!st) return;
   st._locked = true;
+  // Salvar qual rotativo estava em edição quando travou
+  st._lockedAt = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   var b  = document.getElementById('invStatusBadge');
   var bt = document.getElementById('btnTravar');
-  if(b)  { b.style.cssText='display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(255,59,92,.1);border:1px solid rgba(255,59,92,.25);color:var(--red)'; b.textContent='🔒 TRAVADO'; }
-  if(bt) { bt.textContent='🔓 Desbloquear'; bt.onclick=window.invDesbloquear; }
+  if(b)  { b.style.cssText='display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(255,59,92,.1);border:1px solid rgba(255,59,92,.25);color:var(--red)'; b.textContent='🔒 TRAVADO às '+st._lockedAt; }
+  if(bt) { bt.textContent='🔓 Desbloquear'; bt.style.background='rgba(255,59,92,.1)'; bt.style.borderColor='rgba(255,59,92,.3)'; bt.style.color='var(--red)'; bt.onclick=window.invDesbloquear; }
   if(window.App && window.App.renderTable) window.App.renderTable();
-  if(window.App) window.App.toast('Inventário travado!','in');
+  if(window.App) window.App.toast('Rotativo travado às '+st._lockedAt+' — edição bloqueada. Salvar ainda funciona.','in');
 };
 window.invDesbloquear = function() {
   var st = window._appState;
-  if(!(st && st.cfg && st.cfg.senha)) { window._confirmarDesbloqueio(); return; }
+  var senha = st && st.cfg && st.cfg.senha ? st.cfg.senha.trim() : '';
+  if (!senha) {
+    // Sem senha configurada — avisa e destrava direto
+    if(window.App) window.App.toast('Configure uma senha nas Configurações para proteger o inventário','wa');
+    window._confirmarDesbloqueio();
+    return;
+  }
+  // Tem senha — abre modal para digitar
   var inp = document.getElementById('senhaInput');
   if(inp) inp.value = '';
   var modal = document.getElementById('modalSenhaBg');
@@ -8316,10 +8693,21 @@ window._confirmarDesbloqueio = function() {
   var senha = (st && st.cfg && st.cfg.senha) || '';
   if(!senha || (inp && inp.value === senha)) {
     if(st) st._locked = false;
+    // Se tinha um rotativo carregado travado, destravar ele também no histórico
+    if (st && st._rotativoCarregadoId) {
+      var idx = st.history.findIndex(function(r){ return String(r.id)===String(st._rotativoCarregadoId); });
+      if (idx >= 0) {
+        st.history[idx].locked = false;
+        if (window.App && window.App.salvarObsRotativo) {
+          // só salva o estado
+          try { localStorage.setItem('rp_history', JSON.stringify(st.history)); } catch(e){}
+        }
+      }
+    }
     var b  = document.getElementById('invStatusBadge');
     var bt = document.getElementById('btnTravar');
     if(b)  { b.style.cssText='display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(0,255,178,.08);border:1px solid rgba(0,255,178,.15);color:var(--acid)'; b.textContent='● ABERTO'; }
-    if(bt) { bt.textContent='🔒 Travar'; bt.onclick=window.invTravar; }
+    if(bt) { bt.textContent='🔒 Travar'; bt.style.background=''; bt.style.borderColor=''; bt.style.color=''; bt.onclick=window.invTravar; }
     var modal = document.getElementById('modalSenhaBg');
     if(modal) modal.style.display = 'none';
     if(window.App && window.App.renderTable) window.App.renderTable();
