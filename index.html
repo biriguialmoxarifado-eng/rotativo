@@ -1274,15 +1274,12 @@ body { display: flex; }
       <div style="display:grid;grid-template-columns:1fr 300px;gap:12px;margin-bottom:14px">
         <div class="panel">
           <div class="panel-header">
-            <span class="panel-title">Evolução do Período</span>
-            <div style="display:flex;gap:4px">
-              <button class="cbtn cbtn-outline cbtn-sm" id="ctabRot" onclick="App.switchDashChart('rot',this)" style="color:var(--acid);border-color:var(--acid);font-size:10px">Rotativos</button>
-              <button class="cbtn cbtn-outline cbtn-sm" id="ctabDiv" onclick="App.switchDashChart('div',this)" style="font-size:10px">Divergências</button>
-              <button class="cbtn cbtn-outline cbtn-sm" id="ctabAcc" onclick="App.switchDashChart('acc',this)" style="font-size:10px">Acurácia</button>
-              <button class="cbtn cbtn-outline cbtn-sm" id="ctabVal" onclick="App.switchDashChart('val',this)" style="font-size:10px">R$ Valor</button>
-            </div>
+            <span class="panel-title">📊 Resumo dos Rotativos</span>
+            <button class="cbtn cbtn-outline cbtn-sm" onclick="App.atualizarResumoRotativos()" style="font-size:10px">↻ Atualizar</button>
           </div>
-          <div style="padding:10px;height:200px"><canvas id="mainDashChart"></canvas></div>
+          <div id="resumoRotativos" style="overflow-y:auto;max-height:320px">
+            <div style="padding:20px;text-align:center;color:#3A5070;font-size:12px">Clique em ↻ Atualizar</div>
+          </div>
         </div>
         <div class="panel">
           <div class="panel-header"><span class="panel-title">Top SKUs Divergentes</span></div>
@@ -1990,6 +1987,13 @@ body { display: flex; }
             <div class="form-field"><label>Nome</label><input id="cfgOp" class="field-input" placeholder="João da Silva" oninput="App.saveConfig()"/></div>
             <div class="form-field"><label>Empresa / Setor</label><input id="cfgEmp" class="field-input" placeholder="Almoxarifado Central" oninput="App.saveConfig()"/></div>
             <div class="form-field">
+              <label>🔑 Senha de Acesso ao Sistema</label>
+              <div style="display:flex;gap:8px">
+                <input type="password" id="cfgSenhaAcesso" class="field-input" placeholder="Deixe vazio para sem senha..." style="flex:1" oninput="App.saveConfig()"/>
+              </div>
+              <div style="font-size:10px;color:var(--t3);margin-top:4px">Se configurada, será pedida ao abrir o sistema em qualquer máquina</div>
+            </div>
+            <div class="form-field">
               <label>🏢 Logo da Empresa (URL ou Base64)</label>
               <div style="display:flex;gap:8px;align-items:center">
                 <input id="cfgLogo" class="field-input" placeholder="URL da imagem ou clique em Upload..." style="flex:1;font-size:11px" oninput="App.saveConfig()"/>
@@ -2435,9 +2439,10 @@ window.InventoryEngine = (() => {
   window._dashChart2=null; window._dashMode2='rot';
   function _drawNewChart(hist){
     var canvas=document.getElementById('mainDashChart');
-    if(!canvas||typeof Chart==='undefined') return;
-    // Garantir tamanho do canvas
-    if (!canvas.parentElement.offsetHeight) canvas.style.height='200px';
+    if(!canvas) return;
+    // Garantir tamanho
+    canvas.style.height='200px';
+    canvas.height=200;
 
     // Usar histFilt filtrado pelo período
     var fonte = hist || window._lastHistFilt || state.history;
@@ -2497,63 +2502,68 @@ window.InventoryEngine = (() => {
       });
     } catch(e){}
 
-    if(window._dashChart2) window._dashChart2.destroy();
-    var mode=window._dashMode2||'rot';
-    var cols={rot:'#00FFB2',div:'#FF3B5C',acc:'#4A90E2',val:'#FFB020'};
-    var dd={rot:dD.map(function(_,i){ return i+1; }),div:dD,acc:dA,val:dV};
-    var cc=cols[mode]||'#00FFB2';
-    var yLbl=mode==='val'?'R$':mode==='acc'?'%':mode==='div'?'diverg':'nº';
 
-    // Tipo de gráfico: linha para acurácia/valor, barras para divergências/rotativos
-    var tipo = (mode==='acc'||mode==='val') ? 'line' : 'bar';
+    if(window._dashChart2) { window._dashChart2.destroy(); window._dashChart2=null; }
+    var mode  = window._dashMode2||'rot';
+    var cols  = {rot:'#00FFB2',div:'#FF3B5C',acc:'#4A90E2',val:'#FFB020'};
+    var vals  = {rot:dR,div:dD,acc:dA,val:dV}[mode]||dR;
+    var cc    = cols[mode]||'#00FFB2';
 
-    window._dashChart2=new Chart(canvas,{
-      type: tipo,
-      data:{
-        labels: labels,
-        datasets:[{
-          data: dd[mode]||dd.rot,
-          borderColor: cc,
+    if (typeof Chart !== 'undefined') {
+      var tipo = (mode==='acc'||mode==='val')?'line':'bar';
+      window._dashChart2 = new Chart(canvas, {
+        type: tipo,
+        data: { labels: labels, datasets:[{
+          data: vals, borderColor: cc,
           backgroundColor: tipo==='bar' ? cc+'99' : cc+'22',
-          fill: tipo==='line',
-          tension: .4,
-          pointRadius: 4,
-          pointBackgroundColor: cc,
-          borderWidth: tipo==='bar' ? 0 : 2,
-          borderRadius: tipo==='bar' ? 6 : 0,
-        }]
-      },
-      options:{
-        responsive:true,
-        maintainAspectRatio:false,
-        plugins:{
-          legend:{display:false},
-          tooltip:{callbacks:{
-            label:function(ctx){
-              var v=ctx.parsed.y;
-              if(mode==='val') return 'R$ '+v.toLocaleString('pt-BR');
-              if(mode==='acc') return v+'%';
-              if(mode==='div') return v+' divergência'+(v!==1?'s':'');
-              return 'Rotativo '+ctx.parsed.y;
-            }
-          }}
-        },
-        scales:{
-          x:{grid:{color:'rgba(0,200,150,.05)'},ticks:{color:'#4A6080',font:{size:9},maxRotation:45}},
-          y:{
-            grid:{color:'rgba(0,200,150,.05)'},
-            ticks:{color:'#4A6080',font:{size:10},callback:function(v){
-              if(mode==='val') return 'R$'+v;
-              if(mode==='acc') return v+'%';
-              return v;
-            }},
-            min: mode==='acc' ? 0 : undefined,
-            max: mode==='acc' ? 100 : undefined,
+          fill: tipo==='line', tension: .4, pointRadius: 4,
+          pointBackgroundColor: cc, borderWidth: tipo==='bar'?0:2,
+          borderRadius: tipo==='bar'?6:0
+        }]},
+        options: { responsive:true, maintainAspectRatio:false,
+          plugins:{ legend:{display:false}, tooltip:{callbacks:{label:function(ctx){
+            var v=ctx.parsed.y;
+            if(mode==='val') return 'R$ '+v.toLocaleString('pt-BR');
+            if(mode==='acc') return v+'%';
+            if(mode==='div') return v+' div';
+            return 'R'+ctx.dataIndex+1;
+          }}}},
+          scales:{
+            x:{grid:{color:'rgba(0,200,150,.05)'},ticks:{color:'#4A6080',font:{size:9},maxRotation:45}},
+            y:{grid:{color:'rgba(0,200,150,.05)'},
+               ticks:{color:'#4A6080',font:{size:10},callback:function(v){ return mode==='val'?'R$'+v:mode==='acc'?v+'%':v; }},
+               min:mode==='acc'?0:undefined, max:mode==='acc'?100:undefined}
           }
         }
-      }
-    });
+      });
+    } else {
+      // Fallback: desenhar barras diretamente no canvas sem Chart.js
+      var ctx2=canvas.getContext('2d');
+      var W=canvas.offsetWidth||canvas.parentElement.offsetWidth||400;
+      var H=190; canvas.width=W; canvas.height=H;
+      ctx2.clearRect(0,0,W,H);
+      if(!vals.length){ ctx2.fillStyle='#3A5070';ctx2.font='13px sans-serif';ctx2.textAlign='center';ctx2.fillText('Sem dados no período',W/2,H/2);return; }
+      var maxV=Math.max.apply(null,vals.concat([1]));
+      var padL=36,padB=36,padT=12,chartH=H-padB-padT;
+      var bW=Math.max(10,Math.floor((W-padL-8)/vals.length)-4);
+      // Grid
+      ctx2.strokeStyle='rgba(0,200,150,.1)';ctx2.lineWidth=1;
+      for(var g=0;g<=4;g++){var gy=padT+chartH*(1-g/4);ctx2.beginPath();ctx2.moveTo(padL,gy);ctx2.lineTo(W-4,gy);ctx2.stroke();ctx2.fillStyle='#4A6080';ctx2.font='9px monospace';ctx2.textAlign='right';ctx2.fillText(Math.round(maxV*g/4),padL-3,gy+3);}
+      // Barras
+      vals.forEach(function(v,i){
+        var x=padL+4+i*(bW+4);
+        var bh=Math.max(2,Math.round(v/maxV*chartH));
+        var by=padT+chartH-bh;
+        ctx2.fillStyle=cc+'CC';
+        ctx2.beginPath();if(ctx2.roundRect)ctx2.roundRect(x,by,bW,bh,3);else ctx2.rect(x,by,bW,bh);ctx2.fill();
+        ctx2.fillStyle=cc;ctx2.font='8px monospace';ctx2.textAlign='center';
+        if(v>0)ctx2.fillText(mode==='val'?'R$'+Math.round(v):mode==='acc'?v+'%':v,x+bW/2,by-2);
+        ctx2.fillStyle='#4A6080';ctx2.font='8px monospace';
+        ctx2.fillText(labels[i]||('R'+(i+1)),x+bW/2,H-4);
+      });
+    }
   }
+
 
 })();
 
@@ -2588,6 +2598,43 @@ window.App = (function() {
   };
 
   // ── INIT ────────────────────────────────────────────────────
+  function verificarSenhaAcesso() {
+    var senha = state.cfg && state.cfg.senhaAcesso ? state.cfg.senhaAcesso.trim() : '';
+    if (!senha) return; // sem senha configurada
+    // Verificar se já autenticou nessa sessão
+    if (sessionStorage.getItem('rp_autenticado') === '1') return;
+    // Mostrar modal de senha
+    var overlay = document.createElement('div');
+    overlay.id = 'senhaAcessoOverlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:99999';
+    overlay.innerHTML = '<div style="background:var(--c1);border:1px solid var(--bd);border-radius:16px;padding:40px;text-align:center;width:320px;box-shadow:0 20px 60px rgba(0,0,0,.5)">'
+      + '<div style="font-size:32px;margin-bottom:16px">🔒</div>'
+      + '<div style="font-size:18px;font-weight:700;color:var(--t1);margin-bottom:6px">RotativoApp Pro</div>'
+      + '<div style="font-size:12px;color:var(--t3);margin-bottom:20px">Digite a senha para continuar</div>'
+      + '<input type="password" id="inputSenhaAcesso" class="field-input" placeholder="Senha..." style="text-align:center;font-size:16px;letter-spacing:3px;margin-bottom:12px;width:100%"/>'
+      + '<button onclick="window._verificarSenha()" class="cbtn cbtn-primary" style="width:100%;font-size:13px">Entrar</button>'
+      + '<div id="senhaErro" style="color:var(--red);font-size:11px;margin-top:8px;display:none">Senha incorreta</div>'
+      + '</div>';
+    document.body.appendChild(overlay);
+    setTimeout(function(){ var i=document.getElementById('inputSenhaAcesso'); if(i) i.focus(); }, 100);
+    window._verificarSenha = function() {
+      var inp = document.getElementById('inputSenhaAcesso');
+      if (inp && inp.value === senha) {
+        sessionStorage.setItem('rp_autenticado','1');
+        var ov = document.getElementById('senhaAcessoOverlay');
+        if (ov) ov.remove();
+      } else {
+        var err = document.getElementById('senhaErro');
+        if (err) err.style.display='block';
+        if (inp) { inp.value=''; inp.focus(); }
+      }
+    };
+    // Enter key
+    document.getElementById('inputSenhaAcesso').addEventListener('keydown', function(e){
+      if(e.keyCode===13) window._verificarSenha();
+    });
+  }
+
   function init() {
     loadFromStorage();
     renderTopDate();
@@ -2695,6 +2742,7 @@ window.App = (function() {
       const emp = document.getElementById('cfgEmp'); if (emp && state.cfg.emp) emp.value = state.cfg.emp;
       const url = document.getElementById('cfgUrl'); if (url && state.cfg.url) url.value = state.cfg.url;
       var senhaEl = document.getElementById('cfgSenha'); if (senhaEl) senhaEl.value = state.cfg.senha||'';
+      var saEl = document.getElementById('cfgSenhaAcesso'); if (saEl) saEl.value = state.cfg.senhaAcesso||'';
       try {
         var logoEl = document.getElementById('cfgLogo');
         if(logoEl && state.cfg.logo) logoEl.value = state.cfg.logo.substring(0,50)+'...';
@@ -2720,7 +2768,26 @@ window.App = (function() {
       localStorage.setItem('rp_audits',  JSON.stringify(state.audits));
       localStorage.setItem('rp_cfg',     JSON.stringify(state.cfg));
       if (state.capImg) localStorage.setItem('rp_capImg', state.capImg);
-    } catch(e) { console.warn('[Storage] save error:', e); }
+      window._appState = state; // garantir estado global atualizado
+      // Verificar espaço usado
+      try {
+        var used = 0;
+        for (var k in localStorage) { if (localStorage.hasOwnProperty(k)) used += localStorage[k].length * 2; }
+        if (used > 4 * 1024 * 1024) { // >4MB — aviso
+          console.warn('[Storage] Próximo do limite:', Math.round(used/1024)+'KB');
+        }
+      } catch(e2) {}
+    } catch(e) {
+      console.error('[Storage] ERRO ao salvar:', e);
+      // Tentar salvar só o essencial
+      try {
+        localStorage.setItem('rp_history', JSON.stringify(state.history));
+        localStorage.setItem('rp_cfg',     JSON.stringify(state.cfg));
+        if (window.App) window.App.toast('⚠ Espaço de armazenamento quase cheio! Exporte os dados.', 'wa');
+      } catch(e3) {
+        if (window.App) window.App.toast('❌ ERRO: Não foi possível salvar! localStorage cheio.', 'er');
+      }
+    }
   }
 
   function saveConfig() {
@@ -2729,6 +2796,7 @@ window.App = (function() {
     state.cfg.op        = f('cfgOp');
     state.cfg.emp       = f('cfgEmp');
     state.cfg.url       = f('cfgUrl');
+    if (f('cfgSenhaAcesso') !== undefined) state.cfg.senhaAcesso = f('cfgSenhaAcesso');
     state.cfg.localOcr  = fb('cfgLocalOcr');
     state.cfg.googleOcr = fb('cfgGoogleOcr');
     save();
@@ -3326,6 +3394,24 @@ window.App = (function() {
   function diffStatus(it) { const d=diffVal(it); if(d===null||d===0) return 'ok'; return d>0?'pos':'neg'; }
   function diffBadge(it)  { const d=diffVal(it), s=diffStatus(it); if(s==='ok') return '<span class="badge badge-ok">OK</span>'; if(s==='pos') return '<span class="badge badge-pos">+'+d+'</span>'; return '<span class="badge badge-neg">'+d+'</span>'; }
   function padId(n)       { return String(n).padStart(7, '0'); }
+  // parseDate — converte qualquer formato para Date
+  window.parseDate = function(d) {
+    if (!d) return null;
+    if (d instanceof Date && !isNaN(d.getTime())) return d;
+    var dt = new Date(d);
+    if (!isNaN(dt.getTime())) return dt;
+    // Serial do Excel
+    var n = Number(d);
+    if (!isNaN(n) && n > 0 && n < 100000) {
+      dt = new Date(new Date(1900,0,1).getTime() + (n-2)*86400000);
+      if (!isNaN(dt.getTime())) return dt;
+    }
+    // DD/MM/YYYY
+    var m = String(d).match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    if (m) return new Date(m[3]+'-'+m[2]+'-'+m[1]);
+    return null;
+  };
+
   function fmtDate(d) {
     if (!d) return '—';
     var dt = new Date(d);
@@ -3779,8 +3865,17 @@ window.App = (function() {
       } catch(e) {}
 
       // Mostrar impacto financeiro se houver, senão mostrar qtd divergente
+      // Calcular impacto financeiro total dos rotativos do período
+      histFilt.forEach(function(r) {
+        (r.items||[]).forEach(function(it){
+          var ru = it.runit||it.rUnit||0;
+          if(!ru && it.val && (it.sis||0)>0) ru = it.val/it.sis;
+          if(ru > 0) valorTotal += ru * (it.sis||0);
+          else if(it.val > 0) valorTotal += it.val;
+        });
+      });
       var valorFmt = valorTotal > 0
-        ? 'R$' + valorTotal.toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0})
+        ? 'R$' + Math.round(valorTotal).toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0})
         : totalDivQtd > 0
           ? totalDivQtd + ' un'
           : '—';
@@ -3810,10 +3905,12 @@ window.App = (function() {
         rl.innerHTML = '<div class="insight-empty">Nenhum rotativo no período</div>';
       } else {
         rl.innerHTML = histFilt.slice().reverse().map(function(r, i) {
-          var dt   = r.date ? new Date(r.date).toLocaleDateString('pt-BR') : '—';
-          var hr   = r.date ? new Date(r.date).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
-          var divs = r.stats ? r.stats.diverg : 0;
-          var ac   = r.stats && r.stats.total ? Math.round(r.stats.ok/r.stats.total*100) : 100;
+          var _d  = r.date ? window.parseDate(r.date) : null;
+          var dt  = _d ? _d.toLocaleDateString('pt-BR') : '—';
+          var hr  = _d ? _d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
+          var s2  = r.stats || {diverg:0,ok:0,total:0};
+          var divs = s2.diverg||0;
+          var ac   = s2.total ? Math.round(s2.ok/s2.total*100) : 100;
           var acC  = ac>=98?'var(--green)':ac>=90?'var(--amber)':'var(--red)';
           return '<div style="padding:8px 10px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;gap:8px">'
             + '<div>'
@@ -4925,9 +5022,13 @@ window.App = (function() {
     try {
       const payload = { action:'addRotativo', rotativo: {
         id:String(rot.id), date:fmtDate(rot.date), time:fmtTime(rot.date),
-        operador:rot.op, empresa:rot.emp, total:rot.stats.total,
-        divergencias:rot.stats.diverg, ok:rot.stats.ok, falta:rot.stats.neg,
-        excesso:rot.stats.pos, acuracia:rot.stats.acuracia||0,
+        operador:rot.op, empresa:rot.emp,
+        total:(rot.stats||{}).total||rot.items.length,
+        divergencias:(rot.stats||{}).diverg||0,
+        ok:(rot.stats||{}).ok||0,
+        falta:(rot.stats||{}).neg||0,
+        excesso:(rot.stats||{}).pos||0,
+        acuracia:(rot.stats||{}).acuracia||0,
         items: rot.items.map(function(it){
           var sis = it.sis!==null&&it.sis!==undefined ? Number(it.sis) : 0;
           var cnt = it.cnt!==null&&it.cnt!==undefined ? Number(it.cnt) : sis;
@@ -4973,14 +5074,39 @@ window.App = (function() {
   function exportTableXLSX() {
     if (!window.XLSX) { toast('XLSX não carregado', 'er'); return; }
     if (!state.items.length) { toast('Nenhum item na tabela', 'er'); return; }
-    const wb = XLSX.utils.book_new();
-    const data = [['#','MATERIAL','DESCRICAO','SISTEMA','CONTAGEM','DIFERENCA','STATUS','LOCALIZACAO']];
-    state.items.forEach((it,i) => { const d=diffVal(it), s=diffStatus(it); data.push([i+1,it.mat||'',it.desc||'',it.sis!==null?it.sis:'',it.cnt!==null?it.cnt:'OK',d!==null?d:'OK',s.toUpperCase(),it.loc||'']); });
-    const ws = XLSX.utils.aoa_to_sheet(data);
-    ws['!cols'] = [{wch:4},{wch:14},{wch:42},{wch:10},{wch:10},{wch:10},{wch:10},{wch:14}];
-    XLSX.utils.book_append_sheet(wb, ws, 'Tabela');
-    XLSX.writeFile(wb, 'rotativo_tabela_'+new Date().toISOString().slice(0,10)+'.xlsx');
-    toast('Excel exportado', 'ok');
+    var wb = XLSX.utils.book_new();
+    var now = new Date();
+    var emp = (state.cfg && state.cfg.emp) || 'Almoxarifado';
+    var op  = (state.cfg && state.cfg.op)  || 'Operador';
+
+    // ── Aba principal no formato SAP ──
+    var data = [['#','MATERIAL','DESCRICAO','SISTEMA','CONTAGEM','DIFERENCA','STATUS','LOCALIZACAO','VAL.UTIL.LIVRE','R$ UNIT','DESVIO R$']];
+    state.items.forEach(function(it, i) {
+      var d   = diffVal(it), s = diffStatus(it);
+      var sis = it.sis !== null && it.sis !== undefined ? Number(it.sis) : 0;
+      var cnt = it.cnt !== null && it.cnt !== undefined ? Number(it.cnt) : sis;
+      var ru  = it.runit || it.rUnit || 0;
+      if (!ru && it.val && sis > 0) ru = it.val / sis;
+      var valUtil = ru ? Math.round(sis * ru * 100) / 100 : (it.val || '');
+      var desvioR = ru ? Math.round((cnt - sis) * ru * 100) / 100 : '';
+      data.push([
+        i+1, it.mat||'', it.desc||'',
+        it.sis!==null?it.sis:'',
+        it.cnt!==null?it.cnt:'OK',
+        d!==null?d:'OK', s.toUpperCase(),
+        it.loc||'', valUtil, ru||'', desvioR
+      ]);
+    });
+    var ws = XLSX.utils.aoa_to_sheet(data);
+    ws['!cols'] = [{wch:4},{wch:14},{wch:42},{wch:10},{wch:10},{wch:10},{wch:10},{wch:16},{wch:14},{wch:10},{wch:12}];
+    ws['!autofilter'] = {ref:'A1:K1'};
+    _xlsxEstiloHeader(ws, 11, '1A3A5C');
+    _xlsxZebra(ws, data.length, 11);
+    XLSX.utils.book_append_sheet(wb, ws, '📋 Tabela');
+
+    var fname = 'rotativo_tabela_'+emp.replace(/\s+/g,'_')+'_'+now.toISOString().slice(0,10)+'.xlsx';
+    XLSX.writeFile(wb, fname);
+    toast('Excel exportado com valores financeiros!', 'ok');
   }
 
   // ── Aplicar estilo de cabeçalho numa aba ──
@@ -5965,6 +6091,82 @@ window.App = (function() {
           setTimeout(function(){ location.reload(); }, 1200);
         }}
       ], '480px');
+    },
+
+    atualizarResumoRotativos: function() {
+      var el = document.getElementById('resumoRotativos');
+      if (!el) return;
+      var hist = window._lastHistFilt || state.history;
+      if (!hist || !hist.length) {
+        el.innerHTML = '<div style="padding:20px;text-align:center;color:#3A5070">Nenhum rotativo no período</div>';
+        return;
+      }
+      function calcS(r) {
+        if (r.stats && r.stats.total) return r.stats;
+        var tot=0,ok=0,div=0;
+        (r.items||[]).forEach(function(it){
+          if(it.cnt===null||it.cnt===undefined) return;
+          tot++; if(Number(it.cnt)!==Number(it.sis||0)) div++; else ok++;
+        });
+        return {total:tot,ok:ok,diverg:div};
+      }
+      function calcVal(r) {
+        var t=0;
+        (r.items||[]).forEach(function(it){
+          // Tentar todas as fontes de valor
+          var ru = it.runit || it.rUnit || it.preco || 0;
+          if (!ru && it.val && (it.sis||0)>0) ru = it.val / it.sis;
+          var sis = it.sis || 0;
+          if (ru > 0) {
+            t += ru * sis;
+          } else if (it.val > 0) {
+            t += it.val; // usar val direto se tiver
+          }
+        });
+        return Math.round(t);
+      }
+      var sorted = hist.slice().sort(function(a,b){
+        var da=parseDate(a.date)||new Date(0), db=parseDate(b.date)||new Date(0);
+        return da-db;
+      });
+      var totItens=0,totDiv=0,totOk=0,totTot=0,totVal=0;
+      var html = '<table style="width:100%;border-collapse:collapse;font-size:11px">'
+        +'<thead><tr style="background:var(--c3)">'
+        +'<th style="padding:6px 10px;text-align:left;color:var(--t3);font-size:9px;font-weight:700">ROT.</th>'
+        +'<th style="padding:6px 10px;text-align:left;color:var(--t3);font-size:9px;font-weight:700">DATA</th>'
+        +'<th style="padding:6px 10px;text-align:center;color:var(--t3);font-size:9px;font-weight:700">ITENS</th>'
+        +'<th style="padding:6px 10px;text-align:center;color:var(--t3);font-size:9px;font-weight:700">DIV.</th>'
+        +'<th style="padding:6px 10px;text-align:center;color:var(--t3);font-size:9px;font-weight:700">ACUR.</th>'
+        +'<th style="padding:6px 10px;text-align:right;color:var(--t3);font-size:9px;font-weight:700">VALOR</th>'
+        +'</tr></thead><tbody>';
+      sorted.forEach(function(r,i) {
+        var s=calcS(r), v=calcVal(r);
+        var acc=s.total?Math.round(s.ok/s.total*100):100;
+        var d=parseDate(r.date);
+        var dt=d?d.toLocaleDateString('pt-BR'):'—';
+        var accC=acc>=98?'var(--green)':acc>=90?'var(--amber)':'var(--red)';
+        var vFmt=v>0?'R$'+v.toLocaleString('pt-BR'):'—';
+        totItens+=s.total; totDiv+=s.diverg; totOk+=s.ok; totTot+=s.total; totVal+=v;
+        html+='<tr style="border-bottom:1px solid var(--bd);'+(i%2===0?'':'background:rgba(0,200,150,.02)')+'">'
+          +'<td style="padding:7px 10px;font-family:monospace;color:var(--acid);font-weight:700">R'+(i+1)+'</td>'
+          +'<td style="padding:7px 10px;color:var(--t2);font-size:11px">'+dt+'</td>'
+          +'<td style="padding:7px 10px;text-align:center;color:var(--t1);font-weight:600">'+s.total+'</td>'
+          +'<td style="padding:7px 10px;text-align:center;font-weight:700;color:'+(s.diverg>0?'var(--red)':'var(--green)')+'">'+s.diverg+'</td>'
+          +'<td style="padding:7px 10px;text-align:center;font-weight:700;color:'+accC+'">'+acc+'%</td>'
+          +'<td style="padding:7px 10px;text-align:right;font-family:monospace;color:var(--amber);font-size:10px">'+vFmt+'</td>'
+          +'</tr>';
+      });
+      var totAcc=totTot?Math.round(totOk/totTot*100):100;
+      html+='<tr style="background:rgba(0,200,150,.08);border-top:2px solid rgba(0,200,150,.2);font-weight:700">'
+        +'<td colspan="2" style="padding:7px 10px;color:var(--acid);font-size:10px">TOTAL ('+sorted.length+' rotativos)</td>'
+        +'<td style="padding:7px 10px;text-align:center;color:var(--t1)">'+totItens+'</td>'
+        +'<td style="padding:7px 10px;text-align:center;color:'+(totDiv>0?'var(--red)':'var(--green)')+'">'+totDiv+'</td>'
+        +'<td style="padding:7px 10px;text-align:center;color:'+(totAcc>=98?'var(--green)':totAcc>=90?'var(--amber)':'var(--red)')+'">'+totAcc+'%</td>'
+        +'<td style="padding:7px 10px;text-align:right;color:var(--amber);font-family:monospace">'+(totVal>0?'R$'+totVal.toLocaleString('pt-BR'):'—')+'</td>'
+        +'</tr>';
+      html+='</tbody></table>';
+      el.innerHTML = html;
+      toast('Resumo atualizado!','ok');
     },
 
     switchDashChart: function(mode,btn){
