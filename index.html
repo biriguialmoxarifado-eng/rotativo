@@ -1197,6 +1197,10 @@ body { display: flex; }
       <svg viewBox="0 0 20 20"><path d="M10 3v9m-4-4l4 4 4-4"/><rect x="3" y="14" width="14" height="3" rx="1"/></svg>
       Importar Planilha
     </a>
+    <a class="nav-item" data-page="layout" onclick="navigate('layout')">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="16" height="12" rx="2"/><line x1="2" y1="8" x2="18" y2="8"/><line x1="7" y1="8" x2="7" y2="16"/></svg>
+      Layout Planilha
+    </a>
     <a class="nav-item" data-page="settings" onclick="navigate('settings')">
       <svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="2.5"/><path d="M15.7 10a5.7 5.7 0 1 1-11.4 0 5.7 5.7 0 0 1 11.4 0z" fill="none" stroke="currentColor"/></svg>
       Configurações
@@ -1272,15 +1276,18 @@ body { display: flex; }
 
       <!-- Linha 2: gráfico + top divergências -->
       <div style="display:grid;grid-template-columns:1fr 300px;gap:12px;margin-bottom:14px">
-         <div class="panel">
-           <div class="panel-header">
-             <span class="panel-title">📊 Resumo dos Rotativos</span>
-             <button class="cbtn cbtn-outline cbtn-sm" onclick="if(window.App&&App.atualizarResumoRotativos)App.atualizarResumoRotativos();else{var el=document.getElementById('resumoRotativos');if(el)el.innerHTML='<div style=padding:20px;text-align:center>Recarregue a página</div>';}" style="font-size:10px">↻ Atualizar</button>
-           </div>
-           <div id="resumoRotativos" style="overflow-y:auto;max-height:320px">
-             <div style="padding:20px;text-align:center;color:#3A5070;font-size:12px">Clique em ↻ Atualizar</div>
-           </div>
-         </div>
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Evolução do Período</span>
+            <div style="display:flex;gap:4px">
+              <button class="cbtn cbtn-outline cbtn-sm" id="ctabRot" onclick="App.switchDashChart('rot',this)" style="color:var(--acid);border-color:var(--acid);font-size:10px">Rotativos</button>
+              <button class="cbtn cbtn-outline cbtn-sm" id="ctabDiv" onclick="App.switchDashChart('div',this)" style="font-size:10px">Divergências</button>
+              <button class="cbtn cbtn-outline cbtn-sm" id="ctabAcc" onclick="App.switchDashChart('acc',this)" style="font-size:10px">Acurácia</button>
+              <button class="cbtn cbtn-outline cbtn-sm" id="ctabVal" onclick="App.switchDashChart('val',this)" style="font-size:10px">R$ Valor</button>
+            </div>
+          </div>
+          <div style="padding:10px;height:200px"><canvas id="mainDashChart"></canvas></div>
+        </div>
         <div class="panel">
           <div class="panel-header"><span class="panel-title">Top SKUs Divergentes</span></div>
           <div style="overflow-y:auto;max-height:230px">
@@ -1855,6 +1862,99 @@ body { display: flex; }
       </div>
     </section>
 
+    <!-- ══ LAYOUT DE PLANILHA ══ -->
+    <section class="page" id="page-layout">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-size:16px;font-weight:700">CONFIGURAÇÕES › LAYOUT DE PLANILHA</div>
+          <div style="font-size:11px;color:var(--t3)">Defina os campos que serão exibidos em todos os modelos</div>
+        </div>
+        <button onclick="App.layoutAddCampo()" style="display:flex;align-items:center;gap:6px;padding:8px 16px;background:var(--blue);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">
+          ⊕ Adicionar Campo
+        </button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+
+        <!-- LADO ESQUERDO: tabela de campos -->
+        <div class="panel" style="padding:0;overflow:hidden">
+          <div class="panel-header" style="padding:14px 18px;display:flex;align-items:center;gap:10px">
+            <div class="panel-title">LAYOUT DA PLANILHA</div>
+            <div style="font-size:10px;color:var(--t3)">Arraste os campos para definir a ordem de exibição</div>
+          </div>
+          <div style="overflow:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:12px">
+              <thead>
+                <tr style="background:var(--c3)">
+                  <th style="padding:8px 10px;text-align:center;font-size:9px;color:var(--t3);width:36px"></th>
+                  <th style="padding:8px 10px;text-align:left;font-size:9px;color:var(--t3);width:50px">ORDEM</th>
+                  <th style="padding:8px 10px;text-align:left;font-size:9px;color:var(--t3)">CAMPO</th>
+                  <th style="padding:8px 10px;text-align:left;font-size:9px;color:var(--t3)">NOME NA PLANILHA</th>
+                  <th style="padding:8px 10px;text-align:center;font-size:9px;color:var(--t3)">VISÍVEL</th>
+                  <th style="padding:8px 10px;text-align:center;font-size:9px;color:var(--t3)">OBRIG.</th>
+                  <th style="padding:8px 10px;text-align:center;font-size:9px;color:var(--t3)">AÇÕES</th>
+                </tr>
+              </thead>
+              <tbody id="layoutTableBody"></tbody>
+            </table>
+          </div>
+          <div style="padding:14px 18px;border-top:1px solid var(--bd);display:flex;align-items:center;gap:10px">
+            <button onclick="App.layoutSalvar()" style="flex:1;padding:9px;background:var(--blue);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">
+              ✓ Salvar Mapeamento
+            </button>
+            <div style="font-size:10px;color:var(--t3)">As alterações serão aplicadas em todos os modelos</div>
+          </div>
+        </div>
+
+        <!-- LADO DIREITO: pré-visualização -->
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="panel" style="padding:0;overflow:hidden">
+            <div class="panel-header" style="padding:14px 18px;display:flex;align-items:center;justify-content:space-between">
+              <div class="panel-title">PRÉ-VISUALIZAÇÃO DA PLANILHA</div>
+              <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--green)">
+                <div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div>
+                Layout aplicado a todos os modelos
+              </div>
+            </div>
+            <div style="overflow-x:auto;padding:0 0 8px">
+              <table style="width:100%;border-collapse:collapse;font-size:10px;min-width:500px" id="layoutPreview">
+                <thead id="layoutPreviewHead"></thead>
+                <tbody id="layoutPreviewBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Aplicação do layout -->
+          <div class="panel">
+            <div class="panel-title" style="margin-bottom:12px">APLICAÇÃO DO LAYOUT</div>
+            <div style="display:flex;gap:8px;margin-bottom:12px;border-bottom:1px solid var(--bd);padding-bottom:10px">
+              <button id="ltabTodos" onclick="App.layoutSetTab('todos',this)" style="padding:5px 14px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;background:var(--blue);color:#fff;border:none">Todos os Modelos</button>
+            </div>
+            <div style="background:rgba(0,232,122,.08);border:1px solid rgba(0,232,122,.2);border-radius:8px;padding:12px;display:flex;align-items:center;gap:10px">
+              <div style="width:24px;height:24px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">✓</div>
+              <div>
+                <div style="font-size:12px;font-weight:700;color:var(--green)">Layout Global Ativo</div>
+                <div style="font-size:10px;color:var(--t3)">Este mapeamento está sendo aplicado em todos os modelos do sistema.</div>
+              </div>
+            </div>
+
+            <div style="margin-top:14px">
+              <div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:1px;margin-bottom:8px">AÇÃO RÁPIDA</div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <button onclick="App.layoutExportar()" style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--c3);border:1px solid var(--bd);border-radius:6px;color:var(--t2);font-size:11px;cursor:pointer;text-align:left">
+                  ↓ <span><b>Exportar Layout</b><br><span style="font-size:9px;color:var(--t3)">Baixar configuração atual</span></span>
+                </button>
+                <button onclick="App.layoutResetPadrao()" style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--c3);border:1px solid var(--bd);border-radius:6px;color:var(--t2);font-size:11px;cursor:pointer;text-align:left">
+                  ↺ <span><b>Restaurar Padrão SAP</b><br><span style="font-size:9px;color:var(--t3)">Volta ao layout original</span></span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
     <!-- ══ IMPORT ══ -->
     <section class="page" id="page-import">
       <div class="import-layout">
@@ -1869,11 +1969,17 @@ body { display: flex; }
           <div id="importPreview" style="display:none;margin-top:20px"></div>
         </div>
 
-        <div class="panel">
-          <div class="panel-header"><div class="panel-title">Mapeamento de Colunas</div></div>
-          <div id="colMapping" class="col-mapping">
-            <div class="mapping-tip">Importe um arquivo para configurar o mapeamento</div>
+        <div class="panel" style="display:flex;flex-direction:column;gap:12px;align-items:flex-start">
+          <div class="panel-header"><div class="panel-title">Layout Configurado</div></div>
+          <div style="font-size:11px;color:var(--t3);line-height:1.6">
+            O mapeamento de colunas foi movido para<br>
+            <b style="color:var(--acid)">Layout Planilha</b> no menu lateral.<br><br>
+            As configurações salvas lá são aplicadas automaticamente aqui na importação, na Conferência e na exportação.
           </div>
+          <div id="layoutResumo" style="width:100%"></div>
+          <button onclick="navigate('layout')" style="padding:8px 16px;background:rgba(0,255,178,.1);border:1px solid rgba(0,255,178,.3);border-radius:6px;color:var(--acid);font-size:11px;font-weight:700;cursor:pointer">
+            ⚙ Configurar Layout de Campos
+          </button>
         </div>
       </div>
     </section>
@@ -2432,8 +2538,6 @@ window.InventoryEngine = (() => {
   window._dashChart2=null; window._dashMode2='rot';
   function _drawNewChart(hist){
     var canvas=document.getElementById('mainDashChart');
-    // Canvas removido — usar resumoRotativos
-    if(window.App && window.App.atualizarResumoRotativos) { window.App.atualizarResumoRotativos(); return; }
     if(!canvas) return;
     // Garantir tamanho
     canvas.style.height='200px';
@@ -2478,7 +2582,7 @@ window.InventoryEngine = (() => {
     var dV = sorted.map(function(r){
       var total = 0;
       (r.items||[]).forEach(function(it){
-        var ru = it.runit || it.runit || it.preco || 0;
+        var ru = it.runit || it.rUnit || it.preco || 0;
         var sis = it.sis || 0;
         if (!ru && it.val && sis > 0) ru = it.val / sis;
         total += ru * sis;
@@ -2621,22 +2725,10 @@ window.App = (function() {
         if (String(state.history[i].id)===String(row.id)){jaExiste=true;break;}
       }
       if (!jaExiste) {
-        // Normalizar campos financeiros dos itens vindos do Sheets
-        var itensNorm = (row.items||[]).map(function(it) {
-          var sis = Number(it.sis)||0;
-          // Unificar nomes: rUnit→runit, desvioR→desvRS, valUtilizLivre→val
-          if (!it.runit && it.rUnit)           it.runit = Number(it.rUnit)||0;
-          if (!it.desvRS && it.desvioR)        it.desvRS = Number(it.desvioR)||0;
-          if (!it.val && it.valUtilizLivre)    it.val = Number(it.valUtilizLivre)||0;
-          // Recalcular se necessário
-          if ((!it.runit||it.runit<=0) && it.val>0 && sis>0) it.runit = it.val/sis;
-          if ((it.runit||0)>0 && (!it.val||it.val<=0) && sis>0) it.val = Math.round(it.runit*sis*100)/100;
-          return it;
-        });
         state.history.push({
           id: row.id, date: row.date||new Date().toISOString(),
           op: row.op||'Operador', emp: row.emp||'',
-          items: itensNorm,
+          items: row.items||[],
           stats:{ total:Number(row.total)||0, ok:Number(row.ok)||0,
             diverg:Number(row.diverg)||0, neg:Number(row.falta)||0,
             pos:Number(row.excesso)||0, acuracia:Number(row.acuracia)||0 }
@@ -2701,27 +2793,7 @@ window.App = (function() {
       const s = window.Storage || localStorage;
       const load = (k, def) => { try { const v = s.getItem ? s.getItem(k) : s[k]; return v ? JSON.parse(v) : def; } catch(e) { return def; } };
       state.items   = load('rp_items',   []);
-    // Recalcular runit/val para itens que vieram com fórmulas (runit=0)
-    state.items.forEach(function(it){
-      var sis = it.sis || 0;
-      // Se runit é string de fórmula, zerar
-      if (typeof it.runit === 'string' && it.runit.indexOf('=') >= 0) it.runit = 0;
-      if (typeof it.val === 'string' && it.val.indexOf('=') >= 0) it.val = 0;
-      // Recalcular se runit=0 mas val>0
-      if ((!it.runit||it.runit===0) && it.val && sis > 0) it.runit = it.val / sis;
-      if ((it.runit||0) > 0 && (!it.val||it.val===0) && sis > 0) it.val = it.runit * sis;
-    });
       state.history = load('rp_history', []);
-    // Recalcular valores financeiros nos itens do histórico
-    state.history.forEach(function(r){
-      (r.items||[]).forEach(function(it){
-        var sis = it.sis || 0;
-        if (typeof it.runit === 'string' && it.runit.indexOf('=') >= 0) it.runit = 0;
-        if (typeof it.val === 'string' && it.val.indexOf('=') >= 0) it.val = 0;
-        if ((!it.runit||it.runit===0) && it.val && sis > 0) it.runit = it.val / sis;
-        if ((it.runit||0) > 0 && (!it.val||it.val===0) && sis > 0) it.val = it.runit * sis;
-      });
-    });
       state.depots  = load('rp_depots',  []);
       state.audits  = load('rp_audits',  []);
       state.cfg     = load('rp_cfg',     state.cfg);
@@ -2793,7 +2865,8 @@ window.App = (function() {
       audit:       ['Auditorias', 'Inspeções e verificações de campo'],
       ocorrencias: ['Ocorrências', 'Divergências com rastreabilidade completa'],
       depots:    ['Almoxarifado', 'Depósitos e localizações'],
-      import:    ['Importar Planilha', 'CSV, XLSX ou TXT do SAP'],
+      import:    ['Importação de Dados', 'Selecione a planilha SAP para importar'],
+      layout:    ['Layout de Planilha', 'Configuração de campos e mapeamento'],
       settings:   ['Configurações', 'Operador, Google Sheets, OCR'],
       skubase:    ['Base de SKUs', 'Cadastro mestre de materiais'],
       mensal:     ['Inventário Mensal', 'Consolidado mensal por período'],
@@ -3073,8 +3146,7 @@ window.App = (function() {
         .replace(/[àáâãä]/g,'a').replace(/[èéêë]/g,'e')
         .replace(/[ìíîï]/g,'i').replace(/[òóôõö]/g,'o')
         .replace(/[ùúûü]/g,'u').replace(/[ç]/g,'c')
-        .replace(/[ñ]/g,'n')
-        .replace(/\$/g,'').replace(/\s+/g,' ');  // remover $ e espaços duplos
+        .replace(/[ñ]/g,'n');
     }
     var header = rows[headerRow].map(function(h){ return normH(h); });
     var colMat=-1,colDesc=-1,colSis=-1,colLoc=-1,colData=-1,colDataInv=-1;
@@ -3091,7 +3163,7 @@ window.App = (function() {
       else if (/auditor|resp/.test(h))                          colAuditor  = i;
       else if (/^centro/.test(h))                               colCentro   = i;
       else if (/^dep|^deposito/.test(h))                        colDeposito = i;
-      else if (/val.*unit|r.*unit|unit.*val|preco|r\..*unit|\.unit/.test(h)) colValUnit = i;
+      else if (/val.*unit|r.*unit|unit.*val|preco/.test(h))     colValUnit  = i;
       else if (/val.*total|total.*val|val.*utiliz|utiliz.*val|val\.utiliz/.test(h)) colValTotal = i;
       else if (/^cont|contagem/.test(h))                        colContagem = i;
       else if (/desvio.*sku|desv.*qtd|desv.*mat/.test(h))       colDesvioSku= i;
@@ -3155,15 +3227,10 @@ window.App = (function() {
         }
         return parseFloat(str)||0;
       }
-      if(colValUnit>=0&&row[colValUnit]) {
-        var ruStr = String(row[colValUnit]||'');
-        // Se for fórmula (começa com =), ignora e calcula do ValTotal/sis
-        if(ruStr.indexOf('=')<0) runit=parseMoeda(ruStr);
-      }
-      // Sempre tenta calcular do ValTotal/sis se runit ainda for 0
-      if(!runit && colValTotal>=0&&row[colValTotal]&&sisVal>0){
+      if(colValUnit>=0&&row[colValUnit]) runit=parseMoeda(row[colValUnit]);
+      else if(colValTotal>=0&&row[colValTotal]&&sisVal>0){
         var vt=parseMoeda(row[colValTotal]);
-        if(vt>0) runit=Math.round(vt/sisVal*100000)/100000;
+        if(vt>0) runit=vt/sisVal;
       }
       // Contagem física
       var cntVal=null;
@@ -3237,33 +3304,13 @@ window.App = (function() {
         state.items = itens;
         toast(itens.length+' itens importados', 'ok');
       }
-      // Debug: verificar primeiro item
-      if (state.items.length > 0) {
-        var it0 = state.items[0];
-        console.log('[IMPORT DEBUG] Item 0:', JSON.stringify({mat:it0.mat, sis:it0.sis, runit:it0.runit, val:it0.val}));
-        toast('Importado: runit=' + (it0.runit||0).toFixed(2) + ' val=' + (it0.val||0).toFixed(2), 'in');
-      }
       save(); closeModal(); renderTable(); updateTableCounts(); renderPreview(); showSaveBar();
       // Auto-detectar containers pelas localizações importadas
       autoDetectarContainers();
       navigate('table');
     }
 
-    // Se tabela vazia, importar direto sem perguntar
-    if (!state.items.length) {
-      state.items = allParsed;
-      var it0 = state.items[0];
-      if (it0) {
-        console.log('[IMPORT DIRECT] Item 0:', JSON.stringify({mat:it0.mat, sis:it0.sis, runit:it0.runit, val:it0.val}));
-        toast('Importado: runit=' + (it0.runit||0).toFixed(2) + ' val=' + (it0.val||0).toFixed(2), 'in');
-      }
-      save(); closeModal(); renderTable(); updateTableCounts(); renderPreview(); showSaveBar();
-      autoDetectarContainers();
-      navigate('table');
-      return;
-    }
-
-    // Montar modal (só aparece se já tem itens na tabela)
+    // Montar modal
     var temItens = state.items.length > 0;
     var bodyHtml = '<p style="color:var(--t2);margin-bottom:10px"><b style="color:var(--t1)">' + parsed.length + '</b> itens encontrados</p>';
     if (temItens) bodyHtml += '<p style="color:var(--t3);font-size:12px;margin-bottom:10px">Ja existem <b>' + state.items.length + '</b> itens na tabela.</p>';
@@ -3345,20 +3392,6 @@ window.App = (function() {
     var stats  = engine ? engine.calcStats(state.items) : calcStatsLocal(state.items);
     // ID unico: timestamp + contador para evitar colisao
     state._rotCounter = (state._rotCounter || 0) + 1;
-    // Garantir runit/val em todos os itens antes de salvar
-    state.items.forEach(function(it) {
-      var sis = Number(it.sis) || 0;
-      // Ignorar fórmulas
-      if (typeof it.runit === 'string' && it.runit.indexOf('=') >= 0) it.runit = 0;
-      if (typeof it.val   === 'string' && it.val.indexOf('=')   >= 0) it.val   = 0;
-      // Calcular runit de val se necessário
-      if ((!it.runit || it.runit <= 0) && it.val && it.val > 0 && sis > 0)
-        it.runit = Math.round(it.val / sis * 100000) / 100000;
-      // Calcular val de runit se necessário
-      if ((it.runit || 0) > 0 && (!it.val || it.val <= 0) && sis > 0)
-        it.val = Math.round(it.runit * sis * 100) / 100;
-    });
-
     var rot = {
       id:    Date.now() + state._rotCounter,
       date:  new Date().toISOString(),
@@ -3467,43 +3500,267 @@ window.App = (function() {
   }
 
   function renderTable() {
-    // Recalcular runit/val antes de renderizar
-    state.items.forEach(function(it) {
-      var sis = Number(it.sis)||0;
-      if (typeof it.runit==='string'&&it.runit.indexOf('=')>=0) it.runit=0;
-      if (typeof it.val==='string'&&it.val.indexOf('=')>=0) it.val=0;
-      if ((!it.runit||it.runit<=0)&&it.val&&Number(it.val)>0&&sis>0)
-        it.runit=Math.round(Number(it.val)/sis*100000)/100000;
-      if ((it.runit||0)>0&&(!it.val||Number(it.val)<=0)&&sis>0)
-        it.val=Math.round(it.runit*sis*100)/100;
+    var body = document.getElementById('tableBody');
+    if (!body) return;
+
+    // Ler layout configurado
+    var campos = layoutGetCampos().filter(function(c){ return c.visivel; });
+
+    // Atualizar cabeçalho dinamicamente
+    var thead = document.querySelector('#dataTable thead tr');
+    if (thead) {
+      thead.innerHTML = '<th style="width:30px">#</th>'
+        + campos.map(function(c) {
+            var align = ['sis','val','runit','cnt','desvSku','desvRS'].indexOf(c.id)>=0 ? 'right' : 'left';
+            var w = {material:'100px',descricao:'',sis:'70px',val:'90px',um:'50px',loc:'90px',runit:'70px',cnt:'70px',desvSku:'60px',desvRS:'70px',status:'90px',centro:'55px',deposito:'55px',dataMov:'80px',obs:''}[c.id]||'';
+            return '<th style="text-align:'+align+';'+(w?'width:'+w:'')+'">'+c.planilha+'</th>';
+          }).join('')
+        + '<th style="width:30px"></th>';
+    }
+
+    var vis = filteredItems();
+    var cols = campos.length + 2; // # + campos + ✕
+
+    if (!state.items.length) {
+      body.innerHTML = '<tr class="empty-row"><td colspan="'+cols+'"><div class="empty-msg"><span>📋</span><p>Nenhum item. Capture uma folha ou adicione manualmente.</p></div></td></tr>';
+      return;
+    }
+    if (!vis.length) {
+      body.innerHTML = '<tr class="empty-row"><td colspan="'+cols+'"><div class="empty-msg"><span>🔍</span><p>Nenhum item neste filtro.</p></div></td></tr>';
+      return;
+    }
+
+    var html = '';
+    vis.forEach(function(it, vi) {
+      var idx = state.items.indexOf(it);
+      var s   = diffStatus(it);
+      var bg  = s==='neg'?'rgba(255,59,92,.025)':s==='pos'?'rgba(255,176,32,.025)':'';
+      var ru  = Number(it.runit)||Number(it.rUnit)||0;
+      var vl  = Number(it.val)||Number(it.valUtilizLivre)||0;
+      var sisN = it.sis!==null&&it.sis!==undefined?Number(it.sis):0;
+      var cntN = it.cnt!==null&&it.cnt!==undefined?Number(it.cnt):null;
+      var dif  = cntN!==null ? cntN-sisN : null;
+      var desvR = ru>0&&dif!==null ? Math.round(dif*ru*100)/100 : (it.desvRS||0);
+      var stBg    = s==='ok'?'rgba(0,232,122,.12)':s==='neg'?'rgba(255,59,92,.12)':'rgba(255,176,32,.12)';
+      var stColor = s==='ok'?'var(--green)':s==='neg'?'var(--red)':'var(--amber)';
+      var stLabel = s==='ok'?'✓ SALVO':s==='neg'?'↓ FALTA':'↑ EXCESSO';
+
+      html += '<tr style="background:'+bg+'">';
+      html += '<td style="color:var(--t3);font-size:10px;text-align:center">'+(vi+1)+'</td>';
+
+      campos.forEach(function(c) {
+        switch(c.id) {
+          case 'material':
+            html += '<td><input class="cell-input mono" value="'+esc(it.mat||it.material||'')+'" onchange="App.updateItem('+idx+',\'mat\',this.value)" style="width:90px;font-size:10px;color:var(--acid);font-weight:700" '+(state._locked?'disabled readonly':'')+'/></td>';
+            break;
+          case 'descricao':
+            html += '<td><input class="cell-input" value="'+esc(it.desc||it.descricao||'')+'" onchange="App.updateItem('+idx+',\'desc\',this.value)" '+(state._locked?'disabled readonly':'')+'/></td>';
+            break;
+          case 'sis':
+            html += '<td style="text-align:right;font-family:monospace;font-size:11px;padding:4px 6px;color:var(--t2)">'+(sisN||'')+'</td>';
+            break;
+          case 'val':
+            html += '<td style="text-align:right;font-family:monospace;font-size:11px;padding:4px 6px;color:var(--blue);font-weight:600">'+(vl>0?'R$'+vl.toFixed(2):'')+'</td>';
+            break;
+          case 'um':
+            html += '<td style="text-align:center;font-size:10px;color:var(--t3)">'+(it.um||'')+'</td>';
+            break;
+          case 'loc':
+            html += '<td><input class="cell-input mono" value="'+esc(it.loc||it.localizacao||'')+'" onchange="App.updateItem('+idx+',\'loc\',this.value)" style="width:80px;font-size:10px" '+(state._locked?'disabled readonly':'')+'/></td>';
+            break;
+          case 'runit':
+            html += '<td style="text-align:right;font-family:monospace;font-size:11px;padding:4px 6px;color:var(--t2)">'+(ru>0?'R$'+ru.toFixed(2):'')+'</td>';
+            break;
+          case 'cnt':
+            html += '<td><input class="cell-input" type="number" value="'+(cntN!==null?cntN:'')+'" onchange="App.updateItem('+idx+',\'cnt\',this.value)" onpaste="App.pasteColumn(event,'+idx+',\'cnt\')\" placeholder="—" style="width:60px;text-align:right;font-weight:700;font-size:13px;color:'+(s==='neg'?'var(--red)':s==='pos'?'var(--amber)':'var(--green)')+'" '+(state._locked?'disabled readonly':'')+'/></td>';
+            break;
+          case 'desvSku':
+            html += '<td style="text-align:right;font-family:monospace;font-size:12px;font-weight:700;padding:4px 6px;color:'+(dif===null?'var(--t3)':dif<0?'var(--red)':dif>0?'var(--amber)':'var(--t3)')+'">'+( dif===null?'—':dif>0?'+'+dif:dif)+'</td>';
+            break;
+          case 'desvRS':
+            html += '<td style="text-align:right;font-family:monospace;font-size:11px;padding:4px 6px;font-weight:'+(desvR!==0?'700':'400')+';color:'+(desvR<0?'var(--red)':desvR>0?'var(--amber)':'')+'">'+(desvR!==0?(desvR>0?'+':'')+desvR.toFixed(2):'')+'</td>';
+            break;
+          case 'status':
+            html += '<td style="text-align:center"><span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;font-size:9px;font-weight:700;background:'+stBg+';color:'+stColor+'">'+stLabel+'</span></td>';
+            break;
+          case 'centro':
+            html += '<td style="font-size:10px;color:var(--t3);font-family:monospace;text-align:center">'+(it.centro||'')+'</td>';
+            break;
+          case 'deposito':
+            html += '<td style="font-size:10px;color:var(--t3);font-family:monospace;text-align:center">'+(it.deposito||'')+'</td>';
+            break;
+          case 'dataMov':
+            html += '<td style="font-size:10px;color:var(--t3)">'+(it.dataMov||'')+'</td>';
+            break;
+          case 'obs':
+            html += '<td style="font-size:10px;color:var(--t3)">'+(it.obs||'')+'</td>';
+            break;
+          default:
+            html += '<td style="font-size:10px;color:var(--t3)">'+(it[c.id]||'')+'</td>';
+        }
+      });
+
+      html += '<td>'+(state._locked?'':'<button class="row-del-btn" onclick="App.deleteRow('+idx+')">✕</button>')+'</td>';
+      html += '</tr>';
     });
-    const body = document.getElementById('tableBody'); if (!body) return;
-    const vis  = filteredItems();
-    if (!state.items.length) { body.innerHTML = '<tr class="empty-row"><td colspan="11"><div class="empty-msg"><span>📋</span><p>Nenhum item. Capture uma folha ou adicione manualmente.</p></div></td></tr>'; return; }
-    if (!vis.length)         { body.innerHTML = '<tr class="empty-row"><td colspan="9"><div class="empty-msg"><span>🔍</span><p>Nenhum item neste filtro.</p></div></td></tr>'; return; }
-    let html = '';
-    vis.forEach((it, vi) => {
-      const idx = state.items.indexOf(it);
-      const s   = diffStatus(it);
-      const bg  = s==='neg'?'rgba(255,59,92,.025)':s==='pos'?'rgba(255,176,32,.025)':'';
-      html += `<tr style="background:${bg}">
-        <td style="color:var(--t3);font-size:11px">${vi+1}</td>
-        <td><input class="cell-input mono" value="${esc(it.mat)}" onchange="App.updateItem(${idx},'mat',this.value)" style="width:110px" ${state._locked?"disabled readonly":""}  /></td>
-        <td><input class="cell-input" value="${esc(it.desc)}" onchange="App.updateItem(${idx},'desc',this.value)" ${state._locked?"disabled readonly":""}  /></td>
-        <td><input class="cell-input" type="number" value="${it.sis!==null?it.sis:''}" onchange="App.updateItem(${idx},'sis',this.value)" placeholder="—" style="width:70px;text-align:right;color:var(--t2)" ${state._locked?'disabled readonly':''}  /></td>
-        <td><input class="cell-input" type="number" value="${it.cnt!==null?it.cnt:''}" onchange="App.updateItem(${idx},'cnt',this.value)" placeholder="OK" style="width:70px;text-align:right;font-weight:600;color:${s==='neg'?'var(--red)':s==='pos'?'var(--amber)':'var(--green)'}" ${state._locked?'disabled readonly':''}  /></td>
-        <td style="text-align:center">${diffBadge(it)}</td>
-        <td style="text-align:center"><span style="font-size:10px;font-weight:700;color:${s==='ok'?'var(--green)':s==='pos'?'var(--amber)':'var(--red)'}">${s.toUpperCase()}</span></td>
-        <td><input class="cell-input mono" value="${esc(it.loc)}" onchange="App.updateItem(${idx},'loc',this.value)" style="width:100px;font-size:10px"/></td>
-        <td style="text-align:right;font-size:10px;color:var(--blue);font-family:monospace;padding:4px 8px">${it.val&&it.val>0?"R$"+Number(it.val).toFixed(2):""}</td>
-        <td style="text-align:right;font-size:10px;color:var(--t3);font-family:monospace;padding:4px 8px">${it.runit&&it.runit>0?"R$"+Number(it.runit).toFixed(2):""}</td>
-        <td style="text-align:right;font-size:10px;font-family:monospace;padding:4px 8px;color:${it.desvRS<0?"var(--red)":it.desvRS>0?"var(--amber)":""}">${it.desvRS!==null&&it.desvRS!==undefined&&it.desvRS!==0?(it.desvRS>0?"+":"")+Number(it.desvRS).toFixed(2):""}</td>
-        <td>${state._locked?"":"<button class=\"row-del-btn\" onclick=\"App.deleteRow("+idx+")\" >✕</button>"}</td>
-      </tr>`;
-    });
+
     body.innerHTML = html;
   }
 
+
+
+  // ── LAYOUT DE PLANILHA ──────────────────────────────────────
+  var LAYOUT_PADRAO = [
+    { id:'material',  label:'Material',            planilha:'Material',             visivel:true,  obrig:true  },
+    { id:'descricao', label:'Texto breve material', planilha:'Texto breve material', visivel:true,  obrig:true  },
+    { id:'centro',    label:'Centro',               planilha:'Centro',               visivel:true,  obrig:false },
+    { id:'deposito',  label:'Deposito',             planilha:'Deposito',             visivel:true,  obrig:false },
+    { id:'sis',       label:'Utilizacao livre',     planilha:'Utilizacao livre',     visivel:true,  obrig:true  },
+    { id:'val',       label:'Val.utiliz.livre',     planilha:'Val.utiliz.livre',     visivel:true,  obrig:false },
+    { id:'um',        label:'UM basica',            planilha:'UM basica',            visivel:true,  obrig:false },
+    { id:'loc',       label:'Posicao no deposito',  planilha:'Posicao no deposito',  visivel:true,  obrig:false },
+    { id:'runit',     label:'R$ Unit',              planilha:'R$ Unit',              visivel:true,  obrig:false },
+    { id:'cnt',       label:'Contagem',             planilha:'Contagem',             visivel:true,  obrig:true  },
+    { id:'desvSku',   label:'Desvio SKU',           planilha:'Desvio SKU',           visivel:true,  obrig:false },
+    { id:'desvRS',    label:'Desvio R$',            planilha:'Desvio R$',            visivel:true,  obrig:false },
+    { id:'dataMov',   label:'Data Mov',             planilha:'Data Mov',             visivel:true,  obrig:false },
+    { id:'obs',       label:'Observacoes',          planilha:'Observacoes',          visivel:false, obrig:false },
+    { id:'status',    label:'Status',               planilha:'Status',               visivel:true,  obrig:false },
+  ];
+
+  function layoutGetCampos() {
+    return (state.cfg && state.cfg.layoutCampos) || JSON.parse(JSON.stringify(LAYOUT_PADRAO));
+  }
+
+  function layoutRender() {
+    var campos = layoutGetCampos();
+    var tbody = document.getElementById('layoutTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = campos.map(function(c, i) {
+      var fn0 = 'App._layoutToggle('+i+',\'visivel\',false)';
+      var fn1 = 'App._layoutToggle('+i+',\'visivel\',true)';
+      var sw = c.visivel
+        ? '<span style="display:inline-block;width:36px;height:20px;border-radius:10px;background:var(--blue);position:relative;cursor:pointer" onclick="'+fn0+'"><span style="position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:#fff"></span></span>'
+        : '<span style="display:inline-block;width:36px;height:20px;border-radius:10px;background:var(--c4);position:relative;cursor:pointer" onclick="'+fn1+'"><span style="position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff"></span></span>';
+      return '<tr style="border-bottom:1px solid var(--bd)" draggable="true" data-idx="'+i+'" '
+        +'ondragstart="App._layoutDragStart(event,'+i+')" ondragover="event.preventDefault()" ondrop="App._layoutDrop(event,'+i+')">'
+        +'<td style="padding:8px;text-align:center;cursor:grab;color:var(--t3);font-size:18px">⠿</td>'
+        +'<td style="padding:8px;text-align:center;color:var(--t3);font-family:monospace;font-size:11px">'+(i+1)+'</td>'
+        +'<td style="padding:8px;font-size:12px;color:var(--t1);font-weight:600">'+c.label+'</td>'
+        +'<td style="padding:6px 8px"><input value="'+c.planilha+'" oninput="App._layoutEditNome('+i+',this.value)" '
+        +'style="background:var(--c3);border:1px solid var(--bd);border-radius:4px;padding:4px 8px;font-size:11px;color:var(--t2);outline:none;font-family:monospace;width:100%"/></td>'
+        +'<td style="padding:8px;text-align:center">'+sw+'</td>'
+        +'<td style="padding:8px;text-align:center"><input type="checkbox" '+(c.obrig?'checked':'')+' onchange="App._layoutToggle('+i+',\'obrig\',this.checked)" style="width:15px;height:15px;accent-color:var(--blue);cursor:pointer"/></td>'
+        +'<td style="padding:8px;text-align:center"><button onclick="App._layoutRemover('+i+')" style="background:rgba(255,59,92,.1);border:1px solid rgba(255,59,92,.2);border-radius:4px;color:var(--red);cursor:pointer;padding:3px 8px">🗑</button></td>'
+        +'</tr>';
+    }).join('');
+    layoutRenderPreview(campos);
+  }
+
+  function layoutRenderPreview(campos) {
+    var vis = campos.filter(function(c){ return c.visivel; });
+    var head = document.getElementById('layoutPreviewHead');
+    var body = document.getElementById('layoutPreviewBody');
+    if (!head || !body) return;
+    head.innerHTML = '<tr style="background:var(--c3)">'
+      +vis.map(function(c){ return '<th style="padding:7px 10px;text-align:left;font-size:9px;color:var(--t3);white-space:nowrap">'+c.planilha+'</th>'; }).join('')+'</tr>';
+    var ex = [
+      {material:'S00134696',descricao:'CAMIS POLO M/C FEM G',centro:'CF50',deposito:'0060',sis:8,val:377.57,um:'UNT',loc:'CT101C03C',runit:47.19,cnt:8,desvSku:0,desvRS:0,dataMov:'06/06/2026',obs:''},
+      {material:'1830277',  descricao:'CAMIS CAMISETE M/L EGG',centro:'CF50',deposito:'0060',sis:31,val:4413.44,um:'UNT',loc:'CT102C06C',runit:142.37,cnt:31,desvSku:0,desvRS:0,dataMov:'06/06/2026',obs:''},
+    ];
+    body.innerHTML = ex.map(function(row,ri){
+      return '<tr style="border-bottom:1px solid var(--bd);background:'+(ri%2?'var(--c2)':'')+'">'+
+        vis.map(function(c){ var v=row[c.id]; return '<td style="padding:6px 10px;font-size:10px;color:var(--t2);white-space:nowrap">'+(v!==undefined&&v!==''?v:'—')+'</td>'; }).join('')+'</tr>';
+    }).join('');
+  }
+
+  var _layoutDragIdx = null;
+  function _layoutDragStart(e,idx){ _layoutDragIdx=idx; }
+  function _layoutDrop(e,toIdx){
+    e.preventDefault();
+    if(_layoutDragIdx===null||_layoutDragIdx===toIdx)return;
+    var campos=layoutGetCampos();
+    var item=campos.splice(_layoutDragIdx,1)[0];
+    campos.splice(toIdx,0,item);
+    if(!state.cfg)state.cfg={};
+    state.cfg.layoutCampos=campos;
+    _layoutDragIdx=null;
+    layoutRender();
+  }
+  function _layoutToggle(idx,prop,val){
+    var campos=layoutGetCampos();
+    campos[idx][prop]=val;
+    if(!state.cfg)state.cfg={};
+    state.cfg.layoutCampos=campos;
+    layoutRender();
+  }
+  function _layoutEditNome(idx,val){
+    var campos=layoutGetCampos();
+    campos[idx].planilha=val;
+    if(!state.cfg)state.cfg={};
+    state.cfg.layoutCampos=campos;
+    layoutRenderPreview(campos);
+  }
+  function _layoutRemover(idx){
+    var campos=layoutGetCampos();
+    campos.splice(idx,1);
+    if(!state.cfg)state.cfg={};
+    state.cfg.layoutCampos=campos;
+    layoutRender();
+  }
+  function layoutAddCampo(){
+    var campos=layoutGetCampos();
+    campos.push({id:'campo'+Date.now(),label:'Novo Campo',planilha:'',visivel:true,obrig:false});
+    if(!state.cfg)state.cfg={};
+    state.cfg.layoutCampos=campos;
+    layoutRender();
+  }
+  function layoutSalvar(){
+    var campos=layoutGetCampos();
+    if(!state.cfg)state.cfg={};
+    state.cfg.layoutCampos=campos;
+    // Sincronizar colMap para importação
+    state.cfg.colMap={};
+    campos.forEach(function(c){if(c.id&&c.planilha)state.cfg.colMap[c.id]=c.planilha;});
+    save();
+    // Atualizar resumo na tela de importação
+    layoutAtualizarResumoImport(campos);
+    toast('✓ Layout salvo! Aplicado em: Importação · Conferência · Exportação','ok');
+    console.log('[LAYOUT] Salvo. Campos visiveis:',campos.filter(function(c){return c.visivel;}).map(function(c){return c.planilha;}).join(', '));
+    // Aplicar imediatamente na Conferência
+    if (state.items.length) { renderTable(); updateTableCounts(); }
+  }
+
+  function layoutAtualizarResumoImport(campos) {
+    var el = document.getElementById('layoutResumo');
+    if (!el) return;
+    var vis = (campos||layoutGetCampos()).filter(function(c){return c.visivel;});
+    if (!vis.length) { el.innerHTML=''; return; }
+    el.innerHTML = '<div style="font-size:9px;color:var(--t3);margin-bottom:6px;letter-spacing:.5px;font-weight:700">CAMPOS ATIVOS ('+vis.length+')</div>'
+      + '<div style="display:flex;flex-wrap:wrap;gap:4px">'
+      + vis.map(function(c){
+          return '<span style="padding:2px 8px;background:rgba(0,255,178,.08);border:1px solid rgba(0,255,178,.15);border-radius:4px;font-size:9px;color:var(--acid);font-family:monospace">'
+            + c.planilha + '</span>';
+        }).join('')
+      + '</div>';
+  }
+  function layoutResetPadrao(){
+    if(!state.cfg)state.cfg={};
+    state.cfg.layoutCampos=JSON.parse(JSON.stringify(LAYOUT_PADRAO));
+    state.cfg.colMap={};
+    save(); layoutRender();
+    toast('Layout restaurado para padrão SAP','ok');
+  }
+  function layoutExportar(){
+    var blob=new Blob([JSON.stringify(layoutGetCampos(),null,2)],{type:'application/json'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='layout-rotativo-'+new Date().toISOString().slice(0,10)+'.json';
+    a.click(); toast('Layout exportado!','ok');
+  }
+  function layoutSetTab(tab,btn){}
+
+  // ── FIM LAYOUT ────────────────────────────────────────────────
   function searchTable(q) {
     const lq = q.toLowerCase();
     const rows = document.querySelectorAll('#tableBody tr');
@@ -3840,17 +4097,39 @@ window.App = (function() {
     // KPIs unificados — inclui valor financeiro
     var kg = document.getElementById('kpiGrid');
     if (kg) {
-      var totItens = 0, skuSet = new Set(), valorTotal = 0, totalDivQtd = 0;
+      var totItens = 0, skuSet = new Set(), valorTotal = 0, totalDivQtd = 0, valorDesvio = 0;
+      // Valor do rotativo mais recente (último)
+      var valorUltimoRot = 0;
       histFilt.forEach(function(r) {
+        var valRot = 0;
         (r.items||[]).forEach(function(it) {
           totItens++;
           skuSet.add(it.mat||'');
-          // Somar qtd divergente absoluta como impacto operacional
-          if (it.cnt !== null && it.cnt !== undefined && Number(it.cnt) !== Number(it.sis)) {
-            totalDivQtd += Math.abs(Number(it.cnt) - Number(it.sis||0));
+          var vl = Number(it.val)||Number(it.valUtilizLivre)||0;
+          var ru = Number(it.runit)||Number(it.rUnit)||0;
+          var si = Number(it.sis)||0;
+          if (!vl && ru>0 && si>0) vl = Math.round(ru*si*100)/100;
+          valRot += vl;
+          // Desvio financeiro
+          if (it.cnt!==null && it.cnt!==undefined) {
+            var dif = Number(it.cnt) - si;
+            if (dif !== 0 && ru > 0) valorDesvio += Math.abs(Math.round(dif*ru*100)/100);
+            if (dif !== 0) totalDivQtd += Math.abs(dif);
           }
         });
+        valorTotal += valRot;
       });
+      // Valor do rotativo mais recente
+      if (histFilt.length > 0) {
+        var rLast = histFilt[histFilt.length-1];
+        (rLast.items||[]).forEach(function(it) {
+          var vl = Number(it.val)||Number(it.valUtilizLivre)||0;
+          var ru = Number(it.runit)||Number(it.rUnit)||0;
+          var si = Number(it.sis)||0;
+          if (!vl && ru>0 && si>0) vl = Math.round(ru*si*100)/100;
+          valorUltimoRot += vl;
+        });
+      }
       // Buscar impacto financeiro das ocorrências do período
       try {
         var ocorrs = JSON.parse(localStorage.getItem('rp_ocorrencias')||'[]');
@@ -3872,14 +4151,15 @@ window.App = (function() {
           ? totalDivQtd + ' un'
           : '—';
 
+      var fmtVal = function(v) { return v>0 ? 'R$'+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—'; };
       var kpis = [
-        {l:'Rotativos',    v:n,          c:'var(--acid)',  i:'📋'},
-        {l:'SKUs Únicos',  v:skuSet.size,c:'var(--t1)',    i:'🏷️'},
-        {l:'Divergências', v:agg.div,    c:'var(--red)',   i:'⚠️'},
-        {l:'Acuracidade',  v:acc+'%',    c:acc>=98?'var(--green)':acc>=90?'var(--amber)':'var(--red)', i:'✅'},
-        {l:'Total Itens',  v:totItens,   c:'var(--blue)',  i:'📦'},
-        {l:'Conformes',    v:agg.ok,     c:'var(--green)', i:'✓'},
-        {l: valorTotal>0 ? 'Impacto (R$)' : totalDivQtd>0 ? 'Qtd Divergente' : 'Impacto', v:valorFmt, c:'var(--amber)', i:'💰'},
+        {l:'Rotativos',         v:n,                    c:'var(--acid)',  i:'📋'},
+        {l:'SKUs Únicos',       v:skuSet.size,          c:'var(--t1)',    i:'🏷️'},
+        {l:'Divergências',      v:agg.div,               c:agg.div>0?'var(--red)':'var(--green)', i:'⚠️'},
+        {l:'Acuracidade',       v:acc+'%',               c:acc>=98?'var(--green)':acc>=90?'var(--amber)':'var(--red)', i:'✅'},
+        {l:'Val. Total Período',v:fmtVal(valorTotal),    c:'var(--blue)',  i:'💰'},
+        {l:'Val. Último Rot.',  v:fmtVal(valorUltimoRot),c:'var(--acid)', i:'📊'},
+        {l:'Desvio Financeiro', v:fmtVal(valorDesvio),   c:valorDesvio>0?'var(--red)':'var(--green)', i:'📉'},
       ];
       kg.innerHTML = kpis.map(function(k) {
         return '<div style="background:var(--c1);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;position:relative;overflow:hidden">'
@@ -5018,22 +5298,17 @@ window.App = (function() {
         items: rot.items.map(function(it){
           var sis = it.sis!==null&&it.sis!==undefined ? Number(it.sis) : 0;
           var cnt = it.cnt!==null&&it.cnt!==undefined ? Number(it.cnt) : sis;
-          // Buscar runit de todas as fontes possíveis
-          var ru = Number(it.runit)||Number(it.rUnit)||Number(it.preco)||0;
-          // Se runit=0 mas tem val, calcular
-          if (!ru && it.val && Number(it.val)>0 && sis>0) ru = Number(it.val)/sis;
-          // Se ainda zero, tentar desvRS/cnt para estimar
-          var valUtil = ru>0 ? Math.round(sis*ru*100)/100 : (Number(it.val)||0)||'';
-          var desvioR = ru>0 ? Math.round((cnt-sis)*ru*100)/100 : '';
+          var ru  = it.runit || it.rUnit || 0;
+          if (!ru && it.val && sis>0) ru = it.val/sis;
+          var valUtil  = ru ? Math.round(sis*ru*100)/100 : (it.val||'');
+          var desvioR  = ru ? Math.round((cnt-sis)*ru*100)/100 : '';
           var d = diffVal(it); var s = diffStatus(it);
           return {
             material: it.mat, descricao: it.desc,
             sistema: sis, contagem: cnt!==sis||it.cnt!==null?cnt:'OK',
             diferenca: d!==null?d:'OK', status: s.toUpperCase(),
             localizacao: it.loc||'',
-            valUtilizLivre: valUtil,
-            rUnit: ru||'',
-            desvioR: desvioR,
+            valUtilizLivre: valUtil, rUnit: ru||'', desvioR: desvioR,
             um: it.um||'UNT', centro: it.centro||'CF50', deposito: it.deposito||'0060'
           };
         })
@@ -5042,12 +5317,6 @@ window.App = (function() {
       const stxt = document.getElementById('syncTxt');
       if (sdot) sdot.className = 'sync-dot ld';
       if (stxt) stxt.textContent = 'Sincronizando...';
-      // Debug: mostrar valores do primeiro item
-      if (payload.rotativo && payload.rotativo.items && payload.rotativo.items[0]) {
-        var dbg = payload.rotativo.items[0];
-        console.log('[SYNC] Item 0:', JSON.stringify({mat:dbg.material, rUnit:dbg.rUnit, val:dbg.valUtilizLivre}));
-        toast('Enviando: R$Unit=' + (dbg.rUnit||'0') + ' Val=' + (dbg.valUtilizLivre||'0'), 'in');
-      }
       await fetch(state.cfg.url, { method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(payload) });
       if (sdot) sdot.className = 'sync-dot ok';
       if (stxt) stxt.textContent = 'Sheets sincronizado';
@@ -5071,39 +5340,62 @@ window.App = (function() {
   function exportTableXLSX() {
     if (!window.XLSX) { toast('XLSX não carregado', 'er'); return; }
     if (!state.items.length) { toast('Nenhum item na tabela', 'er'); return; }
-    var wb = XLSX.utils.book_new();
+    var wb  = XLSX.utils.book_new();
     var now = new Date();
     var emp = (state.cfg && state.cfg.emp) || 'Almoxarifado';
-    var op  = (state.cfg && state.cfg.op)  || 'Operador';
 
-    // ── Aba principal no formato SAP ──
-    var data = [['#','MATERIAL','DESCRICAO','SISTEMA','CONTAGEM','DIFERENCA','STATUS','LOCALIZACAO','VAL.UTIL.LIVRE','R$ UNIT','DESVIO R$']];
-    state.items.forEach(function(it, i) {
-      var d   = diffVal(it), s = diffStatus(it);
-      var sis = it.sis !== null && it.sis !== undefined ? Number(it.sis) : 0;
-      var cnt = it.cnt !== null && it.cnt !== undefined ? Number(it.cnt) : sis;
-      var ru  = it.runit || it.runit || 0;
-      if (!ru && it.val && sis > 0) ru = it.val / sis;
-      var valUtil = ru ? Math.round(sis * ru * 100) / 100 : (it.val || '');
-      var desvioR = ru ? Math.round((cnt - sis) * ru * 100) / 100 : '';
-      data.push([
-        i+1, it.mat||'', it.desc||'',
-        it.sis!==null?it.sis:'',
-        it.cnt!==null?it.cnt:'OK',
-        d!==null?d:'OK', s.toUpperCase(),
-        it.loc||'', valUtil, ru||'', desvioR
-      ]);
+    // Usar layout configurado — mesma ordem e nomes da planilha
+    var campos = layoutGetCampos().filter(function(c){ return c.visivel; });
+
+    // Cabeçalho com nomes exatos da planilha SAP
+    var cabecalho = campos.map(function(c){ return c.planilha; });
+    var data = [cabecalho];
+
+    state.items.forEach(function(it) {
+      var sis  = Number(it.sis)||0;
+      var cnt  = it.cnt!==null&&it.cnt!==undefined?Number(it.cnt):sis;
+      var ru   = Number(it.runit)||Number(it.rUnit)||0;
+      var vl   = Number(it.val)||Number(it.valUtilizLivre)||0;
+      if (!ru && vl>0 && sis>0) ru = vl/sis;
+      if (!vl && ru>0 && sis>0) vl = Math.round(ru*sis*100)/100;
+      var dif  = cnt - sis;
+      var desvR = ru>0 ? Math.round(dif*ru*100)/100 : 0;
+      var s    = diffStatus(it);
+
+      // Mapa de valores por campo
+      var vals = {
+        material: it.mat||it.material||'',
+        descricao: it.desc||it.descricao||'',
+        centro:   it.centro||'',
+        deposito: it.deposito||'',
+        sis:      sis||'',
+        val:      vl>0?vl:'',
+        um:       it.um||'',
+        loc:      it.loc||it.localizacao||'',
+        runit:    ru>0?Math.round(ru*100)/100:'',
+        cnt:      cnt,
+        desvSku:  dif,
+        desvRS:   desvR!==0?desvR:'',
+        dataMov:  it.dataMov||'',
+        obs:      it.obs||'',
+        status:   s.toUpperCase(),
+      };
+
+      data.push(campos.map(function(c){ return vals[c.id]!==undefined?vals[c.id]:''; }));
     });
-    var ws = XLSX.utils.aoa_to_sheet(data);
-    ws['!cols'] = [{wch:4},{wch:14},{wch:42},{wch:10},{wch:10},{wch:10},{wch:10},{wch:16},{wch:14},{wch:10},{wch:12}];
-    ws['!autofilter'] = {ref:'A1:K1'};
-    _xlsxEstiloHeader(ws, 11, '1A3A5C');
-    _xlsxZebra(ws, data.length, 11);
-    XLSX.utils.book_append_sheet(wb, ws, '📋 Tabela');
 
-    var fname = 'rotativo_tabela_'+emp.replace(/\s+/g,'_')+'_'+now.toISOString().slice(0,10)+'.xlsx';
+    var ws = XLSX.utils.aoa_to_sheet(data);
+    ws['!cols'] = campos.map(function(c){
+      return {wch: c.id==='descricao'?42:c.id==='material'?16:c.id==='loc'?16:10};
+    });
+    ws['!autofilter'] = {ref:'A1:'+XLSX.utils.encode_col(campos.length-1)+'1'};
+    _xlsxEstiloHeader(ws, campos.length, '1A3A5C');
+    _xlsxZebra(ws, data.length, campos.length);
+    XLSX.utils.book_append_sheet(wb, ws, 'Conferencia');
+
+    var fname = 'rotativo_'+emp.replace(/\s+/g,'_')+'_'+now.toISOString().slice(0,10)+'.xlsx';
     XLSX.writeFile(wb, fname);
-    toast('Excel exportado com valores financeiros!', 'ok');
+    toast('Excel exportado no layout da planilha!', 'ok');
   }
 
   // ── Aplicar estilo de cabeçalho numa aba ──
@@ -5214,7 +5506,7 @@ window.App = (function() {
         var sis = it.sis!==null&&it.sis!==undefined ? Number(it.sis) : 0;
         var cnt = it.cnt!==null&&it.cnt!==undefined ? Number(it.cnt) : sis;
         var desvioSku = cnt - sis;
-        var rUnit = it.runit || it.preco || it.runit || 0;
+        var rUnit = it.runit || it.preco || it.rUnit || 0;
         // Se não tem rUnit mas tem val e sis, calcular: val/sis
         if (!rUnit && it.val && sis > 0) rUnit = it.val / sis;
         var valUtil = rUnit ? Math.round(sis * rUnit * 100) / 100 : (it.val || '');
@@ -5332,7 +5624,7 @@ window.App = (function() {
         var sis = it.sis!==null&&it.sis!==undefined ? Number(it.sis) : 0;
         var cnt = it.cnt!==null&&it.cnt!==undefined ? Number(it.cnt) : sis;
         var desvioSku = cnt - sis;
-        var rUnit = it.runit || it.runit || it.preco || 0;
+        var rUnit = it.runit || it.rUnit || it.preco || 0;
         if (!rUnit && it.val && sis > 0) rUnit = it.val / sis;
         var valUtil = rUnit ? Math.round(sis * rUnit * 100) / 100 : (it.val || '');
         var desvioR  = rUnit ? Math.round(desvioSku * rUnit * 100) / 100 : '';
@@ -5886,6 +6178,8 @@ window.App = (function() {
     init, navigate, saveConfig, testConnection,
     handleImageFile, handleSpreadsheetFile, handleImportFile,
     addItemManual, addEmptyRow, updateItem, deleteRow,
+    layoutRender, layoutSalvar, layoutResetPadrao, layoutExportar, layoutAddCampo, layoutSetTab, layoutAtualizarResumoImport,
+    _layoutDragStart, _layoutDrop, _layoutToggle, _layoutEditNome, _layoutRemover,
     saveRotativo, setFilter, searchTable,
     loadRotativo, filterHistory,
     openNewDepot, editDepot, saveDepot, deleteDepot, verItensDepot,
@@ -6088,79 +6382,6 @@ window.App = (function() {
           setTimeout(function(){ location.reload(); }, 1200);
         }}
       ], '480px');
-    },
-
-    atualizarResumoRotativos: window._atualizarResumo = function() {
-      var el = document.getElementById('resumoRotativos');
-      if (!el) return;
-      var hist = window._lastHistFilt || state.history;
-      if (!hist || !hist.length) {
-        el.innerHTML = '<div style="padding:20px;text-align:center;color:#3A5070;font-size:12px">Nenhum rotativo no período</div>';
-        return;
-      }
-      function calcS(r) {
-        if (r.stats && r.stats.total) return r.stats;
-        var tot=0,ok=0,div=0;
-        (r.items||[]).forEach(function(it){
-          if(it.cnt===null||it.cnt===undefined) return;
-          tot++; if(Number(it.cnt)!==Number(it.sis||0)) div++; else ok++;
-        });
-        return {total:tot,ok:ok,diverg:div};
-      }
-      function calcVal(r) {
-        var t=0;
-        (r.items||[]).forEach(function(it){
-          var ru=it.runit||it.runit||0;
-          if(!ru&&it.val&&(it.sis||0)>0) ru=it.val/it.sis;
-          if(ru>0) t+=ru*(it.sis||0);
-          else if(it.val>0) t+=it.val;
-        });
-        return Math.round(t);
-      }
-      var sorted = hist.slice().sort(function(a,b){
-        var pd = window.parseDate || function(d){ return d ? new Date(d) : null; };
-        var da=pd(a.date)||new Date(0);
-        var db=pd(b.date)||new Date(0);
-        return da-db;
-      });
-      var totItens=0,totDiv=0,totOk=0,totTot=0,totVal=0;
-      var html='<table style="width:100%;border-collapse:collapse;font-size:11px">'
-        +'<thead><tr style="background:var(--c3);position:sticky;top:0">'
-        +'<th style="padding:6px 10px;text-align:left;color:var(--t3);font-size:9px;font-weight:700">ROT.</th>'
-        +'<th style="padding:6px 10px;text-align:left;color:var(--t3);font-size:9px;font-weight:700">DATA</th>'
-        +'<th style="padding:6px 10px;text-align:center;color:var(--t3);font-size:9px;font-weight:700">ITENS</th>'
-        +'<th style="padding:6px 10px;text-align:center;color:var(--t3);font-size:9px;font-weight:700">DIV.</th>'
-        +'<th style="padding:6px 10px;text-align:center;color:var(--t3);font-size:9px;font-weight:700">ACUR.</th>'
-        +'<th style="padding:6px 10px;text-align:right;color:var(--t3);font-size:9px;font-weight:700">VALOR TOTAL</th>'
-        +'</tr></thead><tbody>';
-      sorted.forEach(function(r,i){
-        var s=calcS(r), v=calcVal(r);
-        var acc=s.total?Math.round(s.ok/s.total*100):100;
-        var _pd=window.parseDate||function(x){return x?new Date(x):null;};
-        var d=_pd(r.date);
-        var dt=d?d.toLocaleDateString('pt-BR'):'—';
-        var accC=acc>=98?'var(--green)':acc>=90?'var(--amber)':'var(--red)';
-        var vFmt=v>0?'R$'+v.toLocaleString('pt-BR'):'—';
-        totItens+=s.total; totDiv+=s.diverg; totOk+=s.ok; totTot+=s.total; totVal+=v;
-        html+='<tr style="border-bottom:1px solid var(--bd);'+(i%2===0?'':'background:rgba(0,200,150,.02)')+'">'
-          +'<td style="padding:7px 10px;font-family:monospace;color:var(--acid);font-weight:700">R'+(i+1)+'</td>'
-          +'<td style="padding:7px 10px;color:var(--t2);font-size:11px">'+dt+'</td>'
-          +'<td style="padding:7px 10px;text-align:center;color:var(--t1);font-weight:600">'+s.total+'</td>'
-          +'<td style="padding:7px 10px;text-align:center;font-weight:700;color:'+(s.diverg>0?'var(--red)':'var(--green)')+'">'+s.diverg+'</td>'
-          +'<td style="padding:7px 10px;text-align:center;font-weight:700;color:'+accC+'">'+acc+'%</td>'
-          +'<td style="padding:7px 10px;text-align:right;font-family:monospace;color:var(--amber);font-size:10px">'+vFmt+'</td>'
-          +'</tr>';
-      });
-      var totAcc=totTot?Math.round(totOk/totTot*100):100;
-      html+='<tr style="background:rgba(0,200,150,.08);border-top:2px solid rgba(0,200,150,.2);font-weight:700">'
-        +'<td colspan="2" style="padding:7px 10px;color:var(--acid);font-size:10px">TOTAL ('+sorted.length+' rotativos)</td>'
-        +'<td style="padding:7px 10px;text-align:center;color:var(--t1)">'+totItens+'</td>'
-        +'<td style="padding:7px 10px;text-align:center;color:'+(totDiv>0?'var(--red)':'var(--green)')+'">'+totDiv+'</td>'
-        +'<td style="padding:7px 10px;text-align:center;color:'+(totAcc>=98?'var(--green)':totAcc>=90?'var(--amber)':'var(--red)')+'">'+totAcc+'%</td>'
-        +'<td style="padding:7px 10px;text-align:right;color:var(--amber);font-family:monospace">'+(totVal>0?'R$'+totVal.toLocaleString('pt-BR'):'—')+'</td>'
-        +'</tr>';
-      html+='</tbody></table>';
-      el.innerHTML=html;
     },
 
     switchDashChart: function(mode,btn){
