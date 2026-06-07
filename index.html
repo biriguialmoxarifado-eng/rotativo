@@ -1477,7 +1477,7 @@ body { display: flex; }
       </div>
 
       <div class="table-summary" id="tableSummary"></div>
-      <div style="display:flex;align-items:center;gap:10px;padding:6px 14px;background:rgba(26,159,255,.04);border-bottom:1px solid var(--bd);flex-wrap:wrap"><span style="font-size:10px;font-weight:700;color:var(--blue);font-family:monospace">💰 VALORES</span><span style="font-size:10px;color:var(--t3)">Total inv.:</span><input id="valTotalManual" type="text" placeholder="R$ 0,00" oninput="App.salvarValoresManual()" style="background:var(--c3);border:1px solid rgba(26,159,255,.3);border-radius:4px;padding:3px 8px;color:var(--acid);font-size:11px;font-family:monospace;width:110px;outline:none"/><span style="font-size:10px;color:var(--t3)">Desvio:</span><input id="valDesvioManual" type="text" placeholder="R$ 0,00" oninput="App.salvarValoresManual()" style="background:var(--c3);border:1px solid rgba(255,59,92,.3);border-radius:4px;padding:3px 8px;color:var(--red);font-size:11px;font-family:monospace;width:100px;outline:none"/><span id="valStatus" style="font-size:10px;color:var(--t3)">Incluído ao salvar</span></div>
+      <div style="display:flex;align-items:center;gap:10px;padding:6px 14px;background:rgba(26,159,255,.04);border-bottom:1px solid var(--bd);flex-wrap:wrap"><span style="font-size:10px;font-weight:700;color:var(--blue);font-family:monospace">💰 VALORES</span><span style="font-size:10px;color:var(--t3)">Total inv.:</span><input id="valTotalManual" type="text" placeholder="R$ 0,00" oninput="App.salvarValoresManual()" style="background:var(--c3);border:1px solid rgba(26,159,255,.3);border-radius:4px;padding:3px 8px;color:var(--acid);font-size:11px;font-family:monospace;width:120px;outline:none"/><button onclick="App.calcularValorTotal()" title="Somar Val.Util.Livre automaticamente" style="padding:3px 8px;background:rgba(0,255,178,.1);border:1px solid rgba(0,255,178,.2);border-radius:4px;color:var(--acid);font-size:10px;cursor:pointer;font-weight:700">∑ Auto</button><span style="font-size:10px;color:var(--t3)">Desvio:</span><input id="valDesvioManual" type="text" placeholder="R$ 0,00" oninput="App.salvarValoresManual()" style="background:var(--c3);border:1px solid rgba(255,59,92,.3);border-radius:4px;padding:3px 8px;color:var(--red);font-size:11px;font-family:monospace;width:110px;outline:none"/><button onclick="App.calcularDesvioTotal()" title="Somar Desvio R$ automaticamente" style="padding:3px 8px;background:rgba(255,59,92,.08);border:1px solid rgba(255,59,92,.2);border-radius:4px;color:var(--red);font-size:10px;cursor:pointer;font-weight:700">∑ Auto</button><span id="valStatus" style="font-size:10px;color:var(--t3)">Incluído ao salvar</span></div>
       <div class="table-wrap">
         <table class="data-table" id="dataTable">
           <thead>
@@ -3991,29 +3991,38 @@ window.App = (function() {
         rl.innerHTML = '<div class="insight-empty">Nenhum rotativo no período</div>';
       } else {
         rl.innerHTML = histFilt.slice().reverse().map(function(r, i) {
+          var rn   = histFilt.length - i;
           var dt   = r.date ? new Date(r.date).toLocaleDateString('pt-BR') : '—';
           var hr   = r.date ? new Date(r.date).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
           var divs = r.stats ? r.stats.diverg : 0;
           var ac   = r.stats && r.stats.total ? Math.round(r.stats.ok/r.stats.total*100) : 100;
           var acC  = ac>=98?'var(--green)':ac>=90?'var(--amber)':'var(--red)';
+          var valFin = (r.valTotalManual&&r.valTotalManual!=='')
+            ? '<div style="font-size:10px;color:var(--blue);font-family:monospace;font-weight:700">'+r.valTotalManual+'</div>' : '';
+          var devFin = (r.valDesvioManual&&r.valDesvioManual!=='')
+            ? '<div style="font-size:9px;color:'+(r.valDesvioManual.indexOf('-')>=0?'var(--red)':'var(--green)')+';font-family:monospace">'+r.valDesvioManual+'</div>' : '';
           return '<div style="padding:8px 10px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;gap:8px">'
             + '<div>'
-              + '<div style="font-size:11px;font-weight:700;color:var(--acid);font-family:monospace">R'+(histFilt.length-i)+'</div>'
+              + '<div style="font-size:11px;font-weight:700;color:var(--acid);font-family:monospace">R'+rn
+                + '<span style="font-size:9px;color:var(--t3);font-weight:400;margin-left:4px">'+(r.stats?r.stats.total:0)+' itens</span></div>'
               + '<div style="font-size:10px;color:var(--t3)">'+dt+' '+hr+'</div>'
               + '<div style="font-size:10px;color:var(--t3)">'+(r.op||'')+'</div>'
             + '</div>'
             + '<div style="text-align:right">'
-              + '<div style="font-size:10px;color:var(--red)">'+divs+' diverg.</div>'
+              + valFin + devFin
+              + (divs>0?'<div style="font-size:10px;color:var(--red)">'+divs+' diverg.</div>':'')
               + '<div style="font-size:11px;font-weight:700;color:'+acC+'">'+ac+'%</div>'
             + '</div>'
             + '</div>';
         }).join('');
       }
     }
-    // Top divergências
+    // Top divergências — campos canônicos
     var dm={},tb=document.getElementById('topDivBody');
     state.history.forEach(function(r){(r.items||[]).forEach(function(it){
-      if(it.cnt!==null&&it.cnt!==undefined&&Number(it.cnt)!==Number(it.sis)){var k=it.mat||'?';if(!dm[k])dm[k]={mat:k,n:0};dm[k].n++;}
+      var sis=Number(it.sistema||it.sis||0);
+      var cnt=it.contagem!==null&&it.contagem!==undefined?Number(it.contagem):(it.cnt!==null&&it.cnt!==undefined?Number(it.cnt):null);
+      if(cnt!==null&&cnt!==sis){var k=it.material||it.mat||'?';if(!dm[k])dm[k]={mat:k,n:0};dm[k].n++;}
     });});
     if(tb){var top=Object.values(dm).sort(function(a,b){return b.n-a.n;}).slice(0,10);
       tb.innerHTML=top.length?top.map(function(d,i){
@@ -4195,6 +4204,10 @@ window.App = (function() {
         + '<div class="hist-stat"><div class="hist-stat-val" style="color:var(--green)">'+s.ok+'</div><div class="hist-stat-lbl">OK</div></div>'
         + '<div class="hist-stat"><div class="hist-stat-val" style="color:var(--red)">'+s.diverg+'</div><div class="hist-stat-lbl">DIV.</div></div>'
         + '<div class="hist-stat"><div class="hist-stat-val" style="color:var(--acid)">'+acc+'%</div><div class="hist-stat-lbl">ACUR.</div></div>'
+        + (r.valTotalManual&&r.valTotalManual!==''
+            ? '<div class="hist-stat"><div class="hist-stat-val" style="color:var(--blue);font-size:13px">'+r.valTotalManual+'</div><div class="hist-stat-lbl">VALOR</div></div>' : '')
+        + (r.valDesvioManual&&r.valDesvioManual!==''
+            ? '<div class="hist-stat"><div class="hist-stat-val" style="color:'+(r.valDesvioManual.indexOf('-')>=0?'var(--red)':'var(--green)')+';font-size:13px">'+r.valDesvioManual+'</div><div class="hist-stat-lbl">DESVIO</div></div>' : '')
         + '</div>'
         + '<span class="badge '+(s.diverg>0?'badge-neg':'badge-ok')+'" onclick="App.loadRotativo('+r.id+')" style="cursor:pointer">'+(s.diverg>0?s.diverg+' DIV.':'OK')+'</span>'
         + (s.diverg>0?'<button onclick="window.auditarDiv('+r.id+')" style="background:rgba(255,59,92,.08);border:1px solid rgba(255,59,92,.2);border-radius:5px;padding:3px 8px;font-size:11px;font-weight:700;color:var(--red);cursor:pointer;margin-left:4px">⚠ Auditar</button>':'')
@@ -5983,6 +5996,39 @@ window.App = (function() {
     handleImageFile, handleSpreadsheetFile, handleImportFile,
     addItemManual, addEmptyRow, updateItem, deleteRow,
     // ── VALORES MANUAIS ───────────────────────────────────────
+    calcularValorTotal:function(){
+      // Somar val.utiliz.livre de todos os itens da tabela
+      var total = 0;
+      state.items.forEach(function(it){
+        var vl = Number(it.valUtilizLivre)||Number(it.val)||0;
+        var ru = Number(it.rUnit)||Number(it.runit)||0;
+        var sis = Number(it.sistema||it.sis||0);
+        if(!vl && ru>0 && sis>0) vl = Math.round(ru*sis*100)/100;
+        total += vl;
+      });
+      var fmtBR = total.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+      var el = document.getElementById('valTotalManual');
+      if(el){ el.value = 'R$ '+fmtBR; App.salvarValoresManual(); }
+      toast('Total calculado: R$ '+fmtBR,'ok');
+    },
+    calcularDesvioTotal:function(){
+      // Somar desvio R$ de todos os itens
+      var total = 0;
+      state.items.forEach(function(it){
+        var dr = Number(it.desvRS)||0;
+        if(!dr){
+          var ru = Number(it.rUnit)||Number(it.runit)||0;
+          var sis = Number(it.sistema||it.sis||0);
+          var cnt = it.contagem!==null&&it.contagem!==undefined?Number(it.contagem):(it.cnt!==null?Number(it.cnt):sis);
+          if(ru>0) dr = Math.round((cnt-sis)*ru*100)/100;
+        }
+        total += dr;
+      });
+      var fmtBR = (total<0?'- ':'+ ')+'R$ '+Math.abs(total).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+      var el = document.getElementById('valDesvioManual');
+      if(el){ el.value = fmtBR; App.salvarValoresManual(); }
+      toast('Desvio calculado: '+fmtBR,'ok');
+    },
     salvarValoresManual:function(){
       var vT=document.getElementById('valTotalManual');
       var vD=document.getElementById('valDesvioManual');
@@ -6153,12 +6199,41 @@ window.App = (function() {
       var cfg=w.cfg||{};var body=document.getElementById('dwb-'+id);if(!body)return;
       if(body.getAttribute('data-cfg')==='1'){body.removeAttribute('data-cfg');App.dashRenderGrid();return;}
       body.setAttribute('data-cfg','1');
-      body.innerHTML='<div style="display:flex;flex-direction:column;gap:6px">'
-        +'<div><div style="font-size:9px;color:var(--t3);margin-bottom:2px">TÍTULO</div><input id="dwt-'+id+'" value="'+(cfg.titulo||'')+'" style="width:100%;background:var(--c3);border:1px solid var(--bd);border-radius:3px;padding:4px 7px;color:var(--t2);font-size:10px;outline:none"/></div>'
-        +'<div><div style="font-size:9px;color:var(--t3);margin-bottom:2px">TIPO DE GRÁFICO</div><select id="dwg-'+id+'" style="width:100%;background:var(--c3);border:1px solid var(--bd);border-radius:3px;padding:4px 7px;color:var(--t2);font-size:10px;outline:none"><option value="bar"'+(cfg.tipoGraf==='bar'?' selected':'')+'>Barra</option><option value="line"'+(cfg.tipoGraf==='line'?' selected':'')+'>Linha</option><option value="pizza"'+(cfg.tipoGraf==='pizza'?' selected':'')+'>Pizza</option></select></div>'
-        +'<div><div style="font-size:9px;color:var(--t3);margin-bottom:2px">INDICADOR</div><select id="dwm-'+id+'" style="width:100%;background:var(--c3);border:1px solid var(--bd);border-radius:3px;padding:4px 7px;color:var(--t2);font-size:10px;outline:none"><option value="total">Total Rotativos</option><option value="diverg"'+(cfg.metrica==='diverg'?' selected':'')+'>Divergências</option><option value="valor"'+(cfg.metrica==='valor'?' selected':'')+'>Valor Inventariado</option><option value="acuracia"'+(cfg.metrica==='acuracia'?' selected':'')+'>Acuracidade</option></select></div>'
-        +'<div><div style="font-size:9px;color:var(--t3);margin-bottom:2px">PERÍODO</div><select id="dwp-'+id+'" style="width:100%;background:var(--c3);border:1px solid var(--bd);border-radius:3px;padding:4px 7px;color:var(--t2);font-size:10px;outline:none"><option value="">Todos</option><option value="mes"'+(cfg.periodo==='mes'?' selected':'')+'>Este Mês</option><option value="trim"'+(cfg.periodo==='trim'?' selected':'')+'>Trimestre</option><option value="ano"'+(cfg.periodo==='ano'?' selected':'')+'>Este Ano</option></select></div>'
-        +'<div style="display:flex;gap:5px"><button data-id="'+id+'" onclick="App.dashApplyCfg(this.dataset.id)" style="flex:1;padding:5px;background:rgba(0,255,178,.15);border:1px solid rgba(0,255,178,.3);border-radius:3px;color:var(--acid);font-size:10px;font-weight:700;cursor:pointer">✓ Aplicar</button><button data-id="'+id+'" onclick="App.dashOpenCfg(this.dataset.id)" style="flex:1;padding:5px;background:var(--c3);border:1px solid var(--bd);border-radius:3px;color:var(--t3);font-size:10px;cursor:pointer">✕</button></div>'
+      body.innerHTML='<div style="display:flex;flex-direction:column;gap:7px;padding:2px 0">'
+        +'<div><div style="font-size:9px;color:var(--t3);margin-bottom:2px;font-weight:700;letter-spacing:.5px">TÍTULO</div>'
+        +'<input id="dwt-'+id+'" value="'+(cfg.titulo||'')+'" placeholder="Nome do widget" style="width:100%;background:var(--c3);border:1px solid var(--bd);border-radius:3px;padding:4px 7px;color:var(--t2);font-size:10px;outline:none"/></div>'
+
+        +'<div><div style="font-size:9px;color:var(--t3);margin-bottom:2px;font-weight:700;letter-spacing:.5px">TIPO DE GRÁFICO</div>'
+        +'<select id="dwg-'+id+'" style="width:100%;background:var(--c3);border:1px solid var(--bd);border-radius:3px;padding:4px 7px;color:var(--t2);font-size:10px;outline:none">'
+        +'<option value="bar"'+(cfg.tipoGraf==='bar'?' selected':'')+'>📊 Barra</option>'
+        +'<option value="line"'+(cfg.tipoGraf==='line'?' selected':'')+'>📈 Linha</option>'
+        +'<option value="pizza"'+(cfg.tipoGraf==='pizza'?' selected':'')+'>🥧 Pizza</option>'
+        +'<option value="coluna"'+(cfg.tipoGraf==='coluna'?' selected':'')+'>📶 Coluna (Horizontal)</option>'
+        +'</select></div>'
+
+        +'<div><div style="font-size:9px;color:var(--t3);margin-bottom:2px;font-weight:700;letter-spacing:.5px">INDICADOR</div>'
+        +'<select id="dwm-'+id+'" style="width:100%;background:var(--c3);border:1px solid var(--bd);border-radius:3px;padding:4px 7px;color:var(--t2);font-size:10px;outline:none">'
+        +'<option value="total"'+((!cfg.metrica||cfg.metrica==='total')?' selected':'')+'>📋 Total de Rotativos</option>'
+        +'<option value="itens"'+(cfg.metrica==='itens'?' selected':'')+'>📦 Itens Auditados</option>'
+        +'<option value="diverg"'+(cfg.metrica==='diverg'?' selected':'')+'>⚠️ Divergências</option>'
+        +'<option value="acuracia"'+(cfg.metrica==='acuracia'?' selected':'')+'>✅ Acuracidade %</option>'
+        +'<option value="valor"'+(cfg.metrica==='valor'?' selected':'')+'>💰 Valor Inventariado</option>'
+        +'<option value="desvio"'+(cfg.metrica==='desvio'?' selected':'')+'>📉 Valor Divergência</option>'
+        +'</select></div>'
+
+        +'<div><div style="font-size:9px;color:var(--t3);margin-bottom:2px;font-weight:700;letter-spacing:.5px">PERÍODO</div>'
+        +'<select id="dwp-'+id+'" style="width:100%;background:var(--c3);border:1px solid var(--bd);border-radius:3px;padding:4px 7px;color:var(--t2);font-size:10px;outline:none">'
+        +'<option value="">Todos os períodos</option>'
+        +'<option value="mes"'+(cfg.periodo==='mes'?' selected':'')+'>Este Mês</option>'
+        +'<option value="mes-1"'+(cfg.periodo==='mes-1'?' selected':'')+'>Mês Passado</option>'
+        +'<option value="trim"'+(cfg.periodo==='trim'?' selected':'')+'>Trimestre</option>'
+        +'<option value="ano"'+(cfg.periodo==='ano'?' selected':'')+'>Este Ano</option>'
+        +'</select></div>'
+
+        +'<div style="display:flex;gap:5px;margin-top:2px">'
+        +'<button data-id="'+id+'" onclick="App.dashApplyCfg(this.dataset.id)" style="flex:1;padding:6px;background:rgba(0,255,178,.15);border:1px solid rgba(0,255,178,.3);border-radius:3px;color:var(--acid);font-size:10px;font-weight:700;cursor:pointer">✓ Aplicar</button>'
+        +'<button data-id="'+id+'" onclick="App.dashOpenCfg(this.dataset.id)" style="padding:6px 10px;background:var(--c3);border:1px solid var(--bd);border-radius:3px;color:var(--t3);font-size:10px;cursor:pointer">✕</button>'
+        +'</div>'
         +'</div>';
     },
     dashApplyCfg:function(id){
@@ -6250,10 +6325,18 @@ window.App = (function() {
       if(w._chart){w._chart.destroy();w._chart=null;}
       var cfg=w.cfg||{};var metrica=cfg.metrica||'total';
       var getVal=function(r){
-        if(metrica==='diverg')return r.stats?r.stats.diverg:0;
+        if(metrica==='diverg')  return r.stats?r.stats.diverg:0;
+        if(metrica==='itens')   return r.stats?r.stats.total:0;
         if(metrica==='acuracia')return r.stats&&r.stats.total?Math.round(r.stats.ok/r.stats.total*100):100;
-        if(metrica==='valor'){var v=0;if(r.valTotalManual){var n=parseFloat(String(r.valTotalManual).replace(/[R$\s.]/g,'').replace(',','.'));if(!isNaN(n))v=n;}return v;}
-        return r.stats?r.stats.total:0;
+        if(metrica==='valor'){
+          var v=0;if(r.valTotalManual){var n=parseFloat(String(r.valTotalManual).replace(/[R$\s.]/g,'').replace(',','.'));if(!isNaN(n))v=n;}
+          return v;
+        }
+        if(metrica==='desvio'){
+          var d=0;if(r.valDesvioManual){var n=parseFloat(String(r.valDesvioManual).replace(/[R$\s.]/g,'').replace(',','.'));if(!isNaN(n))d=Math.abs(n);}
+          return d;
+        }
+        return r.stats?r.stats.total:0; // total rotativos = 1 per entry
       };
       if(w.tipo==='pizza'){
         var ok2=0,div2=0;hist.forEach(function(r){ok2+=r.stats?r.stats.ok:0;div2+=r.stats?r.stats.diverg:0;});
@@ -6263,7 +6346,31 @@ window.App = (function() {
         var vals=hist.slice(-6).map(getVal);
         if(!vals.length){labels=['Jan','Fev','Mar','Abr','Mai','Jun'];vals=[0,0,0,0,0,0];}
         var tipoGraf=cfg.tipoGraf||'bar';
-        w._chart=new Chart(c,{type:tipoGraf==='line'?'line':'bar',data:{labels:labels,datasets:[{data:vals,backgroundColor:'rgba(0,255,178,.4)',borderColor:'rgba(0,255,178,.8)',borderWidth:tipoGraf==='line'?2:1,borderRadius:tipoGraf==='bar'?3:0,fill:tipoGraf==='line',tension:.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#4A6080',font:{size:8}},grid:{display:false}},y:{ticks:{color:'#4A6080',font:{size:8},callback:function(v){return metrica==='acuracia'?v+'%':metrica==='valor'?'R$'+v:v;}},grid:{color:'rgba(0,200,150,.05)'}}}}});
+        var isHoriz = tipoGraf==='coluna';
+        w._chart=new Chart(c,{
+          type: tipoGraf==='line'?'line':'bar',
+          data:{labels:labels,datasets:[{data:vals,
+            backgroundColor:'rgba(0,255,178,.5)',borderColor:'rgba(0,255,178,.9)',
+            borderWidth:tipoGraf==='line'?2:1,
+            borderRadius:tipoGraf==='bar'||isHoriz?3:0,
+            fill:tipoGraf==='line',tension:.4,
+            indexAxis: isHoriz?'y':undefined
+          }]},
+          options:{
+            indexAxis: isHoriz?'y':'x',
+            responsive:true,maintainAspectRatio:false,
+            plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){
+              var v=ctx.parsed[isHoriz?'x':'y'];
+              return metrica==='acuracia'?v+'%':metrica==='valor'||metrica==='desvio'?'R$'+v.toLocaleString('pt-BR'):String(v);
+            }}}},
+            scales:{
+              x:{ticks:{color:'#4A6080',font:{size:8}},grid:{display:!isHoriz}},
+              y:{ticks:{color:'#4A6080',font:{size:8},callback:function(v){
+                return metrica==='acuracia'?v+'%':metrica==='valor'||metrica==='desvio'?'R$'+v:v;
+              }},grid:{color:'rgba(0,200,150,.04)'}}
+            }
+          }
+        });
       }
     },
 
@@ -7923,6 +8030,30 @@ function gerarRelatorioCombinado(rotId) {
     doc.text(k.l, kx+(kpiW-2)/2, y+15, {align:'center'});
   });
   y += 22;
+
+  // ── VALORES FINANCEIROS NO PDF ──
+  var valTotal  = rot.valTotalManual  || '';
+  var valDesvio = rot.valDesvioManual || '';
+  if (valTotal || valDesvio) {
+    var halfW = (W-28)/2;
+    // Card Valor Total
+    doc.setFillColor(240,248,255); doc.rect(M,y,halfW-2,14,'F');
+    doc.setDrawColor(180,210,240); doc.rect(M,y,halfW-2,14,'S');
+    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,C.cinzaM);
+    doc.text('VALOR TOTAL INVENTARIADO', M+3, y+5);
+    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor.apply(doc,C.azul);
+    doc.text(valTotal||'—', M+3, y+12);
+    // Card Desvio Financeiro
+    var dx = M+halfW;
+    var devColor = valDesvio&&valDesvio.indexOf('-')>=0 ? C.vermelho : C.verde;
+    doc.setFillColor(248,255,248); doc.rect(dx,y,halfW-2,14,'F');
+    doc.setDrawColor(180,230,180); doc.rect(dx,y,halfW-2,14,'S');
+    doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor.apply(doc,C.cinzaM);
+    doc.text('DESVIO FINANCEIRO', dx+3, y+5);
+    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor.apply(doc,devColor);
+    doc.text(valDesvio||'—', dx+3, y+12);
+    y += 18;
+  }
 
   // ── RESUMO DO INVENTÁRIO ──
   doc.setFillColor.apply(doc,C.marrom); doc.rect(M,y,W-28,8,'F');
