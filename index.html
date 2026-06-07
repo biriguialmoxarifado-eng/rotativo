@@ -1197,7 +1197,12 @@ body { display: flex; }
       <svg viewBox="0 0 20 20"><path d="M10 3v9m-4-4l4 4 4-4"/><rect x="3" y="14" width="14" height="3" rx="1"/></svg>
       Importar Planilha
     </a>
-    <a class="nav-item" data-page="layout" onclick="navigate('layout')">
+    <a class="nav-item" data-page="exportacao-sap" onclick="navigate('exportacao-sap')">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h12v10a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/><path d="M7 10h6M7 13h4"/></svg>
+      Exportação SAP
+      <span class="nav-badge" style="background:rgba(0,176,215,.8)">MB52</span>
+    </a>
+    <a class="nav-item" data-page="layout-planilha" onclick="navigate('layout-planilha')">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="4" width="16" height="12" rx="2"/><line x1="2" y1="8" x2="18" y2="8"/><line x1="7" y1="8" x2="7" y2="16"/></svg>
       Layout Planilha
     </a>
@@ -1274,23 +1279,22 @@ body { display: flex; }
       <!-- KPIs unificados -->
       <div id="kpiGrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:14px"></div>
 
-      <!-- Linha 2: gráfico + top divergências -->
-      <div style="display:grid;grid-template-columns:1fr 300px;gap:12px;margin-bottom:14px">
-        <div class="panel">
-          <div class="panel-header">
-            <span class="panel-title">Evolução do Período</span>
-            <div style="display:flex;gap:4px">
-              <button class="cbtn cbtn-outline cbtn-sm" id="ctabRot" onclick="App.switchDashChart('rot',this)" style="color:var(--acid);border-color:var(--acid);font-size:10px">Rotativos</button>
-              <button class="cbtn cbtn-outline cbtn-sm" id="ctabDiv" onclick="App.switchDashChart('div',this)" style="font-size:10px">Divergências</button>
-              <button class="cbtn cbtn-outline cbtn-sm" id="ctabAcc" onclick="App.switchDashChart('acc',this)" style="font-size:10px">Acurácia</button>
-              <button class="cbtn cbtn-outline cbtn-sm" id="ctabVal" onclick="App.switchDashChart('val',this)" style="font-size:10px">R$ Valor</button>
-            </div>
-          </div>
-          <div style="padding:10px;height:200px"><canvas id="mainDashChart"></canvas></div>
+      <!-- Linha 2: Widgets Modulares + Top SKUs -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:9px;color:var(--t3);font-family:monospace;font-weight:700;letter-spacing:.5px">WIDGETS DO DASHBOARD</span>
+        <div style="display:flex;gap:6px">
+          <button onclick="App.dashAddWidget()" style="padding:3px 10px;background:rgba(0,255,178,.1);border:1px solid rgba(0,255,178,.2);border-radius:4px;color:var(--acid);font-size:9px;font-weight:700;cursor:pointer">⊕ Adicionar</button>
+          <button onclick="App.dashSalvarLayout()" style="padding:3px 10px;background:rgba(26,159,255,.1);border:1px solid rgba(26,159,255,.2);border-radius:4px;color:var(--blue);font-size:9px;font-weight:700;cursor:pointer">💾 Salvar</button>
         </div>
+      </div>
+      <div id="dashModGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px"></div>
+      <div id="dashAddPanel" style="display:none;grid-template-columns:repeat(5,1fr);gap:6px;padding:12px;background:var(--c2);border:1px solid var(--bd2);border-radius:8px;margin-bottom:10px"></div>
+
+      <!-- Top SKUs -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
         <div class="panel">
           <div class="panel-header"><span class="panel-title">Top SKUs Divergentes</span></div>
-          <div style="overflow-y:auto;max-height:230px">
+          <div style="overflow-y:auto;max-height:180px">
             <table style="width:100%;border-collapse:collapse;font-size:11px">
               <thead><tr>
                 <th style="padding:5px 8px;font-size:9px;color:var(--t3);border-bottom:1px solid var(--bd)">#</th>
@@ -1299,6 +1303,12 @@ body { display: flex; }
               </tr></thead>
               <tbody id="topDivBody"><tr><td colspan="3" style="padding:12px;text-align:center;color:var(--t3)">Sem dados</td></tr></tbody>
             </table>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">💰 Resumo Financeiro</span></div>
+          <div id="dashFinanceiroPanel" style="padding:6px 0">
+            <div style="color:var(--t3);font-size:11px;text-align:center;padding:12px">Preencha Valor na Conferência e salve um rotativo</div>
           </div>
         </div>
       </div>
@@ -1459,6 +1469,7 @@ body { display: flex; }
           <input class="search-input" placeholder="Buscar material..." id="tableSearch" oninput="App._debouncedSearch(this.value)"/>
           <button class="cbtn cbtn-outline cbtn-sm" onclick="App.addEmptyRow()">+ Linha</button>
           <button class="cbtn cbtn-outline cbtn-sm" onclick="App.exportTableXLSX()">↓ Excel</button>
+          <button class="cbtn cbtn-outline cbtn-sm" onclick="App.fazerBackupManual()" style="color:var(--amber);border-color:rgba(255,176,32,.3)">💾 Backup</button>
           <button class="cbtn cbtn-primary cbtn-sm" onclick="App.saveRotativo()">Salvar Rotativo</button>
           <span id="invStatusBadge" style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(0,255,178,.08);border:1px solid rgba(0,255,178,.15);color:var(--acid)">● ABERTO</span>
           <button id="btnTravar" onclick="window.invTravar&&window.invTravar()" style="padding:4px 12px;border:1px solid rgba(255,59,92,.2);border-radius:6px;background:rgba(255,59,92,.06);color:var(--red);font-size:11px;font-weight:700;cursor:pointer">🔒 Travar</button>
@@ -1466,7 +1477,7 @@ body { display: flex; }
       </div>
 
       <div class="table-summary" id="tableSummary"></div>
-
+      <div style="display:flex;align-items:center;gap:10px;padding:6px 14px;background:rgba(26,159,255,.04);border-bottom:1px solid var(--bd);flex-wrap:wrap"><span style="font-size:10px;font-weight:700;color:var(--blue);font-family:monospace">💰 VALORES</span><span style="font-size:10px;color:var(--t3)">Total inv.:</span><input id="valTotalManual" type="text" placeholder="R$ 0,00" oninput="App.salvarValoresManual()" style="background:var(--c3);border:1px solid rgba(26,159,255,.3);border-radius:4px;padding:3px 8px;color:var(--acid);font-size:11px;font-family:monospace;width:110px;outline:none"/><span style="font-size:10px;color:var(--t3)">Desvio:</span><input id="valDesvioManual" type="text" placeholder="R$ 0,00" oninput="App.salvarValoresManual()" style="background:var(--c3);border:1px solid rgba(255,59,92,.3);border-radius:4px;padding:3px 8px;color:var(--red);font-size:11px;font-family:monospace;width:100px;outline:none"/><span id="valStatus" style="font-size:10px;color:var(--t3)">Incluído ao salvar</span></div>
       <div class="table-wrap">
         <table class="data-table" id="dataTable">
           <thead>
@@ -1862,99 +1873,6 @@ body { display: flex; }
       </div>
     </section>
 
-    <!-- ══ LAYOUT DE PLANILHA ══ -->
-    <section class="page" id="page-layout">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-        <div>
-          <div style="font-size:16px;font-weight:700">CONFIGURAÇÕES › LAYOUT DE PLANILHA</div>
-          <div style="font-size:11px;color:var(--t3)">Defina os campos que serão exibidos em todos os modelos</div>
-        </div>
-        <button onclick="App.layoutAddCampo()" style="display:flex;align-items:center;gap:6px;padding:8px 16px;background:var(--blue);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">
-          ⊕ Adicionar Campo
-        </button>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-
-        <!-- LADO ESQUERDO: tabela de campos -->
-        <div class="panel" style="padding:0;overflow:hidden">
-          <div class="panel-header" style="padding:14px 18px;display:flex;align-items:center;gap:10px">
-            <div class="panel-title">LAYOUT DA PLANILHA</div>
-            <div style="font-size:10px;color:var(--t3)">Arraste os campos para definir a ordem de exibição</div>
-          </div>
-          <div style="overflow:auto">
-            <table style="width:100%;border-collapse:collapse;font-size:12px">
-              <thead>
-                <tr style="background:var(--c3)">
-                  <th style="padding:8px 10px;text-align:center;font-size:9px;color:var(--t3);width:36px"></th>
-                  <th style="padding:8px 10px;text-align:left;font-size:9px;color:var(--t3);width:50px">ORDEM</th>
-                  <th style="padding:8px 10px;text-align:left;font-size:9px;color:var(--t3)">CAMPO</th>
-                  <th style="padding:8px 10px;text-align:left;font-size:9px;color:var(--t3)">NOME NA PLANILHA</th>
-                  <th style="padding:8px 10px;text-align:center;font-size:9px;color:var(--t3)">VISÍVEL</th>
-                  <th style="padding:8px 10px;text-align:center;font-size:9px;color:var(--t3)">OBRIG.</th>
-                  <th style="padding:8px 10px;text-align:center;font-size:9px;color:var(--t3)">AÇÕES</th>
-                </tr>
-              </thead>
-              <tbody id="layoutTableBody"></tbody>
-            </table>
-          </div>
-          <div style="padding:14px 18px;border-top:1px solid var(--bd);display:flex;align-items:center;gap:10px">
-            <button onclick="App.layoutSalvar()" style="flex:1;padding:9px;background:var(--blue);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer">
-              ✓ Salvar Mapeamento
-            </button>
-            <div style="font-size:10px;color:var(--t3)">As alterações serão aplicadas em todos os modelos</div>
-          </div>
-        </div>
-
-        <!-- LADO DIREITO: pré-visualização -->
-        <div style="display:flex;flex-direction:column;gap:16px">
-          <div class="panel" style="padding:0;overflow:hidden">
-            <div class="panel-header" style="padding:14px 18px;display:flex;align-items:center;justify-content:space-between">
-              <div class="panel-title">PRÉ-VISUALIZAÇÃO DA PLANILHA</div>
-              <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--green)">
-                <div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div>
-                Layout aplicado a todos os modelos
-              </div>
-            </div>
-            <div style="overflow-x:auto;padding:0 0 8px">
-              <table style="width:100%;border-collapse:collapse;font-size:10px;min-width:500px" id="layoutPreview">
-                <thead id="layoutPreviewHead"></thead>
-                <tbody id="layoutPreviewBody"></tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Aplicação do layout -->
-          <div class="panel">
-            <div class="panel-title" style="margin-bottom:12px">APLICAÇÃO DO LAYOUT</div>
-            <div style="display:flex;gap:8px;margin-bottom:12px;border-bottom:1px solid var(--bd);padding-bottom:10px">
-              <button id="ltabTodos" onclick="App.layoutSetTab('todos',this)" style="padding:5px 14px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;background:var(--blue);color:#fff;border:none">Todos os Modelos</button>
-            </div>
-            <div style="background:rgba(0,232,122,.08);border:1px solid rgba(0,232,122,.2);border-radius:8px;padding:12px;display:flex;align-items:center;gap:10px">
-              <div style="width:24px;height:24px;border-radius:50%;background:var(--green);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">✓</div>
-              <div>
-                <div style="font-size:12px;font-weight:700;color:var(--green)">Layout Global Ativo</div>
-                <div style="font-size:10px;color:var(--t3)">Este mapeamento está sendo aplicado em todos os modelos do sistema.</div>
-              </div>
-            </div>
-
-            <div style="margin-top:14px">
-              <div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:1px;margin-bottom:8px">AÇÃO RÁPIDA</div>
-              <div style="display:flex;flex-direction:column;gap:6px">
-                <button onclick="App.layoutExportar()" style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--c3);border:1px solid var(--bd);border-radius:6px;color:var(--t2);font-size:11px;cursor:pointer;text-align:left">
-                  ↓ <span><b>Exportar Layout</b><br><span style="font-size:9px;color:var(--t3)">Baixar configuração atual</span></span>
-                </button>
-                <button onclick="App.layoutResetPadrao()" style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--c3);border:1px solid var(--bd);border-radius:6px;color:var(--t2);font-size:11px;cursor:pointer;text-align:left">
-                  ↺ <span><b>Restaurar Padrão SAP</b><br><span style="font-size:9px;color:var(--t3)">Volta ao layout original</span></span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
     <!-- ══ IMPORT ══ -->
     <section class="page" id="page-import">
       <div class="import-layout">
@@ -1969,17 +1887,11 @@ body { display: flex; }
           <div id="importPreview" style="display:none;margin-top:20px"></div>
         </div>
 
-        <div class="panel" style="display:flex;flex-direction:column;gap:12px;align-items:flex-start">
-          <div class="panel-header"><div class="panel-title">Layout Configurado</div></div>
-          <div style="font-size:11px;color:var(--t3);line-height:1.6">
-            O mapeamento de colunas foi movido para<br>
-            <b style="color:var(--acid)">Layout Planilha</b> no menu lateral.<br><br>
-            As configurações salvas lá são aplicadas automaticamente aqui na importação, na Conferência e na exportação.
+        <div class="panel">
+          <div class="panel-header"><div class="panel-title">Mapeamento de Colunas</div></div>
+          <div id="colMapping" class="col-mapping">
+            <div class="mapping-tip">Importe um arquivo para configurar o mapeamento</div>
           </div>
-          <div id="layoutResumo" style="width:100%"></div>
-          <button onclick="navigate('layout')" style="padding:8px 16px;background:rgba(0,255,178,.1);border:1px solid rgba(0,255,178,.3);border-radius:6px;color:var(--acid);font-size:11px;font-weight:700;cursor:pointer">
-            ⚙ Configurar Layout de Campos
-          </button>
         </div>
       </div>
     </section>
@@ -2069,6 +1981,119 @@ body { display: flex; }
           <thead><tr style="border-bottom:1px solid var(--bd)"><th style="padding:7px 8px;font-size:9px;color:var(--t3)">SKU</th><th style="padding:7px 8px;font-size:9px;color:var(--t3)">Descrição</th><th style="padding:7px 8px;font-size:9px;color:var(--t3);text-align:right">Sist.</th><th style="padding:7px 8px;font-size:9px;color:var(--t3);text-align:right">Contado</th><th style="padding:7px 8px;font-size:9px;color:var(--t3);text-align:center">Desvio</th><th style="padding:7px 8px;font-size:9px;color:var(--t3)">Endereço</th><th style="padding:7px 8px;font-size:9px;color:var(--t3);text-align:center">Conf.%</th></tr></thead>
           <tbody id="mensalBody"><tr><td colspan="7" style="padding:30px;text-align:center;color:var(--t3)">Selecione o mês/ano e clique em Gerar</td></tr></tbody>
         </table></div>
+      </div>
+    </section>
+
+    <!-- ══ LAYOUT DE PLANILHA ══ -->
+    <section class="page" id="page-layout-planilha">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="panel" style="padding:0;overflow:hidden">
+          <div class="panel-header" style="padding:12px 16px">
+            <div class="panel-title">MAPEAMENTO DE CAMPOS — FONTE OFICIAL DO SISTEMA</div>
+          </div>
+          <div style="overflow:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:11px">
+              <thead><tr style="background:var(--c3)">
+                <th style="padding:6px 10px;font-size:9px;color:var(--t3)">CAMPO DO SISTEMA</th>
+                <th style="padding:6px 10px;font-size:9px;color:var(--t3)">NOME NA PLANILHA SAP</th>
+                <th style="padding:6px 10px;font-size:9px;color:var(--t3)">NOME EXPORTAÇÃO</th>
+                <th style="padding:6px 10px;text-align:center;font-size:9px;color:var(--t3)">VIS.</th>
+                <th style="padding:6px 10px;text-align:center;font-size:9px;color:var(--t3)">AÇÕES</th>
+              </tr></thead>
+              <tbody id="lpTableBody"></tbody>
+            </table>
+          </div>
+          <div style="padding:10px 16px;border-top:1px solid var(--bd);display:flex;gap:8px">
+            <button onclick="App.lpSalvar()" style="flex:1;padding:8px;background:var(--acid);color:#000;border:none;border-radius:5px;font-size:11px;font-weight:800;cursor:pointer">✓ Salvar e Aplicar em Todo o Sistema</button>
+            <button onclick="App.lpAdicionar()" style="padding:8px 12px;background:transparent;border:1px solid var(--bd2);border-radius:5px;color:var(--t2);font-size:11px;cursor:pointer">+ Campo</button>
+            <button onclick="App.lpResetar()" style="padding:8px 12px;background:transparent;border:1px solid var(--bd2);border-radius:5px;color:var(--t3);font-size:11px;cursor:pointer">↺ Padrão</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="panel">
+            <div class="panel-title" style="margin-bottom:8px">PRÉ-VISUALIZAÇÃO — Layout Ativo</div>
+            <div style="overflow-x:auto"><table style="border-collapse:collapse;font-size:10px;min-width:400px"><thead id="lpPreviewHead"></thead><tbody id="lpPreviewBody"></tbody></table></div>
+            <div style="margin-top:10px;padding:8px;background:rgba(0,232,122,.06);border:1px solid rgba(0,232,122,.15);border-radius:5px;font-size:10px;color:var(--green)">✓ Este layout é aplicado em: Importação · Conferência · Histórico · Relatórios · Exportação</div>
+          </div>
+          <div class="panel">
+            <div class="panel-title" style="margin-bottom:8px">EXPORTAR / IMPORTAR LAYOUT</div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <button onclick="App.lpExportar()" style="padding:8px;background:rgba(26,159,255,.1);border:1px solid rgba(26,159,255,.2);border-radius:5px;color:var(--blue);font-size:11px;cursor:pointer;text-align:left">↓ Exportar Layout (.json)</button>
+              <button onclick="App.lpImportar()" style="padding:8px;background:transparent;border:1px solid var(--bd2);border-radius:5px;color:var(--t3);font-size:11px;cursor:pointer;text-align:left">↑ Importar Layout (.json)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ EXPORTAÇÃO SAP ══ -->
+    <section class="page" id="page-exportacao-sap">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <div class="panel">
+            <div class="panel-header"><div class="panel-title">⚙ Configuração da Exportação</div></div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div>
+                <div style="font-size:10px;color:var(--t3);font-weight:700;margin-bottom:4px">PERÍODO</div>
+                <select id="expPeriodo" style="width:100%;background:var(--c3);border:1px solid var(--bd2);border-radius:5px;padding:7px 10px;color:var(--t2);font-size:11px;outline:none">
+                  <option value="todos">Todos</option><option value="mes">Este Mês</option>
+                  <option value="mes-1">Mês Passado</option><option value="trim">Trimestre</option><option value="ano">Este Ano</option>
+                </select>
+              </div>
+              <div>
+                <div style="font-size:10px;color:var(--t3);font-weight:700;margin-bottom:6px">FORMATO</div>
+                <div style="display:flex;gap:8px">
+                  <label style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:5px;border:1px solid var(--bd2);cursor:pointer;flex:1;justify-content:center">
+                    <input type="radio" name="expFmt" value="xlsx" checked style="accent-color:var(--acid)"/>
+                    <span style="font-size:11px;font-weight:700;color:var(--green)">📊 XLSX</span>
+                  </label>
+                  <label style="display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:5px;border:1px solid var(--bd2);cursor:pointer;flex:1;justify-content:center">
+                    <input type="radio" name="expFmt" value="csv" style="accent-color:var(--acid)"/>
+                    <span style="font-size:11px;font-weight:700;color:var(--blue)">📄 CSV</span>
+                  </label>
+                </div>
+              </div>
+              <button onclick="App.executarExportacaoSAP()" style="padding:10px;background:var(--acid);color:#000;border:none;border-radius:6px;font-size:12px;font-weight:800;cursor:pointer">↓ EXPORTAR DADOS</button>
+            </div>
+          </div>
+          <div class="panel" style="padding:14px 16px">
+            <div class="panel-title" style="margin-bottom:10px">Fluxo de Integração</div>
+            <div style="display:flex;flex-direction:column;gap:4px;font-size:10px;font-family:monospace">
+              <div style="padding:5px 10px;background:rgba(0,255,178,.06);border-left:2px solid var(--acid);border-radius:0 4px 4px 0;color:var(--acid)">Layout de Planilha</div>
+              <div style="padding:2px 10px;color:var(--t3)">↓</div>
+              <div style="padding:5px 10px;background:rgba(26,159,255,.06);border-left:2px solid var(--blue);border-radius:0 4px 4px 0;color:var(--blue)">Mapeamento de Colunas</div>
+              <div style="padding:2px 10px;color:var(--t3)">↓</div>
+              <div style="padding:5px 10px;background:rgba(58,88,120,.2);border-left:2px solid var(--t3);border-radius:0 4px 4px 0;color:var(--t2)">Conferência / Histórico</div>
+              <div style="padding:2px 10px;color:var(--t3)">↓</div>
+              <div style="padding:5px 10px;background:rgba(255,176,32,.06);border-left:2px solid var(--amber);border-radius:0 4px 4px 0;color:var(--amber)">Exportação SAP / MB52</div>
+            </div>
+          </div>
+        </div>
+        <div class="panel" style="padding:0;overflow:hidden">
+          <div class="panel-header" style="padding:12px 16px">
+            <div class="panel-title">Pré-Visualização — Colunas de Exportação</div>
+          </div>
+          <div style="overflow:auto;max-height:280px">
+            <table style="width:100%;border-collapse:collapse;font-size:11px">
+              <thead><tr style="background:var(--c3)">
+                <th style="padding:6px 10px;font-size:9px;color:var(--t3);width:50px">COL.</th>
+                <th style="padding:6px 10px;font-size:9px;color:var(--t3)">CAMPO</th>
+                <th style="padding:6px 10px;font-size:9px;color:var(--t3)">NOME EXPORTAÇÃO</th>
+                <th style="padding:6px 10px;text-align:center;font-size:9px;color:var(--t3)">ATIVO</th>
+              </tr></thead>
+              <tbody id="expPreviewBody"></tbody>
+            </table>
+          </div>
+          <div class="panel-header" style="padding:10px 16px;border-top:1px solid var(--bd);margin-top:0">
+            <div style="font-size:10px;font-weight:600;color:var(--t2)">Prévia dos Dados (primeiras 3 linhas)</div>
+          </div>
+          <div style="overflow-x:auto;padding-bottom:8px">
+            <table style="border-collapse:collapse;font-size:10px;min-width:400px">
+              <thead id="expDataHead"></thead>
+              <tbody id="expDataBody"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -2865,8 +2890,7 @@ window.App = (function() {
       audit:       ['Auditorias', 'Inspeções e verificações de campo'],
       ocorrencias: ['Ocorrências', 'Divergências com rastreabilidade completa'],
       depots:    ['Almoxarifado', 'Depósitos e localizações'],
-      import:    ['Importação de Dados', 'Selecione a planilha SAP para importar'],
-      layout:    ['Layout de Planilha', 'Configuração de campos e mapeamento'],
+      import:    ['Importar Planilha', 'CSV, XLSX ou TXT do SAP'],
       settings:   ['Configurações', 'Operador, Google Sheets, OCR'],
       skubase:    ['Base de SKUs', 'Cadastro mestre de materiais'],
       mensal:     ['Inventário Mensal', 'Consolidado mensal por período'],
@@ -2878,6 +2902,8 @@ window.App = (function() {
     // Lazy render com proteção
     try {
       if (page === 'dashboard')  renderDashboard();
+      if (page === 'layout-planilha') setTimeout(function(){ App.lpRender(); }, 50);
+      if (page === 'exportacao-sap')  setTimeout(function(){ App.expPreview(); }, 50);
       if (page === 'table')      { renderTable(); updateTableCounts(); }
       if (page === 'analytics')  renderAnalytics();
       if (page === 'ideal')      renderIdeal();
@@ -3390,16 +3416,61 @@ window.App = (function() {
     if (!state.items.length) { toast('Adicione itens primeiro', 'er'); return; }
     var engine = window.InventoryEngine;
     var stats  = engine ? engine.calcStats(state.items) : calcStatsLocal(state.items);
-    // ID unico: timestamp + contador para evitar colisao
     state._rotCounter = (state._rotCounter || 0) + 1;
+
+    // ── NORMALIZAR ITENS ─────────────────────────────────────
+    // Garante que todos os campos chegam ao Sheets independente
+    // de como foram criados (via importação, manual ou edição)
+    var itemsNorm = state.items.map(function(it) {
+      var sis = it.sis    !== null && it.sis    !== undefined ? Number(it.sis)    :
+                it.sistema!== null && it.sistema!== undefined ? Number(it.sistema): 0;
+      var cnt = it.cnt      !== null && it.cnt      !== undefined ? Number(it.cnt)      :
+                it.contagem !== null && it.contagem !== undefined ? Number(it.contagem) : null;
+      var ru  = Number(it.runit)||Number(it.rUnit)||0;
+      var vl  = Number(it.val)||Number(it.valUtilizLivre)||0;
+      if (!ru && vl > 0 && sis > 0) ru = Math.round(vl / sis * 100) / 100;
+      if (!vl && ru > 0 && sis > 0) vl = Math.round(ru * sis * 100) / 100;
+      var dsk = Number(it.desvSku) || (cnt !== null ? cnt - sis : 0);
+      var dr  = Number(it.desvRS)  || (ru > 0 && dsk !== 0 ? Math.round(dsk * ru * 100) / 100 : 0);
+      return {
+        id:             it.id,
+        // Campos canônicos — todos obrigatórios
+        material:       it.material    || it.mat  || '',
+        descricao:      it.descricao   || it.desc || '',
+        sistema:        sis,
+        contagem:       cnt,
+        localizacao:    it.localizacao || it.loc  || '',
+        centro:         it.centro      || '',
+        deposito:       it.deposito    || '',
+        um:             it.um          || 'UNT',
+        rUnit:          ru,
+        valUtilizLivre: vl,
+        desvSku:        dsk,
+        desvRS:         dr,
+        status:         it.status      || '',
+        dataMov:        it.dataMov     || it.data || '',
+        obs:            it.obs         || '',
+        // Aliases mantidos para compatibilidade com renderTable
+        mat:  it.material || it.mat  || '',
+        desc: it.descricao|| it.desc || '',
+        sis:  sis,
+        cnt:  cnt,
+        loc:  it.localizacao || it.loc || '',
+        runit:ru,
+        val:  vl,
+      };
+    });
+
     var rot = {
       id:    Date.now() + state._rotCounter,
       date:  new Date().toISOString(),
-      items: JSON.parse(JSON.stringify(state.items)),
+      items: itemsNorm,
       stats: stats,
       op:    state.cfg.op  || 'Operador',
       emp:   state.cfg.emp || '',
       centro: (state.items[0]&&state.items[0].centro)||state.cfg.centro||'',
+      valTotalManual:  state._valTotalManual  || '',
+      valDesvioManual: state._valDesvioManual || '',
     };
     // Garantir que não substitui — nunca limitar em 50 sem aviso
     state.history.unshift(rot);
@@ -3500,267 +3571,33 @@ window.App = (function() {
   }
 
   function renderTable() {
-    var body = document.getElementById('tableBody');
-    if (!body) return;
-
-    // Ler layout configurado
-    var campos = layoutGetCampos().filter(function(c){ return c.visivel; });
-
-    // Atualizar cabeçalho dinamicamente
-    var thead = document.querySelector('#dataTable thead tr');
-    if (thead) {
-      thead.innerHTML = '<th style="width:30px">#</th>'
-        + campos.map(function(c) {
-            var align = ['sis','val','runit','cnt','desvSku','desvRS'].indexOf(c.id)>=0 ? 'right' : 'left';
-            var w = {material:'100px',descricao:'',sis:'70px',val:'90px',um:'50px',loc:'90px',runit:'70px',cnt:'70px',desvSku:'60px',desvRS:'70px',status:'90px',centro:'55px',deposito:'55px',dataMov:'80px',obs:''}[c.id]||'';
-            return '<th style="text-align:'+align+';'+(w?'width:'+w:'')+'">'+c.planilha+'</th>';
-          }).join('')
-        + '<th style="width:30px"></th>';
-    }
-
-    var vis = filteredItems();
-    var cols = campos.length + 2; // # + campos + ✕
-
-    if (!state.items.length) {
-      body.innerHTML = '<tr class="empty-row"><td colspan="'+cols+'"><div class="empty-msg"><span>📋</span><p>Nenhum item. Capture uma folha ou adicione manualmente.</p></div></td></tr>';
-      return;
-    }
-    if (!vis.length) {
-      body.innerHTML = '<tr class="empty-row"><td colspan="'+cols+'"><div class="empty-msg"><span>🔍</span><p>Nenhum item neste filtro.</p></div></td></tr>';
-      return;
-    }
-
-    var html = '';
-    vis.forEach(function(it, vi) {
-      var idx = state.items.indexOf(it);
-      var s   = diffStatus(it);
-      var bg  = s==='neg'?'rgba(255,59,92,.025)':s==='pos'?'rgba(255,176,32,.025)':'';
-      var ru  = Number(it.runit)||Number(it.rUnit)||0;
-      var vl  = Number(it.val)||Number(it.valUtilizLivre)||0;
-      var sisN = it.sis!==null&&it.sis!==undefined?Number(it.sis):0;
-      var cntN = it.cnt!==null&&it.cnt!==undefined?Number(it.cnt):null;
-      var dif  = cntN!==null ? cntN-sisN : null;
-      var desvR = ru>0&&dif!==null ? Math.round(dif*ru*100)/100 : (it.desvRS||0);
-      var stBg    = s==='ok'?'rgba(0,232,122,.12)':s==='neg'?'rgba(255,59,92,.12)':'rgba(255,176,32,.12)';
-      var stColor = s==='ok'?'var(--green)':s==='neg'?'var(--red)':'var(--amber)';
-      var stLabel = s==='ok'?'✓ SALVO':s==='neg'?'↓ FALTA':'↑ EXCESSO';
-
-      html += '<tr style="background:'+bg+'">';
-      html += '<td style="color:var(--t3);font-size:10px;text-align:center">'+(vi+1)+'</td>';
-
-      campos.forEach(function(c) {
-        switch(c.id) {
-          case 'material':
-            html += '<td><input class="cell-input mono" value="'+esc(it.mat||it.material||'')+'" onchange="App.updateItem('+idx+',\'mat\',this.value)" style="width:90px;font-size:10px;color:var(--acid);font-weight:700" '+(state._locked?'disabled readonly':'')+'/></td>';
-            break;
-          case 'descricao':
-            html += '<td><input class="cell-input" value="'+esc(it.desc||it.descricao||'')+'" onchange="App.updateItem('+idx+',\'desc\',this.value)" '+(state._locked?'disabled readonly':'')+'/></td>';
-            break;
-          case 'sis':
-            html += '<td style="text-align:right;font-family:monospace;font-size:11px;padding:4px 6px;color:var(--t2)">'+(sisN||'')+'</td>';
-            break;
-          case 'val':
-            html += '<td style="text-align:right;font-family:monospace;font-size:11px;padding:4px 6px;color:var(--blue);font-weight:600">'+(vl>0?'R$'+vl.toFixed(2):'')+'</td>';
-            break;
-          case 'um':
-            html += '<td style="text-align:center;font-size:10px;color:var(--t3)">'+(it.um||'')+'</td>';
-            break;
-          case 'loc':
-            html += '<td><input class="cell-input mono" value="'+esc(it.loc||it.localizacao||'')+'" onchange="App.updateItem('+idx+',\'loc\',this.value)" style="width:80px;font-size:10px" '+(state._locked?'disabled readonly':'')+'/></td>';
-            break;
-          case 'runit':
-            html += '<td style="text-align:right;font-family:monospace;font-size:11px;padding:4px 6px;color:var(--t2)">'+(ru>0?'R$'+ru.toFixed(2):'')+'</td>';
-            break;
-          case 'cnt':
-            html += '<td><input class="cell-input" type="number" value="'+(cntN!==null?cntN:'')+'" onchange="App.updateItem('+idx+',\'cnt\',this.value)" onpaste="App.pasteColumn(event,'+idx+',\'cnt\')\" placeholder="—" style="width:60px;text-align:right;font-weight:700;font-size:13px;color:'+(s==='neg'?'var(--red)':s==='pos'?'var(--amber)':'var(--green)')+'" '+(state._locked?'disabled readonly':'')+'/></td>';
-            break;
-          case 'desvSku':
-            html += '<td style="text-align:right;font-family:monospace;font-size:12px;font-weight:700;padding:4px 6px;color:'+(dif===null?'var(--t3)':dif<0?'var(--red)':dif>0?'var(--amber)':'var(--t3)')+'">'+( dif===null?'—':dif>0?'+'+dif:dif)+'</td>';
-            break;
-          case 'desvRS':
-            html += '<td style="text-align:right;font-family:monospace;font-size:11px;padding:4px 6px;font-weight:'+(desvR!==0?'700':'400')+';color:'+(desvR<0?'var(--red)':desvR>0?'var(--amber)':'')+'">'+(desvR!==0?(desvR>0?'+':'')+desvR.toFixed(2):'')+'</td>';
-            break;
-          case 'status':
-            html += '<td style="text-align:center"><span style="display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;font-size:9px;font-weight:700;background:'+stBg+';color:'+stColor+'">'+stLabel+'</span></td>';
-            break;
-          case 'centro':
-            html += '<td style="font-size:10px;color:var(--t3);font-family:monospace;text-align:center">'+(it.centro||'')+'</td>';
-            break;
-          case 'deposito':
-            html += '<td style="font-size:10px;color:var(--t3);font-family:monospace;text-align:center">'+(it.deposito||'')+'</td>';
-            break;
-          case 'dataMov':
-            html += '<td style="font-size:10px;color:var(--t3)">'+(it.dataMov||'')+'</td>';
-            break;
-          case 'obs':
-            html += '<td style="font-size:10px;color:var(--t3)">'+(it.obs||'')+'</td>';
-            break;
-          default:
-            html += '<td style="font-size:10px;color:var(--t3)">'+(it[c.id]||'')+'</td>';
-        }
-      });
-
-      html += '<td>'+(state._locked?'':'<button class="row-del-btn" onclick="App.deleteRow('+idx+')">✕</button>')+'</td>';
-      html += '</tr>';
+    const body = document.getElementById('tableBody'); if (!body) return;
+    const vis  = filteredItems();
+    if (!state.items.length) { body.innerHTML = '<tr class="empty-row"><td colspan="11"><div class="empty-msg"><span>📋</span><p>Nenhum item. Capture uma folha ou adicione manualmente.</p></div></td></tr>'; return; }
+    if (!vis.length)         { body.innerHTML = '<tr class="empty-row"><td colspan="9"><div class="empty-msg"><span>🔍</span><p>Nenhum item neste filtro.</p></div></td></tr>'; return; }
+    let html = '';
+    vis.forEach((it, vi) => {
+      const idx = state.items.indexOf(it);
+      const s   = diffStatus(it);
+      const bg  = s==='neg'?'rgba(255,59,92,.025)':s==='pos'?'rgba(255,176,32,.025)':'';
+      html += `<tr style="background:${bg}">
+        <td style="color:var(--t3);font-size:11px">${vi+1}</td>
+        <td><input class="cell-input mono" value="${esc(it.mat)}" onchange="App.updateItem(${idx},'mat',this.value)" style="width:110px" ${state._locked?"disabled readonly":""}  /></td>
+        <td><input class="cell-input" value="${esc(it.desc)}" onchange="App.updateItem(${idx},'desc',this.value)" ${state._locked?"disabled readonly":""}  /></td>
+        <td><input class="cell-input" type="number" value="${it.sis!==null?it.sis:''}" onchange="App.updateItem(${idx},'sis',this.value)" placeholder="—" style="width:70px;text-align:right;color:var(--t2)" ${state._locked?'disabled readonly':''}  /></td>
+        <td><input class="cell-input" type="number" value="${it.cnt!==null?it.cnt:''}" onchange="App.updateItem(${idx},'cnt',this.value)" placeholder="OK" style="width:70px;text-align:right;font-weight:600;color:${s==='neg'?'var(--red)':s==='pos'?'var(--amber)':'var(--green)'}" ${state._locked?'disabled readonly':''}  /></td>
+        <td style="text-align:center">${diffBadge(it)}</td>
+        <td style="text-align:center"><span style="font-size:10px;font-weight:700;color:${s==='ok'?'var(--green)':s==='pos'?'var(--amber)':'var(--red)'}">${s.toUpperCase()}</span></td>
+        <td><input class="cell-input mono" value="${esc(it.loc)}" onchange="App.updateItem(${idx},'loc',this.value)" style="width:100px;font-size:10px"/></td>
+        <td style="text-align:right;font-size:10px;color:var(--blue);font-family:monospace;padding:4px 8px">${it.val&&it.val>0?"R$"+Number(it.val).toFixed(2):""}</td>
+        <td style="text-align:right;font-size:10px;color:var(--t3);font-family:monospace;padding:4px 8px">${it.runit&&it.runit>0?"R$"+Number(it.runit).toFixed(2):""}</td>
+        <td style="text-align:right;font-size:10px;font-family:monospace;padding:4px 8px;color:${it.desvRS<0?"var(--red)":it.desvRS>0?"var(--amber)":""}">${it.desvRS!==null&&it.desvRS!==undefined&&it.desvRS!==0?(it.desvRS>0?"+":"")+Number(it.desvRS).toFixed(2):""}</td>
+        <td>${state._locked?"":"<button class=\"row-del-btn\" onclick=\"App.deleteRow("+idx+")\" >✕</button>"}</td>
+      </tr>`;
     });
-
     body.innerHTML = html;
   }
 
-
-
-  // ── LAYOUT DE PLANILHA ──────────────────────────────────────
-  var LAYOUT_PADRAO = [
-    { id:'material',  label:'Material',            planilha:'Material',             visivel:true,  obrig:true  },
-    { id:'descricao', label:'Texto breve material', planilha:'Texto breve material', visivel:true,  obrig:true  },
-    { id:'centro',    label:'Centro',               planilha:'Centro',               visivel:true,  obrig:false },
-    { id:'deposito',  label:'Deposito',             planilha:'Deposito',             visivel:true,  obrig:false },
-    { id:'sis',       label:'Utilizacao livre',     planilha:'Utilizacao livre',     visivel:true,  obrig:true  },
-    { id:'val',       label:'Val.utiliz.livre',     planilha:'Val.utiliz.livre',     visivel:true,  obrig:false },
-    { id:'um',        label:'UM basica',            planilha:'UM basica',            visivel:true,  obrig:false },
-    { id:'loc',       label:'Posicao no deposito',  planilha:'Posicao no deposito',  visivel:true,  obrig:false },
-    { id:'runit',     label:'R$ Unit',              planilha:'R$ Unit',              visivel:true,  obrig:false },
-    { id:'cnt',       label:'Contagem',             planilha:'Contagem',             visivel:true,  obrig:true  },
-    { id:'desvSku',   label:'Desvio SKU',           planilha:'Desvio SKU',           visivel:true,  obrig:false },
-    { id:'desvRS',    label:'Desvio R$',            planilha:'Desvio R$',            visivel:true,  obrig:false },
-    { id:'dataMov',   label:'Data Mov',             planilha:'Data Mov',             visivel:true,  obrig:false },
-    { id:'obs',       label:'Observacoes',          planilha:'Observacoes',          visivel:false, obrig:false },
-    { id:'status',    label:'Status',               planilha:'Status',               visivel:true,  obrig:false },
-  ];
-
-  function layoutGetCampos() {
-    return (state.cfg && state.cfg.layoutCampos) || JSON.parse(JSON.stringify(LAYOUT_PADRAO));
-  }
-
-  function layoutRender() {
-    var campos = layoutGetCampos();
-    var tbody = document.getElementById('layoutTableBody');
-    if (!tbody) return;
-    tbody.innerHTML = campos.map(function(c, i) {
-      var fn0 = 'App._layoutToggle('+i+',\'visivel\',false)';
-      var fn1 = 'App._layoutToggle('+i+',\'visivel\',true)';
-      var sw = c.visivel
-        ? '<span style="display:inline-block;width:36px;height:20px;border-radius:10px;background:var(--blue);position:relative;cursor:pointer" onclick="'+fn0+'"><span style="position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:#fff"></span></span>'
-        : '<span style="display:inline-block;width:36px;height:20px;border-radius:10px;background:var(--c4);position:relative;cursor:pointer" onclick="'+fn1+'"><span style="position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff"></span></span>';
-      return '<tr style="border-bottom:1px solid var(--bd)" draggable="true" data-idx="'+i+'" '
-        +'ondragstart="App._layoutDragStart(event,'+i+')" ondragover="event.preventDefault()" ondrop="App._layoutDrop(event,'+i+')">'
-        +'<td style="padding:8px;text-align:center;cursor:grab;color:var(--t3);font-size:18px">⠿</td>'
-        +'<td style="padding:8px;text-align:center;color:var(--t3);font-family:monospace;font-size:11px">'+(i+1)+'</td>'
-        +'<td style="padding:8px;font-size:12px;color:var(--t1);font-weight:600">'+c.label+'</td>'
-        +'<td style="padding:6px 8px"><input value="'+c.planilha+'" oninput="App._layoutEditNome('+i+',this.value)" '
-        +'style="background:var(--c3);border:1px solid var(--bd);border-radius:4px;padding:4px 8px;font-size:11px;color:var(--t2);outline:none;font-family:monospace;width:100%"/></td>'
-        +'<td style="padding:8px;text-align:center">'+sw+'</td>'
-        +'<td style="padding:8px;text-align:center"><input type="checkbox" '+(c.obrig?'checked':'')+' onchange="App._layoutToggle('+i+',\'obrig\',this.checked)" style="width:15px;height:15px;accent-color:var(--blue);cursor:pointer"/></td>'
-        +'<td style="padding:8px;text-align:center"><button onclick="App._layoutRemover('+i+')" style="background:rgba(255,59,92,.1);border:1px solid rgba(255,59,92,.2);border-radius:4px;color:var(--red);cursor:pointer;padding:3px 8px">🗑</button></td>'
-        +'</tr>';
-    }).join('');
-    layoutRenderPreview(campos);
-  }
-
-  function layoutRenderPreview(campos) {
-    var vis = campos.filter(function(c){ return c.visivel; });
-    var head = document.getElementById('layoutPreviewHead');
-    var body = document.getElementById('layoutPreviewBody');
-    if (!head || !body) return;
-    head.innerHTML = '<tr style="background:var(--c3)">'
-      +vis.map(function(c){ return '<th style="padding:7px 10px;text-align:left;font-size:9px;color:var(--t3);white-space:nowrap">'+c.planilha+'</th>'; }).join('')+'</tr>';
-    var ex = [
-      {material:'S00134696',descricao:'CAMIS POLO M/C FEM G',centro:'CF50',deposito:'0060',sis:8,val:377.57,um:'UNT',loc:'CT101C03C',runit:47.19,cnt:8,desvSku:0,desvRS:0,dataMov:'06/06/2026',obs:''},
-      {material:'1830277',  descricao:'CAMIS CAMISETE M/L EGG',centro:'CF50',deposito:'0060',sis:31,val:4413.44,um:'UNT',loc:'CT102C06C',runit:142.37,cnt:31,desvSku:0,desvRS:0,dataMov:'06/06/2026',obs:''},
-    ];
-    body.innerHTML = ex.map(function(row,ri){
-      return '<tr style="border-bottom:1px solid var(--bd);background:'+(ri%2?'var(--c2)':'')+'">'+
-        vis.map(function(c){ var v=row[c.id]; return '<td style="padding:6px 10px;font-size:10px;color:var(--t2);white-space:nowrap">'+(v!==undefined&&v!==''?v:'—')+'</td>'; }).join('')+'</tr>';
-    }).join('');
-  }
-
-  var _layoutDragIdx = null;
-  function _layoutDragStart(e,idx){ _layoutDragIdx=idx; }
-  function _layoutDrop(e,toIdx){
-    e.preventDefault();
-    if(_layoutDragIdx===null||_layoutDragIdx===toIdx)return;
-    var campos=layoutGetCampos();
-    var item=campos.splice(_layoutDragIdx,1)[0];
-    campos.splice(toIdx,0,item);
-    if(!state.cfg)state.cfg={};
-    state.cfg.layoutCampos=campos;
-    _layoutDragIdx=null;
-    layoutRender();
-  }
-  function _layoutToggle(idx,prop,val){
-    var campos=layoutGetCampos();
-    campos[idx][prop]=val;
-    if(!state.cfg)state.cfg={};
-    state.cfg.layoutCampos=campos;
-    layoutRender();
-  }
-  function _layoutEditNome(idx,val){
-    var campos=layoutGetCampos();
-    campos[idx].planilha=val;
-    if(!state.cfg)state.cfg={};
-    state.cfg.layoutCampos=campos;
-    layoutRenderPreview(campos);
-  }
-  function _layoutRemover(idx){
-    var campos=layoutGetCampos();
-    campos.splice(idx,1);
-    if(!state.cfg)state.cfg={};
-    state.cfg.layoutCampos=campos;
-    layoutRender();
-  }
-  function layoutAddCampo(){
-    var campos=layoutGetCampos();
-    campos.push({id:'campo'+Date.now(),label:'Novo Campo',planilha:'',visivel:true,obrig:false});
-    if(!state.cfg)state.cfg={};
-    state.cfg.layoutCampos=campos;
-    layoutRender();
-  }
-  function layoutSalvar(){
-    var campos=layoutGetCampos();
-    if(!state.cfg)state.cfg={};
-    state.cfg.layoutCampos=campos;
-    // Sincronizar colMap para importação
-    state.cfg.colMap={};
-    campos.forEach(function(c){if(c.id&&c.planilha)state.cfg.colMap[c.id]=c.planilha;});
-    save();
-    // Atualizar resumo na tela de importação
-    layoutAtualizarResumoImport(campos);
-    toast('✓ Layout salvo! Aplicado em: Importação · Conferência · Exportação','ok');
-    console.log('[LAYOUT] Salvo. Campos visiveis:',campos.filter(function(c){return c.visivel;}).map(function(c){return c.planilha;}).join(', '));
-    // Aplicar imediatamente na Conferência
-    if (state.items.length) { renderTable(); updateTableCounts(); }
-  }
-
-  function layoutAtualizarResumoImport(campos) {
-    var el = document.getElementById('layoutResumo');
-    if (!el) return;
-    var vis = (campos||layoutGetCampos()).filter(function(c){return c.visivel;});
-    if (!vis.length) { el.innerHTML=''; return; }
-    el.innerHTML = '<div style="font-size:9px;color:var(--t3);margin-bottom:6px;letter-spacing:.5px;font-weight:700">CAMPOS ATIVOS ('+vis.length+')</div>'
-      + '<div style="display:flex;flex-wrap:wrap;gap:4px">'
-      + vis.map(function(c){
-          return '<span style="padding:2px 8px;background:rgba(0,255,178,.08);border:1px solid rgba(0,255,178,.15);border-radius:4px;font-size:9px;color:var(--acid);font-family:monospace">'
-            + c.planilha + '</span>';
-        }).join('')
-      + '</div>';
-  }
-  function layoutResetPadrao(){
-    if(!state.cfg)state.cfg={};
-    state.cfg.layoutCampos=JSON.parse(JSON.stringify(LAYOUT_PADRAO));
-    state.cfg.colMap={};
-    save(); layoutRender();
-    toast('Layout restaurado para padrão SAP','ok');
-  }
-  function layoutExportar(){
-    var blob=new Blob([JSON.stringify(layoutGetCampos(),null,2)],{type:'application/json'});
-    var a=document.createElement('a');
-    a.href=URL.createObjectURL(blob);
-    a.download='layout-rotativo-'+new Date().toISOString().slice(0,10)+'.json';
-    a.click(); toast('Layout exportado!','ok');
-  }
-  function layoutSetTab(tab,btn){}
-
-  // ── FIM LAYOUT ────────────────────────────────────────────────
   function searchTable(q) {
     const lq = q.toLowerCase();
     const rows = document.querySelectorAll('#tableBody tr');
@@ -4097,39 +3934,17 @@ window.App = (function() {
     // KPIs unificados — inclui valor financeiro
     var kg = document.getElementById('kpiGrid');
     if (kg) {
-      var totItens = 0, skuSet = new Set(), valorTotal = 0, totalDivQtd = 0, valorDesvio = 0;
-      // Valor do rotativo mais recente (último)
-      var valorUltimoRot = 0;
+      var totItens = 0, skuSet = new Set(), valorTotal = 0, totalDivQtd = 0;
       histFilt.forEach(function(r) {
-        var valRot = 0;
         (r.items||[]).forEach(function(it) {
           totItens++;
           skuSet.add(it.mat||'');
-          var vl = Number(it.val)||Number(it.valUtilizLivre)||0;
-          var ru = Number(it.runit)||Number(it.rUnit)||0;
-          var si = Number(it.sis)||0;
-          if (!vl && ru>0 && si>0) vl = Math.round(ru*si*100)/100;
-          valRot += vl;
-          // Desvio financeiro
-          if (it.cnt!==null && it.cnt!==undefined) {
-            var dif = Number(it.cnt) - si;
-            if (dif !== 0 && ru > 0) valorDesvio += Math.abs(Math.round(dif*ru*100)/100);
-            if (dif !== 0) totalDivQtd += Math.abs(dif);
+          // Somar qtd divergente absoluta como impacto operacional
+          if (it.cnt !== null && it.cnt !== undefined && Number(it.cnt) !== Number(it.sis)) {
+            totalDivQtd += Math.abs(Number(it.cnt) - Number(it.sis||0));
           }
         });
-        valorTotal += valRot;
       });
-      // Valor do rotativo mais recente
-      if (histFilt.length > 0) {
-        var rLast = histFilt[histFilt.length-1];
-        (rLast.items||[]).forEach(function(it) {
-          var vl = Number(it.val)||Number(it.valUtilizLivre)||0;
-          var ru = Number(it.runit)||Number(it.rUnit)||0;
-          var si = Number(it.sis)||0;
-          if (!vl && ru>0 && si>0) vl = Math.round(ru*si*100)/100;
-          valorUltimoRot += vl;
-        });
-      }
       // Buscar impacto financeiro das ocorrências do período
       try {
         var ocorrs = JSON.parse(localStorage.getItem('rp_ocorrencias')||'[]');
@@ -4151,15 +3966,14 @@ window.App = (function() {
           ? totalDivQtd + ' un'
           : '—';
 
-      var fmtVal = function(v) { return v>0 ? 'R$'+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—'; };
       var kpis = [
-        {l:'Rotativos',         v:n,                    c:'var(--acid)',  i:'📋'},
-        {l:'SKUs Únicos',       v:skuSet.size,          c:'var(--t1)',    i:'🏷️'},
-        {l:'Divergências',      v:agg.div,               c:agg.div>0?'var(--red)':'var(--green)', i:'⚠️'},
-        {l:'Acuracidade',       v:acc+'%',               c:acc>=98?'var(--green)':acc>=90?'var(--amber)':'var(--red)', i:'✅'},
-        {l:'Val. Total Período',v:fmtVal(valorTotal),    c:'var(--blue)',  i:'💰'},
-        {l:'Val. Último Rot.',  v:fmtVal(valorUltimoRot),c:'var(--acid)', i:'📊'},
-        {l:'Desvio Financeiro', v:fmtVal(valorDesvio),   c:valorDesvio>0?'var(--red)':'var(--green)', i:'📉'},
+        {l:'Rotativos',    v:n,          c:'var(--acid)',  i:'📋'},
+        {l:'SKUs Únicos',  v:skuSet.size,c:'var(--t1)',    i:'🏷️'},
+        {l:'Divergências', v:agg.div,    c:'var(--red)',   i:'⚠️'},
+        {l:'Acuracidade',  v:acc+'%',    c:acc>=98?'var(--green)':acc>=90?'var(--amber)':'var(--red)', i:'✅'},
+        {l:'Total Itens',  v:totItens,   c:'var(--blue)',  i:'📦'},
+        {l:'Conformes',    v:agg.ok,     c:'var(--green)', i:'✓'},
+        {l: valorTotal>0 ? 'Impacto (R$)' : totalDivQtd>0 ? 'Qtd Divergente' : 'Impacto', v:valorFmt, c:'var(--amber)', i:'💰'},
       ];
       kg.innerHTML = kpis.map(function(k) {
         return '<div style="background:var(--c1);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;position:relative;overflow:hidden">'
@@ -5295,21 +5109,34 @@ window.App = (function() {
         operador:rot.op, empresa:rot.emp, total:rot.stats.total,
         divergencias:rot.stats.diverg, ok:rot.stats.ok, falta:rot.stats.neg,
         excesso:rot.stats.pos, acuracia:rot.stats.acuracia||0,
+        valTotalManual:  rot.valTotalManual  || '',
+        valDesvioManual: rot.valDesvioManual || '',
         items: rot.items.map(function(it){
-          var sis = it.sis!==null&&it.sis!==undefined ? Number(it.sis) : 0;
-          var cnt = it.cnt!==null&&it.cnt!==undefined ? Number(it.cnt) : sis;
-          var ru  = it.runit || it.rUnit || 0;
-          if (!ru && it.val && sis>0) ru = it.val/sis;
-          var valUtil  = ru ? Math.round(sis*ru*100)/100 : (it.val||'');
-          var desvioR  = ru ? Math.round((cnt-sis)*ru*100)/100 : '';
-          var d = diffVal(it); var s = diffStatus(it);
+          // Itens já vêm normalizados de saveRotativo()
+          // Usar campos canônicos diretamente, com fallback para aliases
+          var sis = Number(it.sistema !== undefined ? it.sistema : (it.sis||0));
+          var cnt = it.contagem !== null && it.contagem !== undefined ? Number(it.contagem) :
+                    (it.cnt !== null && it.cnt !== undefined ? Number(it.cnt) : sis);
+          var ru  = Number(it.rUnit)||Number(it.runit)||0;
+          var vl  = Number(it.valUtilizLivre)||Number(it.val)||0;
+          var dsk = Number(it.desvSku)||(cnt-sis);
+          var dr  = Number(it.desvRS)||(ru>0&&dsk!==0?Math.round(dsk*ru*100)/100:0);
+          var s   = diffStatus(it);
           return {
-            material: it.mat, descricao: it.desc,
-            sistema: sis, contagem: cnt!==sis||it.cnt!==null?cnt:'OK',
-            diferenca: d!==null?d:'OK', status: s.toUpperCase(),
-            localizacao: it.loc||'',
-            valUtilizLivre: valUtil, rUnit: ru||'', desvioR: desvioR,
-            um: it.um||'UNT', centro: it.centro||'CF50', deposito: it.deposito||'0060'
+            material:       it.material    || it.mat  || '',
+            descricao:      it.descricao   || it.desc || '',
+            sistema:        sis,
+            contagem:       cnt,
+            localizacao:    it.localizacao || it.loc  || '',
+            centro:         it.centro      || 'CF50',
+            deposito:       it.deposito    || '',
+            um:             it.um          || 'UNT',
+            rUnit:          ru > 0 ? Math.round(ru*100)/100  : '',
+            valUtilizLivre: vl > 0 ? vl : '',
+            desvSku:        dsk,
+            desvRS:         dr !== 0 ? dr : '',
+            status:         s.toUpperCase(),
+            dataMov:        it.dataMov     || it.data || '',
           };
         })
       }};
@@ -5340,62 +5167,39 @@ window.App = (function() {
   function exportTableXLSX() {
     if (!window.XLSX) { toast('XLSX não carregado', 'er'); return; }
     if (!state.items.length) { toast('Nenhum item na tabela', 'er'); return; }
-    var wb  = XLSX.utils.book_new();
+    var wb = XLSX.utils.book_new();
     var now = new Date();
     var emp = (state.cfg && state.cfg.emp) || 'Almoxarifado';
+    var op  = (state.cfg && state.cfg.op)  || 'Operador';
 
-    // Usar layout configurado — mesma ordem e nomes da planilha
-    var campos = layoutGetCampos().filter(function(c){ return c.visivel; });
-
-    // Cabeçalho com nomes exatos da planilha SAP
-    var cabecalho = campos.map(function(c){ return c.planilha; });
-    var data = [cabecalho];
-
-    state.items.forEach(function(it) {
-      var sis  = Number(it.sis)||0;
-      var cnt  = it.cnt!==null&&it.cnt!==undefined?Number(it.cnt):sis;
-      var ru   = Number(it.runit)||Number(it.rUnit)||0;
-      var vl   = Number(it.val)||Number(it.valUtilizLivre)||0;
-      if (!ru && vl>0 && sis>0) ru = vl/sis;
-      if (!vl && ru>0 && sis>0) vl = Math.round(ru*sis*100)/100;
-      var dif  = cnt - sis;
-      var desvR = ru>0 ? Math.round(dif*ru*100)/100 : 0;
-      var s    = diffStatus(it);
-
-      // Mapa de valores por campo
-      var vals = {
-        material: it.mat||it.material||'',
-        descricao: it.desc||it.descricao||'',
-        centro:   it.centro||'',
-        deposito: it.deposito||'',
-        sis:      sis||'',
-        val:      vl>0?vl:'',
-        um:       it.um||'',
-        loc:      it.loc||it.localizacao||'',
-        runit:    ru>0?Math.round(ru*100)/100:'',
-        cnt:      cnt,
-        desvSku:  dif,
-        desvRS:   desvR!==0?desvR:'',
-        dataMov:  it.dataMov||'',
-        obs:      it.obs||'',
-        status:   s.toUpperCase(),
-      };
-
-      data.push(campos.map(function(c){ return vals[c.id]!==undefined?vals[c.id]:''; }));
+    // ── Aba principal no formato SAP ──
+    var data = [['#','MATERIAL','DESCRICAO','SISTEMA','CONTAGEM','DIFERENCA','STATUS','LOCALIZACAO','VAL.UTIL.LIVRE','R$ UNIT','DESVIO R$']];
+    state.items.forEach(function(it, i) {
+      var d   = diffVal(it), s = diffStatus(it);
+      var sis = it.sis !== null && it.sis !== undefined ? Number(it.sis) : 0;
+      var cnt = it.cnt !== null && it.cnt !== undefined ? Number(it.cnt) : sis;
+      var ru  = it.runit || it.rUnit || 0;
+      if (!ru && it.val && sis > 0) ru = it.val / sis;
+      var valUtil = ru ? Math.round(sis * ru * 100) / 100 : (it.val || '');
+      var desvioR = ru ? Math.round((cnt - sis) * ru * 100) / 100 : '';
+      data.push([
+        i+1, it.mat||'', it.desc||'',
+        it.sis!==null?it.sis:'',
+        it.cnt!==null?it.cnt:'OK',
+        d!==null?d:'OK', s.toUpperCase(),
+        it.loc||'', valUtil, ru||'', desvioR
+      ]);
     });
-
     var ws = XLSX.utils.aoa_to_sheet(data);
-    ws['!cols'] = campos.map(function(c){
-      return {wch: c.id==='descricao'?42:c.id==='material'?16:c.id==='loc'?16:10};
-    });
-    ws['!autofilter'] = {ref:'A1:'+XLSX.utils.encode_col(campos.length-1)+'1'};
-    _xlsxEstiloHeader(ws, campos.length, '1A3A5C');
-    _xlsxZebra(ws, data.length, campos.length);
-    XLSX.utils.book_append_sheet(wb, ws, 'Conferencia');
+    ws['!cols'] = [{wch:4},{wch:14},{wch:42},{wch:10},{wch:10},{wch:10},{wch:10},{wch:16},{wch:14},{wch:10},{wch:12}];
+    ws['!autofilter'] = {ref:'A1:K1'};
+    _xlsxEstiloHeader(ws, 11, '1A3A5C');
+    _xlsxZebra(ws, data.length, 11);
+    XLSX.utils.book_append_sheet(wb, ws, '📋 Tabela');
 
-    var fname = 'rotativo_'+emp.replace(/\s+/g,'_')+'_'+now.toISOString().slice(0,10)+'.xlsx';
+    var fname = 'rotativo_tabela_'+emp.replace(/\s+/g,'_')+'_'+now.toISOString().slice(0,10)+'.xlsx';
     XLSX.writeFile(wb, fname);
-    toast('Excel exportado no layout da planilha!', 'ok');
+    toast('Excel exportado com valores financeiros!', 'ok');
   }
 
   // ── Aplicar estilo de cabeçalho numa aba ──
@@ -6178,8 +5982,291 @@ window.App = (function() {
     init, navigate, saveConfig, testConnection,
     handleImageFile, handleSpreadsheetFile, handleImportFile,
     addItemManual, addEmptyRow, updateItem, deleteRow,
-    layoutRender, layoutSalvar, layoutResetPadrao, layoutExportar, layoutAddCampo, layoutSetTab, layoutAtualizarResumoImport,
-    _layoutDragStart, _layoutDrop, _layoutToggle, _layoutEditNome, _layoutRemover,
+    // ── VALORES MANUAIS ───────────────────────────────────────
+    salvarValoresManual:function(){
+      var vT=document.getElementById('valTotalManual');
+      var vD=document.getElementById('valDesvioManual');
+      if(!vT||!vD)return;
+      state._valTotalManual=vT.value.trim();
+      state._valDesvioManual=vD.value.trim();
+      var st=document.getElementById('valStatus');
+      if(st){st.textContent=(vT.value||vD.value)?'✓ Incluído ao salvar':'Incluído ao salvar';
+        st.style.color=(vT.value||vD.value)?'var(--green)':'var(--t3)';}
+    },
+
+    // ── BACKUP MANUAL ─────────────────────────────────────────
+    fazerBackupManual:async function(){
+      if(!state.cfg.url){toast('Configure a URL do Sheets!','er');return;}
+      if(!state.items.length){toast('Nenhum item para backup','er');return;}
+      toast('Fazendo backup...','in');
+      var payload={action:'addRotativo',rotativo:{
+        id:'BKP-'+Date.now(),date:new Date().toLocaleDateString('pt-BR'),
+        time:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+        operador:state.cfg.op||'Operador',empresa:state.cfg.emp||'',
+        total:state.items.length,divergencias:0,ok:state.items.length,falta:0,excesso:0,acuracia:100,
+        valTotalManual:state._valTotalManual||'',valDesvioManual:state._valDesvioManual||'',
+        items:state.items.map(function(it){
+          var sis=Number(it.sis||it.sistema||0),ru=Number(it.runit||it.rUnit||0),vl=Number(it.val||it.valUtilizLivre||0);
+          var cnt=it.cnt!==null&&it.cnt!==undefined?Number(it.cnt):sis;
+          if(!ru&&vl>0&&sis>0)ru=vl/sis; if(!vl&&ru>0&&sis>0)vl=Math.round(ru*sis*100)/100;
+          return{material:it.material||it.mat||'',descricao:it.descricao||it.desc||'',
+            centro:it.centro||'CF50',deposito:it.deposito||'',sistema:sis,
+            valUtilizLivre:vl>0?vl:'',um:it.um||'UNT',localizacao:it.localizacao||it.loc||'',
+            rUnit:ru>0?Math.round(ru*100)/100:'',contagem:cnt,
+            desvSku:cnt-sis,desvRS:ru>0?Math.round((cnt-sis)*ru*100)/100:'',status:it.status||'OK'};
+        })
+      }};
+      try{var r=await fetch(state.cfg.url,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)});
+        var d=await r.json();
+        if(d.ok)toast('✓ Backup salvo! ('+state.items.length+' itens na aba BACKUP)','ok');
+        else toast('Erro: '+(d.error||'verifique o script'),'er');
+      }catch(e){toast('Erro de conexão','er');}
+    },
+
+    // ── LAYOUT DE PLANILHA ─────────────────────────────────────
+    _lpPadrao:function(){return[
+      {id:'material',  sys:'Material',         sap:'Material',            exp:'Material',             vis:true},
+      {id:'descricao', sys:'Descrição',         sap:'Texto breve material',exp:'Texto Breve Material', vis:true},
+      {id:'centro',    sys:'Centro',            sap:'Centro',              exp:'Centro',               vis:true},
+      {id:'deposito',  sys:'Depósito',          sap:'Deposito',            exp:'Depósito',             vis:true},
+      {id:'sistema',   sys:'Qtd. Sistema',      sap:'Utilizacao livre',    exp:'Utilização Livre',     vis:true},
+      {id:'valUtilizLivre',sys:'Val.Util.Livre',sap:'Val.utiliz.livre',    exp:'Val. Util. Livre',     vis:true},
+      {id:'um',        sys:'UM Básica',         sap:'UM basica',           exp:'UM Básica',            vis:true},
+      {id:'localizacao',sys:'Localização',      sap:'Posicao no deposito', exp:'Posição no Depósito',  vis:true},
+      {id:'rUnit',     sys:'R$ Unitário',       sap:'R$ Unit',             exp:'R$ Unit',              vis:true},
+      {id:'contagem',  sys:'Contagem',          sap:'Contagem',            exp:'Contagem',             vis:true},
+      {id:'desvSku',   sys:'Desvio SKU',        sap:'Desvio SKU',          exp:'Desvio SKU',           vis:true},
+      {id:'desvRS',    sys:'Desvio R$',         sap:'Desvio R$',           exp:'Desvio R$',            vis:true},
+      {id:'status',    sys:'Status',            sap:'Status',              exp:'Status',               vis:true},
+      {id:'dataMov',   sys:'Data Mov',          sap:'Data Mov',            exp:'Data Mov',             vis:false},
+      {id:'obs',       sys:'Observações',       sap:'Observacoes',         exp:'Observações',          vis:false},
+    ];},
+    _lpGet:function(){try{var s=localStorage.getItem('rp_lp_campos');if(s)return JSON.parse(s);}catch(e){}return App._lpPadrao();},
+    lpRender:function(){
+      var campos=App._lpGet();
+      var tbody=document.getElementById('lpTableBody');if(!tbody)return;
+      tbody.innerHTML=campos.map(function(c,i){
+        return '<tr style="border-bottom:1px solid var(--bd)">'
+          +'<td style="padding:5px 8px;font-size:10px;color:var(--t2);font-weight:600">'+c.sys+'</td>'
+          +'<td style="padding:3px 6px"><input data-i="'+i+'" data-f="sap" value="'+c.sap+'" oninput="App._lpEdit(this)" style="width:100%;background:var(--c3);border:1px solid var(--bd);border-radius:3px;padding:3px 6px;color:var(--t2);font-size:10px;outline:none;font-family:monospace"/></td>'
+          +'<td style="padding:3px 6px"><input data-i="'+i+'" data-f="exp" value="'+c.exp+'" oninput="App._lpEdit(this)" style="width:100%;background:var(--c3);border:1px solid var(--bd);border-radius:3px;padding:3px 6px;color:var(--acid);font-size:10px;outline:none;font-family:monospace"/></td>'
+          +'<td style="padding:5px 8px;text-align:center"><input type="checkbox" data-i="'+i+'" '+(c.vis?'checked':'')+' onchange="App._lpToggle(this)" style="width:14px;height:14px;accent-color:var(--acid);cursor:pointer"/></td>'
+          +'<td style="padding:5px 8px;text-align:center"><button data-i="'+i+'" onclick="App._lpDel(this)" style="background:rgba(255,59,92,.1);border:1px solid rgba(255,59,92,.2);border-radius:3px;color:var(--red);cursor:pointer;padding:2px 6px;font-size:10px">✕</button></td>'
+          +'</tr>';
+      }).join('');
+      App._lpPreview(campos);
+      App.expPreview();
+    },
+    _lpEdit:function(el){var c=App._lpGet();c[el.dataset.i][el.dataset.f]=el.value;localStorage.setItem('rp_lp_campos',JSON.stringify(c));App._lpPreview(c);App.expPreview();},
+    _lpToggle:function(el){var c=App._lpGet();c[el.dataset.i].vis=el.checked;localStorage.setItem('rp_lp_campos',JSON.stringify(c));App._lpPreview(c);},
+    _lpDel:function(el){var c=App._lpGet();c.splice(el.dataset.i,1);localStorage.setItem('rp_lp_campos',JSON.stringify(c));App.lpRender();},
+    lpAdicionar:function(){var c=App._lpGet();c.push({id:'c'+Date.now(),sys:'Novo Campo',sap:'',exp:'',vis:true});localStorage.setItem('rp_lp_campos',JSON.stringify(c));App.lpRender();},
+    lpResetar:function(){localStorage.setItem('rp_lp_campos',JSON.stringify(App._lpPadrao()));App.lpRender();toast('Layout padrão SAP restaurado','ok');},
+    lpSalvar:function(){
+      var c=App._lpGet();localStorage.setItem('rp_lp_campos',JSON.stringify(c));
+      if(!state.cfg)state.cfg={};state.cfg.colMap={};
+      c.forEach(function(f){if(f.id&&f.sap)state.cfg.colMap[f.id]=f.sap;});
+      save();App.expPreview();
+      toast('✓ Layout salvo — aplicado em todo o sistema','ok');
+    },
+    lpExportar:function(){var b=new Blob([JSON.stringify(App._lpGet(),null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='layout-'+new Date().toISOString().slice(0,10)+'.json';a.click();toast('Layout exportado!','ok');},
+    lpImportar:function(){var i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=function(e){var r=new FileReader();r.onload=function(ev){try{localStorage.setItem('rp_lp_campos',ev.target.result);App.lpRender();toast('Layout importado!','ok');}catch(err){toast('Arquivo inválido','er');}};r.readAsText(e.target.files[0]);};i.click();},
+    _lpPreview:function(campos){
+      var vis=(campos||App._lpGet()).filter(function(c){return c.vis;});
+      var h=document.getElementById('lpPreviewHead'),b=document.getElementById('lpPreviewBody');if(!h||!b)return;
+      h.innerHTML='<tr style="background:var(--c3)">'+vis.map(function(c){return '<th style="padding:5px 8px;font-size:9px;color:var(--acid);white-space:nowrap;font-family:monospace">'+c.exp+'</th>';}).join('')+'</tr>';
+      var ex=[{material:'S00134696',descricao:'CAMIS POLO FEM G',centro:'CF50',deposito:'0060',sistema:8,valUtilizLivre:377.57,um:'UNT',localizacao:'CT101C03C',rUnit:47.19,contagem:8,desvSku:0,desvRS:0,status:'OK',dataMov:'06/06/2026',obs:''}];
+      b.innerHTML=ex.map(function(row){return '<tr>'+vis.map(function(c){var v=row[c.id];return '<td style="padding:5px 8px;font-size:10px;color:var(--t2);white-space:nowrap">'+(v!==undefined&&v!==''?v:'—')+'</td>';}).join('')+'</tr>';}).join('');
+    },
+
+    // ── EXPORTAÇÃO SAP ─────────────────────────────────────────
+    expPreview:function(){
+      var campos=App._lpGet().filter(function(c){return c.vis;});
+      var L='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      var tb=document.getElementById('expPreviewBody');
+      if(tb)tb.innerHTML=campos.map(function(c,i){return '<tr style="border-bottom:1px solid var(--bd)"><td style="padding:5px 8px;font-family:monospace;font-size:11px;color:var(--amber);font-weight:700">'+L[i]+'</td><td style="padding:5px 8px;font-size:11px;color:var(--t2)">'+c.sys+'</td><td style="padding:5px 8px;font-size:11px;color:var(--acid);font-family:monospace">'+c.exp+'</td><td style="padding:5px 8px;text-align:center"><div style="width:8px;height:8px;border-radius:50%;background:var(--green);margin:auto"></div></td></tr>';}).join('');
+      var dh=document.getElementById('expDataHead'),db=document.getElementById('expDataBody');if(!dh||!db)return;
+      dh.innerHTML='<tr style="background:var(--c3)">'+campos.map(function(c,i){return '<th style="padding:5px 8px;font-size:9px;color:var(--amber);font-family:monospace;white-space:nowrap">'+L[i]+' — '+c.exp+'</th>';}).join('')+'</tr>';
+      var items=state.items.slice(0,3);
+      if(!items.length){db.innerHTML='<tr><td colspan="'+campos.length+'" style="padding:12px;text-align:center;color:var(--t3);font-size:11px">Importe uma planilha para ver a prévia</td></tr>';return;}
+      db.innerHTML=items.map(function(it,ri){return '<tr style="border-bottom:1px solid var(--bd);background:'+(ri%2?'var(--c2)':'')+'">'+campos.map(function(c){var v=it[c.id]||it[{sistema:'sis',contagem:'cnt',localizacao:'loc',rUnit:'runit',valUtilizLivre:'val',material:'mat',descricao:'desc'}[c.id]]||'';return '<td style="padding:5px 8px;font-size:10px;color:var(--t2);white-space:nowrap">'+v+'</td>';}).join('')+'</tr>';}).join('');
+    },
+    executarExportacaoSAP:function(){
+      var campos=App._lpGet().filter(function(c){return c.vis;});
+      var fmt=document.querySelector('input[name="expFmt"]:checked');var formato=fmt?fmt.value:'xlsx';
+      var per=document.getElementById('expPeriodo');var periodo=per?per.value:'';
+      var dados=state.history;
+      if(periodo&&periodo!=='todos'){var now=new Date();dados=dados.filter(function(r){if(!r.date)return true;var d=new Date(r.date);if(isNaN(d))return true;if(periodo==='mes')return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();if(periodo==='trim')return d>=new Date(now.getFullYear(),Math.floor(now.getMonth()/3)*3,1);if(periodo==='ano')return d.getFullYear()===now.getFullYear();return true;});}
+      var allItems=[];
+      if(dados.length)dados.forEach(function(r){(r.items||[]).forEach(function(it){allItems.push({rot:r,it:it});});});
+      else if(state.items.length)state.items.forEach(function(it){allItems.push({rot:{id:'ATUAL',date:new Date().toISOString()},it:it});});
+      if(!allItems.length){toast('Nenhum dado para exportar','er');return;}
+      toast('Exportando '+allItems.length+' registros...','in');
+      var cabecalho=campos.map(function(c){return c.exp;});
+      var getV=function(it,r,c){
+        var v=it[c.id];
+        if(v===undefined||v===null||v==='')v=it[{sistema:'sis',contagem:'cnt',localizacao:'loc',rUnit:'runit',valUtilizLivre:'val',material:'mat',descricao:'desc'}[c.id]];
+        if(c.id==='dataMov'&&(!v||v===''))v=r.date?new Date(r.date).toLocaleDateString('pt-BR'):'';
+        return v!==undefined&&v!==null?v:'';
+      };
+      if(formato==='csv'){
+        var linhas=[cabecalho.map(function(h){return '"'+h+'"';}).join(',')];
+        allItems.forEach(function(row){linhas.push(campos.map(function(c){return '"'+String(getV(row.it,row.rot,c)).replace(/"/g,'""')+'"';}).join(','));});
+        var blob=new Blob([linhas.join('\r\n')],{type:'text/csv;charset=utf-8'});
+        var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='rotativo_sap_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+        toast('CSV exportado! '+allItems.length+' registros','ok');
+      } else {
+        if(!window.XLSX){toast('XLSX não carregado. Tente CSV.','er');return;}
+        var wb=XLSX.utils.book_new();
+        var data=[cabecalho];
+        allItems.forEach(function(row){data.push(campos.map(function(c){return getV(row.it,row.rot,c);}));});
+        var ws=XLSX.utils.aoa_to_sheet(data);
+        ws['!cols']=campos.map(function(c){return{wch:c.id==='descricao'?40:c.id==='material'?16:12};});
+        XLSX.utils.book_append_sheet(wb,ws,'Rotativo SAP MB52');
+        XLSX.writeFile(wb,'rotativo_sap_'+new Date().toISOString().slice(0,10)+'.xlsx');
+        toast('XLSX exportado! '+allItems.length+' registros','ok');
+      }
+    },
+
+    // ── DASHBOARD MODULAR ─────────────────────────────────────
+    dashGetWidgets:function(){try{var s=localStorage.getItem('rp_dash_w');if(s)return JSON.parse(s);}catch(e){}return[{tipo:'lista',id:'dw1'},{tipo:'top',id:'dw2'},{tipo:'insights',id:'dw3'}];},
+    dashSaveWidgets:function(w){localStorage.setItem('rp_dash_w',JSON.stringify(w));},
+    dashSalvarLayout:function(){App.dashSaveWidgets(App.dashGetWidgets());toast('Layout salvo!','ok');},
+    dashAddWidget:function(){
+      var p=document.getElementById('dashAddPanel');if(!p)return;
+      if(p.style.display!=='none'){p.style.display='none';return;}
+      var TIPOS=[{t:'bar',n:'Gráfico Barras',i:'📊'},{t:'pizza',n:'Gráfico Pizza',i:'🥧'},
+        {t:'lista',n:'Lista Rotativos',i:'📅'},{t:'top',n:'Top Divergências',i:'🏆'},
+        {t:'insights',n:'Insights',i:'💡'},{t:'kpi-rot',n:'KPI Rotativos',i:'📋'},
+        {t:'kpi-acc',n:'KPI Acurácia',i:'✅'},{t:'kpi-div',n:'KPI Divergências',i:'⚠️'},{t:'kpi-val',n:'KPI Valor',i:'💰'}];
+      p.innerHTML=TIPOS.map(function(d){return '<div data-t="'+d.t+'" onclick="App.dashConfirmAdd(this.dataset.t)" style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border-radius:5px;background:var(--c3);border:1px solid var(--bd);cursor:pointer;text-align:center"><span style="font-size:20px">'+d.i+'</span><span style="font-size:9px;color:var(--t2)">'+d.n+'</span></div>';}).join('');
+      p.style.display='grid';
+    },
+    dashConfirmAdd:function(tipo){
+      var p=document.getElementById('dashAddPanel');if(p)p.style.display='none';
+      var ws=App.dashGetWidgets();ws.push({tipo:tipo,id:'dw'+Date.now()});
+      App.dashSaveWidgets(ws);App.dashRenderGrid();toast('Widget adicionado!','ok');
+    },
+    dashRemoveWidget:function(id){App.dashSaveWidgets(App.dashGetWidgets().filter(function(w){return w.id!==id;}));App.dashRenderGrid();},
+    dashOpenCfg:function(id){
+      var ws=App.dashGetWidgets();var w=ws.find(function(x){return x.id===id;});if(!w)return;
+      var cfg=w.cfg||{};var body=document.getElementById('dwb-'+id);if(!body)return;
+      if(body.getAttribute('data-cfg')==='1'){body.removeAttribute('data-cfg');App.dashRenderGrid();return;}
+      body.setAttribute('data-cfg','1');
+      body.innerHTML='<div style="display:flex;flex-direction:column;gap:6px">'
+        +'<div><div style="font-size:9px;color:var(--t3);margin-bottom:2px">TÍTULO</div><input id="dwt-'+id+'" value="'+(cfg.titulo||'')+'" style="width:100%;background:var(--c3);border:1px solid var(--bd);border-radius:3px;padding:4px 7px;color:var(--t2);font-size:10px;outline:none"/></div>'
+        +'<div><div style="font-size:9px;color:var(--t3);margin-bottom:2px">TIPO DE GRÁFICO</div><select id="dwg-'+id+'" style="width:100%;background:var(--c3);border:1px solid var(--bd);border-radius:3px;padding:4px 7px;color:var(--t2);font-size:10px;outline:none"><option value="bar"'+(cfg.tipoGraf==='bar'?' selected':'')+'>Barra</option><option value="line"'+(cfg.tipoGraf==='line'?' selected':'')+'>Linha</option><option value="pizza"'+(cfg.tipoGraf==='pizza'?' selected':'')+'>Pizza</option></select></div>'
+        +'<div><div style="font-size:9px;color:var(--t3);margin-bottom:2px">INDICADOR</div><select id="dwm-'+id+'" style="width:100%;background:var(--c3);border:1px solid var(--bd);border-radius:3px;padding:4px 7px;color:var(--t2);font-size:10px;outline:none"><option value="total">Total Rotativos</option><option value="diverg"'+(cfg.metrica==='diverg'?' selected':'')+'>Divergências</option><option value="valor"'+(cfg.metrica==='valor'?' selected':'')+'>Valor Inventariado</option><option value="acuracia"'+(cfg.metrica==='acuracia'?' selected':'')+'>Acuracidade</option></select></div>'
+        +'<div><div style="font-size:9px;color:var(--t3);margin-bottom:2px">PERÍODO</div><select id="dwp-'+id+'" style="width:100%;background:var(--c3);border:1px solid var(--bd);border-radius:3px;padding:4px 7px;color:var(--t2);font-size:10px;outline:none"><option value="">Todos</option><option value="mes"'+(cfg.periodo==='mes'?' selected':'')+'>Este Mês</option><option value="trim"'+(cfg.periodo==='trim'?' selected':'')+'>Trimestre</option><option value="ano"'+(cfg.periodo==='ano'?' selected':'')+'>Este Ano</option></select></div>'
+        +'<div style="display:flex;gap:5px"><button data-id="'+id+'" onclick="App.dashApplyCfg(this.dataset.id)" style="flex:1;padding:5px;background:rgba(0,255,178,.15);border:1px solid rgba(0,255,178,.3);border-radius:3px;color:var(--acid);font-size:10px;font-weight:700;cursor:pointer">✓ Aplicar</button><button data-id="'+id+'" onclick="App.dashOpenCfg(this.dataset.id)" style="flex:1;padding:5px;background:var(--c3);border:1px solid var(--bd);border-radius:3px;color:var(--t3);font-size:10px;cursor:pointer">✕</button></div>'
+        +'</div>';
+    },
+    dashApplyCfg:function(id){
+      var ws=App.dashGetWidgets();var w=ws.find(function(x){return x.id===id;});if(!w)return;
+      var g=function(e){var el=document.getElementById(e);return el?el.value:'';};
+      w.tipo=g('dwg-'+id)||w.tipo;
+      w.cfg={titulo:g('dwt-'+id),tipoGraf:g('dwg-'+id),metrica:g('dwm-'+id),periodo:g('dwp-'+id)};
+      App.dashSaveWidgets(ws);App.dashRenderGrid();toast('Widget configurado!','ok');
+    },
+    dashRenderGrid:function(){
+      var grid=document.getElementById('dashModGrid');if(!grid)return;
+      var ws=App.dashGetWidgets();var hist=window._lastHistFilt||state.history;
+      var N={bar:'Gráfico Barras',pizza:'Gráfico Pizza',lista:'Lista Rotativos',top:'Top Divergências',insights:'Insights','kpi-rot':'Rotativos','kpi-acc':'Acurácia','kpi-div':'Divergências','kpi-val':'Valor'};
+      var I={bar:'📊',pizza:'🥧',lista:'📅',top:'🏆',insights:'💡','kpi-rot':'📋','kpi-acc':'✅','kpi-div':'⚠️','kpi-val':'💰'};
+      if(!ws.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:14px;color:var(--t3);font-size:11px">Clique em ⊕ Adicionar para personalizar</div>';return;}
+      grid.innerHTML=ws.map(function(w){
+        var cfg=w.cfg||{};var nome=cfg.titulo||(N[w.tipo]||w.tipo);
+        return '<div class="panel" id="dw-'+w.id+'">'
+          +'<div class="panel-header" style="display:flex;align-items:center;gap:6px">'
+          +'<span>'+(I[w.tipo]||'📊')+'</span><span class="panel-title">'+nome+'</span>'
+          +'<div style="margin-left:auto;display:flex;gap:3px">'
+          +'<button data-id="'+w.id+'" onclick="App.dashOpenCfg(this.dataset.id)" style="background:rgba(26,159,255,.1);border:1px solid rgba(26,159,255,.2);border-radius:3px;color:var(--blue);cursor:pointer;padding:1px 6px;font-size:10px" title="Configurar">⚙</button>'
+          +'<button data-id="'+w.id+'" onclick="App.dashRemoveWidget(this.dataset.id)" style="background:rgba(255,59,92,.1);border:1px solid rgba(255,59,92,.2);border-radius:3px;color:var(--red);cursor:pointer;padding:1px 6px;font-size:10px">✕</button>'
+          +'</div></div>'
+          +'<div id="dwb-'+w.id+'" style="padding:4px 12px 10px">'+App._dashBody(w,hist)+'</div>'
+          +'</div>';
+      }).join('');
+      setTimeout(function(){ws.forEach(function(w){App._dashChart(w,hist);});},80);
+      // Atualizar Resumo Financeiro
+      var fp=document.getElementById('dashFinanceiroPanel');
+      if(fp){
+        var tv=0,td=0,rc=0;
+        hist.forEach(function(r){
+          if(r.valTotalManual&&r.valTotalManual!==''){var v=parseFloat(String(r.valTotalManual).replace(/[R$\s.]/g,'').replace(',','.'));if(!isNaN(v)&&v>0){tv+=v;rc++;}}
+          if(r.valDesvioManual&&r.valDesvioManual!==''){var d=parseFloat(String(r.valDesvioManual).replace(/[R$\s.]/g,'').replace(',','.'));if(!isNaN(d))td+=d;}
+        });
+        var fmt=function(v){return 'R$ '+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});};
+        fp.innerHTML=rc===0?'<div style="color:var(--t3);font-size:11px;text-align:center;padding:12px">Preencha os campos de Valor na Conferência e salve um rotativo</div>'
+          :'<div style="display:flex;flex-direction:column;gap:8px;padding:2px 0">'
+          +'<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:rgba(26,159,255,.06);border-radius:6px"><span style="font-size:11px;color:var(--t3)">Valor Total</span><span style="font-size:18px;font-weight:800;color:var(--blue);font-family:monospace">'+fmt(tv)+'</span></div>'
+          +'<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:'+(td<0?'rgba(255,59,92,.06)':'rgba(0,232,122,.06)')+';border-radius:6px"><span style="font-size:11px;color:var(--t3)">Desvio Financeiro</span><span style="font-size:18px;font-weight:800;color:'+(td<0?'var(--red)':td>0?'var(--amber)':'var(--green)')+';font-family:monospace">'+(td<0?'- ':'+ ')+fmt(td)+'</span></div>'
+          +'<div style="font-size:9px;color:var(--t3);text-align:right">'+rc+' rotativo(s) com dados financeiros</div></div>';
+      }
+    },
+    _dashFiltHist:function(cfg,hist){
+      if(!cfg||!cfg.periodo)return hist;
+      var now=new Date();
+      return hist.filter(function(r){if(!r.date)return true;var d=new Date(r.date);if(isNaN(d))return true;
+        if(cfg.periodo==='mes')return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+        if(cfg.periodo==='trim')return d>=new Date(now.getFullYear(),Math.floor(now.getMonth()/3)*3,1);
+        if(cfg.periodo==='ano')return d.getFullYear()===now.getFullYear();return true;});
+    },
+    _dashBody:function(w,histAll){
+      var hist=App._dashFiltHist(w.cfg,histAll);
+      var totDiv=0,totOk=0,totTot=0;
+      hist.forEach(function(r){totDiv+=r.stats?r.stats.diverg:0;totOk+=r.stats?r.stats.ok:0;totTot+=r.stats?r.stats.total:0;});
+      var acc=totTot?Math.round(totOk/totTot*100):100;
+      var kpi=function(l,v,c){return '<div><div style="font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">'+l+'</div><div style="font-size:24px;font-weight:800;font-family:monospace;color:'+c+'">'+v+'</div></div>';};
+      switch(w.tipo){
+        case 'kpi-rot':return kpi('Rotativos',hist.length,'var(--acid)');
+        case 'kpi-acc':return kpi('Acurácia',acc+'%',acc>=95?'var(--green)':acc>=80?'var(--amber)':'var(--red)');
+        case 'kpi-div':return kpi('Divergências',totDiv,totDiv>0?'var(--red)':'var(--green)');
+        case 'kpi-val':var tv=0;hist.forEach(function(r){if(r.valTotalManual){var v=parseFloat(String(r.valTotalManual).replace(/[R$\s.]/g,'').replace(',','.'));if(!isNaN(v))tv+=v;}});return kpi('Valor',tv>0?'R$'+Math.round(tv).toLocaleString('pt-BR'):'—','var(--blue)');
+        case 'lista':
+          if(!hist.length)return '<div style="color:var(--t3);font-size:11px;padding:6px">Nenhum rotativo</div>';
+          return '<div style="max-height:130px;overflow-y:auto">'+hist.slice().reverse().slice(0,6).map(function(r){var ac=r.stats&&r.stats.total?Math.round(r.stats.ok/r.stats.total*100):100;var dt=r.date?new Date(r.date).toLocaleDateString('pt-BR'):'—';return '<div style="display:flex;gap:6px;padding:4px 0;border-bottom:1px solid var(--bd);font-size:10px;align-items:center"><span style="font-family:monospace;color:var(--acid)">'+dt+'</span><span style="flex:1;color:var(--t2)">'+(r.stats?r.stats.total:0)+' itens</span>'+(r.valTotalManual?'<span style="color:var(--blue);font-family:monospace;font-size:9px">'+r.valTotalManual+'</span>':'')+'<span style="font-weight:700;color:'+(ac>=95?'var(--green)':'var(--amber)')+'">'+ac+'%</span></div>';}).join('')+'</div>';
+        case 'top':
+          var freq={};hist.forEach(function(r){(r.items||[]).forEach(function(it){var sis=Number(it.sistema||it.sis||0);var cnt=it.contagem!==null&&it.contagem!==undefined?Number(it.contagem):(it.cnt!==null&&it.cnt!==undefined?Number(it.cnt):null);if(cnt!==null&&cnt!==sis){var k=it.material||it.mat||'?';freq[k]=(freq[k]||0)+1;}});});
+          var tops=Object.keys(freq).sort(function(a,b){return freq[b]-freq[a];}).slice(0,5);
+          if(!tops.length)return '<div style="color:var(--green);font-size:11px;padding:6px">🎉 Sem divergências!</div>';
+          return '<div>'+tops.map(function(k,i){return '<div style="display:flex;gap:6px;padding:4px 0;border-bottom:1px solid var(--bd);font-size:10px;align-items:center"><span style="color:var(--t3);width:14px">'+(i+1)+'</span><span style="flex:1;font-family:monospace;color:var(--acid)">'+k+'</span><span style="font-weight:700;color:var(--red)">'+freq[k]+'×</span></div>';}).join('')+'</div>';
+        case 'insights':
+          var ins=[];
+          if(acc>=98)ins.push({c:'var(--green)',t:'Acurácia excelente: '+acc+'%'});
+          else if(acc<80)ins.push({c:'var(--red)',t:'Acurácia baixa: '+acc+'%'});
+          else ins.push({c:'var(--amber)',t:'Acurácia: '+acc+'%'});
+          ins.push(totDiv===0?{c:'var(--green)',t:'Sem divergências 🎉'}:{c:'var(--red)',t:totDiv+' divergência(s)'});
+          return '<div>'+ins.map(function(i){return '<div style="display:flex;gap:6px;padding:5px 0;border-bottom:1px solid var(--bd);align-items:center"><div style="width:6px;height:6px;border-radius:50%;background:'+i.c+';flex-shrink:0"></div><span style="font-size:11px;color:var(--t2)">'+i.t+'</span></div>';}).join('')+'</div>';
+        case 'bar':case 'pizza':
+          return '<canvas id="dwc-'+w.id+'" style="max-height:130px"></canvas>';
+        default:return '';
+      }
+    },
+    _dashChart:function(w,histAll){
+      if(w.tipo!=='bar'&&w.tipo!=='pizza')return;
+      var hist=App._dashFiltHist(w.cfg,histAll);
+      var c=document.getElementById('dwc-'+w.id);
+      if(!c||typeof Chart==='undefined')return;
+      if(w._chart){w._chart.destroy();w._chart=null;}
+      var cfg=w.cfg||{};var metrica=cfg.metrica||'total';
+      var getVal=function(r){
+        if(metrica==='diverg')return r.stats?r.stats.diverg:0;
+        if(metrica==='acuracia')return r.stats&&r.stats.total?Math.round(r.stats.ok/r.stats.total*100):100;
+        if(metrica==='valor'){var v=0;if(r.valTotalManual){var n=parseFloat(String(r.valTotalManual).replace(/[R$\s.]/g,'').replace(',','.'));if(!isNaN(n))v=n;}return v;}
+        return r.stats?r.stats.total:0;
+      };
+      if(w.tipo==='pizza'){
+        var ok2=0,div2=0;hist.forEach(function(r){ok2+=r.stats?r.stats.ok:0;div2+=r.stats?r.stats.diverg:0;});
+        w._chart=new Chart(c,{type:'doughnut',data:{labels:['OK','Diverg.'],datasets:[{data:[ok2,div2],backgroundColor:['rgba(0,232,122,.7)','rgba(255,59,92,.7)'],borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#7BA8CC',font:{size:9}}}}}});
+      } else {
+        var labels=hist.slice(-6).map(function(r,i){return r.date?new Date(r.date).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}):'R'+(i+1);});
+        var vals=hist.slice(-6).map(getVal);
+        if(!vals.length){labels=['Jan','Fev','Mar','Abr','Mai','Jun'];vals=[0,0,0,0,0,0];}
+        var tipoGraf=cfg.tipoGraf||'bar';
+        w._chart=new Chart(c,{type:tipoGraf==='line'?'line':'bar',data:{labels:labels,datasets:[{data:vals,backgroundColor:'rgba(0,255,178,.4)',borderColor:'rgba(0,255,178,.8)',borderWidth:tipoGraf==='line'?2:1,borderRadius:tipoGraf==='bar'?3:0,fill:tipoGraf==='line',tension:.4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#4A6080',font:{size:8}},grid:{display:false}},y:{ticks:{color:'#4A6080',font:{size:8},callback:function(v){return metrica==='acuracia'?v+'%':metrica==='valor'?'R$'+v:v;}},grid:{color:'rgba(0,200,150,.05)'}}}}});
+      }
+    },
+
     saveRotativo, setFilter, searchTable,
     loadRotativo, filterHistory,
     openNewDepot, editDepot, saveDepot, deleteDepot, verItensDepot,
