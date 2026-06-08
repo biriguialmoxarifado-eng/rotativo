@@ -1184,6 +1184,11 @@ body { display: flex; }
       Mapa 3D
       <span class="nav-badge">NEW</span>
     </a>
+    <a class="nav-item" data-page="rastreabilidade" onclick="navigate('rastreabilidade')">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="5" height="5" rx="1"/><rect x="13" y="3" width="5" height="5" rx="1"/><rect x="7.5" y="12" width="5" height="5" rx="1"/><path d="M4.5 8v2.5a1 1 0 001 1h9a1 1 0 001-1V8"/><line x1="10" y1="10.5" x2="10" y2="12"/></svg>
+      Rastreabilidade
+      <span class="nav-badge" id="rastNavBadge" style="background:var(--blue)">0</span>
+    </a>
 
     <div class="nav-section-label" style="margin-top:20px">RELATÓRIOS</div>
     <a class="nav-item" data-page="mensal" onclick="navigate('mensal')">
@@ -1442,11 +1447,40 @@ body { display: flex; }
         </div>
       </div>
 
+      <!-- ══ RASTREABILIDADE — painel aditivo (não altera fluxo existente) ══ -->
+      <div id="rastContextBar" style="display:none;position:fixed;bottom:68px;left:var(--sidebar-w);right:0;background:rgba(8,15,30,.97);border-top:1px solid rgba(0,153,255,.25);padding:8px 20px;z-index:89;display:none;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="var(--blue)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="5" height="5" rx="1"/><rect x="13" y="3" width="5" height="5" rx="1"/><rect x="7.5" y="12" width="5" height="5" rx="1"/><path d="M4.5 8v2.5a1 1 0 001 1h9a1 1 0 001-1V8"/><line x1="10" y1="10.5" x2="10" y2="12"/></svg>
+          <span style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--blue)">RASTREABILIDADE</span>
+          <span style="font-size:9px;color:var(--t3)">(opcional)</span>
+        </div>
+        <div style="display:flex;gap:10px;flex:1;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:6px">
+            <label style="font-size:10px;color:var(--t3);white-space:nowrap">Reserva</label>
+            <input id="rastReserva" placeholder="ex: 0010042381" class="field-input mono" style="width:130px;font-size:11px;padding:4px 8px;height:28px"/>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <label style="font-size:10px;color:var(--t3);white-space:nowrap">Matrícula</label>
+            <input id="rastMatricula" placeholder="ex: 12345" class="field-input mono" style="width:90px;font-size:11px;padding:4px 8px;height:28px"/>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <label style="font-size:10px;color:var(--t3);white-space:nowrap">Destino</label>
+            <input id="rastDestino" placeholder="ex: Linha A / CC 1234" class="field-input" style="width:150px;font-size:11px;padding:4px 8px;height:28px"/>
+          </div>
+        </div>
+        <button onclick="document.getElementById('rastContextBar').style.display='none'" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:16px;padding:0 4px" title="Fechar">×</button>
+      </div>
+
       <div class="capture-save-bar" id="captureSaveBar" style="display:none">
         <div class="save-bar-info" id="saveBarInfo">0 itens prontos para salvar</div>
-        <div style="display:flex;gap:10px">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <button class="cbtn cbtn-outline" onclick="App.novaCapturaBtn()">🔄 Nova Captura</button>
           <button class="cbtn cbtn-outline" onclick="navigate('table')">Revisar Tabela</button>
+          <!-- Botão aditivo de rastreabilidade — não interfere no fluxo -->
+          <button class="cbtn cbtn-outline" id="rastToggleBtn" onclick="Rast.toggleBar()" style="border-color:rgba(0,153,255,.4);color:var(--blue)" title="Informar Reserva / Matrícula / Destino">
+            <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="5" height="5" rx="1"/><rect x="13" y="3" width="5" height="5" rx="1"/><rect x="7.5" y="12" width="5" height="5" rx="1"/><path d="M4.5 8v2.5a1 1 0 001 1h9a1 1 0 001-1V8"/><line x1="10" y1="10.5" x2="10" y2="12"/></svg>
+            Rastreabilidade
+          </button>
           <button class="cbtn cbtn-primary" onclick="App.saveRotativo()">
             <svg viewBox="0 0 20 20" width="14" height="14"><path d="M5 2h8l4 4v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><polyline points="7 13 7 17 13 17 13 13"/></svg>
             Salvar Rotativo
@@ -1564,6 +1598,16 @@ body { display: flex; }
 
     <!-- ══ ETIQUETAS ══ -->
     <section class="page" id="page-etiquetas">
+
+      <!-- ── BUSCA RÁPIDA (aditivo) ── -->
+      <div style="background:var(--c2);border:1px solid var(--bd);border-radius:var(--r);padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="var(--t3)" stroke-width="1.8" stroke-linecap="round"><circle cx="8.5" cy="8.5" r="5.5"/><line x1="13" y1="13" x2="17" y2="17"/></svg>
+        <input id="etqBusca" class="field-input" placeholder="Buscar série, SKU, produto... (ex: INV-000015)" style="flex:1;min-width:200px;font-size:12px;padding:5px 10px" oninput="_etqBuscar(this.value)"/>
+        <button class="cbtn cbtn-outline cbtn-sm" onclick="_etqBuscar('');document.getElementById('etqBusca').value=''" style="font-size:11px">✕ Limpar</button>
+      </div>
+      <!-- Resultado da busca -->
+      <div id="etqBuscaResultado" style="display:none;background:var(--c2);border:1px solid rgba(0,255,178,.2);border-radius:var(--r);padding:12px 16px;margin-bottom:10px"></div>
+
       <!-- Controles de etiqueta -->
       <div style="background:var(--c1);border:1px solid var(--bd);border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
         <span style="font-size:10px;font-weight:700;color:var(--t3)">MODELO:</span>
@@ -1636,8 +1680,8 @@ body { display: flex; }
               </div>
               <div class="form-row">
                 <div class="form-field">
-                  <label>Nº Inicial</label>
-                  <input id="etqNumInicio" class="field-input" type="number" value="1" min="1" oninput="App.previewEtiqueta()"/>
+                  <label>Nº Inicial <span style="font-size:9px;color:var(--t3);font-weight:400">(0 = automático)</span></label>
+                  <input id="etqNumInicio" class="field-input" type="number" value="0" min="0" oninput="App.previewEtiqueta()" placeholder="0 = próximo disponível"/>
                 </div>
                 <div class="form-field">
                   <label>Quantidade</label>
@@ -1680,12 +1724,13 @@ body { display: flex; }
               <div style="display:flex;gap:8px;margin-top:6px">
                 <button class="cbtn cbtn-primary" style="flex:2" onclick="App.gerarEtiquetasPDF()">
                   <svg viewBox="0 0 20 20" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 14H3a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-1"/><rect x="4" y="13" width="12" height="6" rx="1"/><path d="M4 7V3h12v4"/></svg>
-                  Gerar PDF
+                  Gerar Etiquetas
                 </button>
                 <button class="cbtn cbtn-secondary" style="flex:1" onclick="App.gerarZPL()">ZPL Zebra</button>
               </div>
               <div style="display:flex;gap:6px;margin-top:6px">
                 <button class="cbtn cbtn-outline" style="flex:1;font-size:11px" onclick="window.imprimirDiretaFn()">🖨 Imprimir Direta</button>
+                <button class="cbtn cbtn-outline" style="flex:1;font-size:11px;border-color:rgba(0,153,255,.4);color:var(--blue)" onclick="_soBaixarPDF()" title="Baixar PDF das etiquetas já geradas — sem criar novos registros">⬇ Baixar PDF</button>
                 <button style="flex:1;padding:6px;border:1px solid rgba(255,59,92,.3);border-radius:7px;background:rgba(255,59,92,.06);color:var(--red);font-size:11px;cursor:pointer;font-weight:600" onclick="App.limparEtiquetas()">🗑 Excluir Lote</button>
               </div>
               <!-- ZPL output -->
@@ -1922,6 +1967,79 @@ body { display: flex; }
       <div id="ocorrKpis" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px"></div>
       <!-- Lista -->
       <div id="ocorrLista" style="display:flex;flex-direction:column;gap:10px"></div>
+    </section>
+
+    <!-- ══ RASTREABILIDADE ══ (módulo aditivo — não altera fluxos existentes) -->
+    <section class="page" id="page-rastreabilidade">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="font-size:16px;font-weight:700">🔗 Rastreabilidade de Movimentações</div>
+          <div style="font-size:11px;color:var(--t3)">Lote · Reserva · Matrícula · Destino — registro completo por movimentação</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input id="rastSearch" class="field-input" placeholder="Buscar série, reserva, SKU, produto..." style="width:220px;font-size:11px;padding:5px 10px" oninput="Rast.renderLista();Rast.renderConsulta(this.value)"/>
+          <button class="cbtn cbtn-outline cbtn-sm" onclick="Rast.exportCSV()">📥 Exportar CSV</button>
+          <button class="cbtn cbtn-primary cbtn-sm" onclick="navigate('capture')">+ Novo Lote</button>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div id="rastKpis" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px"></div>
+
+      <!-- Consulta Rápida (aditivo) -->
+      <div id="rastConsultaPanel" style="display:none;margin-bottom:14px;background:var(--c2);border:1px solid var(--bd);border-radius:var(--r)">
+        <div style="padding:10px 16px;border-bottom:1px solid var(--bd);font-size:11px;font-weight:700;color:var(--t2);letter-spacing:.5px">RESULTADOS DA CONSULTA</div>
+        <div id="rastConsultaResultado" style="max-height:260px;overflow-y:auto"></div>
+      </div>
+
+      <!-- Lista de lotes -->
+      <div id="rastLista" style="display:flex;flex-direction:column;gap:10px"></div>
+
+      <!-- Estado vazio -->
+      <div id="rastVazio" style="display:none;text-align:center;padding:60px 20px;color:var(--t3)">
+        <div style="font-size:32px;margin-bottom:12px">🔗</div>
+        <div style="font-size:14px;font-weight:600;color:var(--t2);margin-bottom:8px">Nenhum lote com rastreabilidade</div>
+        <div style="font-size:12px;line-height:1.8">Ao salvar um rotativo, clique em <strong style="color:var(--blue)">Rastreabilidade</strong><br/>na barra inferior e informe Reserva, Matrícula ou Destino.</div>
+        <button class="cbtn cbtn-primary" style="margin-top:20px" onclick="navigate('capture')">Ir para Captura →</button>
+      </div>
+
+      <!-- ── REIMPRESSÃO INTELIGENTE — Simulador de Leitura ── -->
+      <div style="margin-top:20px;background:var(--c2);border:1px solid rgba(0,153,255,.2);border-radius:var(--r);overflow:hidden">
+        <div style="padding:12px 18px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--blue)">📷 Leitor de Etiqueta</div>
+            <div style="font-size:10px;color:var(--t3);margin-top:2px">Digite ou escaneie o ID. Releitura da mesma etiqueta abre o fluxo de reimpressão automático.</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <input id="rastLeituraInput" class="field-input mono" placeholder="INV-000005 ou escaneie QR..." style="width:200px;font-size:12px;padding:6px 10px"
+              onkeydown="if(event.key==='Enter'&&this.value.trim()){Rast.exibirResultadoLeitura(this.value.trim());Rast.verificarLeitura(this.value.trim());this.value='';}"/>
+            <button class="cbtn cbtn-outline cbtn-sm" onclick="(function(){var el=document.getElementById('rastLeituraInput');if(el&&el.value.trim()){Rast.exibirResultadoLeitura(el.value.trim());Rast.verificarLeitura(el.value.trim());el.value='';el.focus();}})()">▶ Ler</button>
+            <button class="cbtn cbtn-primary cbtn-sm" onclick="Rast.abrirCameraQR()" title="Abrir câmera para ler QR Code">
+              <svg viewBox="0 0 20 20" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M2 6a2 2 0 0 1 2-2h3l2-2h6l2 2h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6z"/><circle cx="10" cy="11" r="2.5"/></svg>
+              Câmera
+            </button>
+          </div>
+        </div>
+
+        <!-- Resultado da leitura -->
+        <div id="rastLeituraResultado" style="padding:12px 18px"></div>
+
+        <!-- Histórico de séries -->
+        <div style="padding:12px 18px 6px;border-top:1px solid var(--bd)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <div style="font-size:10px;font-weight:700;letter-spacing:1px;color:var(--t3)">HISTÓRICO DE SÉRIES</div>
+            <div style="display:flex;gap:6px">
+              <button class="cbtn cbtn-outline cbtn-sm" style="font-size:10px" onclick="Rast.renderHistoricoSeries('rastSeriesLista');document.getElementById('rastSeriesVazio').style.display='none'">↻ Atualizar</button>
+              <button class="cbtn cbtn-outline cbtn-sm" style="font-size:10px;border-color:rgba(0,255,178,.3);color:var(--acid)" onclick="navigate('etiquetas')">🏷 Ir p/ Etiquetas</button>
+            </div>
+          </div>
+          <div id="rastSeriesLista" style="max-height:280px;overflow-y:auto;border-radius:7px;border:1px solid var(--bd)"></div>
+          <div id="rastSeriesVazio" style="text-align:center;padding:24px;color:var(--t3);font-size:12px">Nenhuma série registrada — gere um PDF de etiquetas para registrar automaticamente</div>
+        </div>
+        <div style="padding:6px 18px 14px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="cbtn cbtn-outline cbtn-sm" onclick="Rast.imprimirDireto()" title="Imprimir etiqueta do preview diretamente">🖨 Impressão Direta</button>
+        </div>
+      </div>
     </section>
 
     <!-- ══ BASE DE SKUs ══ -->
@@ -2889,7 +3007,7 @@ window.App = (function() {
       history:   ['Histórico', 'Todos os rotativos salvos'],
       audit:       ['Auditorias', 'Inspeções e verificações de campo'],
       ocorrencias: ['Ocorrências', 'Divergências com rastreabilidade completa'],
-      depots:    ['Almoxarifado', 'Depósitos e localizações'],
+      rastreabilidade: ['Rastreabilidade', 'Histórico de movimentações com reserva, matrícula e destino'],      depots:    ['Almoxarifado', 'Depósitos e localizações'],
       import:    ['Importar Planilha', 'CSV, XLSX ou TXT do SAP'],
       settings:   ['Configurações', 'Operador, Google Sheets, OCR'],
       skubase:    ['Base de SKUs', 'Cadastro mestre de materiais'],
@@ -2913,6 +3031,22 @@ window.App = (function() {
       if (page === 'depots')     renderDepots();
       if (page === 'audit')        renderAuditList();
       if (page === 'ocorrencias')  { if(typeof renderOcorrencias==='function') renderOcorrencias(); }
+      if (page === 'rastreabilidade') {
+        if (window.Rast) {
+          // Forçar render completo sempre que a tela for aberta
+          try {
+            window.Rast.renderLista();
+            window.Rast.renderHistoricoSeries('rastSeriesLista');
+            var _series = JSON.parse(localStorage.getItem('rp_series_etiquetas')||'[]');
+            var sv = document.getElementById('rastSeriesVazio');
+            var sl = document.getElementById('rastSeriesLista');
+            if (sv) sv.style.display = _series.length ? 'none' : 'block';
+            if (sl) sl.style.display = _series.length ? 'block' : 'none';
+            var rv = document.getElementById('rastVazio');
+            if (rv) rv.style.display = _series.length ? 'none' : 'block';
+          } catch(e) { console.warn('[Rast navigate]', e); }
+        }
+      }
       if (page === 'settings')     { setTimeout(function(){ if(typeof window.modRender==='function') window.modRender(); },50); }
       if (page === 'skubase')      { setTimeout(function(){ if(typeof window.skuRender==='function') window.skuRender(); },50); }
       if (page === 'mensal') { var _nd=new Date(); setTimeout(function(){
@@ -3472,6 +3606,30 @@ window.App = (function() {
       valTotalManual:  state._valTotalManual  || '',
       valDesvioManual: state._valDesvioManual || '',
     };
+    // ── RASTREABILIDADE (aditivo) ─────────────────────────────
+    // Captura campos opcionais sem alterar fluxo existente
+    var rastReserva   = (document.getElementById('rastReserva')   || {}).value || '';
+    var rastMatricula = (document.getElementById('rastMatricula') || {}).value || '';
+    var rastDestino   = (document.getElementById('rastDestino')   || {}).value || '';
+    if (rastReserva || rastMatricula || rastDestino) {
+      rot.rast = {
+        reserva:   rastReserva.trim(),
+        matricula: rastMatricula.trim(),
+        destino:   rastDestino.trim(),
+        ts:        new Date().toISOString(),
+        op:        state.cfg.op || 'Operador'
+      };
+      // Registrar no módulo de rastreabilidade
+      if (window.Rast) window.Rast.registrar(rot);
+      // Limpar campos após salvar
+      ['rastReserva','rastMatricula','rastDestino'].forEach(function(id){
+        var el = document.getElementById(id); if(el) el.value='';
+      });
+      var bar = document.getElementById('rastContextBar');
+      if (bar) bar.style.display='none';
+    }
+    // ── FIM RASTREABILIDADE ───────────────────────────────────
+
     // Garantir que não substitui — nunca limitar em 50 sem aviso
     state.history.unshift(rot);
     // Criar ocorrências automáticas das divergências
@@ -6403,6 +6561,7 @@ window.App = (function() {
 
     previewEtiqueta: function(){ previewEtiqueta(); },
     gerarEtiquetasPDF: function(){ gerarEtiquetasPDF(); },
+    soBaixarPDF:       function(){ _soBaixarPDF(); },
     gerarZPL: function(){ gerarZPL(); },
     renderMapa: renderMapa,
     autoDetectarContainersPublic: function() { autoDetectarContainers(); recalcDepots(); },
@@ -6811,7 +6970,28 @@ function initEtiquetas() {
 }
 
 function getEtqConfig() {
-  var get = function(id){ var el=document.getElementById(id); return el?el.value.trim():''; };
+  var get  = function(id){ var el=document.getElementById(id); return el?el.value.trim():''; };
+  var getB = function(id){ var el=document.getElementById(id); return el ? el.checked : true; };
+  var prefixo = (get('etqPrefixo') || 'INV').toUpperCase();
+
+  // Calcular próximo número disponível automaticamente
+  // Se o campo é 0 ou vazio, busca o maior número já usado para este prefixo no storage
+  function _proximoDisponivel(pref) {
+    try {
+      var series = JSON.parse(localStorage.getItem('rp_series_etiquetas') || '[]');
+      var nums = series
+        .filter(function(s){ return (s.prefixo||'').toUpperCase() === pref.toUpperCase(); })
+        .map(function(s){ return s.num || parseInt((s.idNovo||'').split('-').pop()) || 0; })
+        .filter(function(n){ return !isNaN(n); });
+      return nums.length ? Math.max.apply(null, nums) + 1 : 1;
+    } catch(e) { return 1; }
+  }
+
+  var numInicioRaw = parseInt(get('etqNumInicio'));
+  var numInicio = (isNaN(numInicioRaw) || numInicioRaw <= 0)
+    ? _proximoDisponivel(prefixo)
+    : numInicioRaw;
+
   return {
     emp:       get('etqEmp') || (window._appState&&window._appState.cfg&&window._appState.cfg.emp)||'EMPRESA',
     sub:       get('etqSub')      || 'INVENTARIO ROTATIVO',
@@ -6820,12 +7000,14 @@ function getEtqConfig() {
     desc:      get('etqDesc') || '',
     auditor:   get('etqAuditor')  || (window._appState?window._appState.cfg.op:'') || 'Auditor',
     local:     get('etqLocal')    || '',
-    prefixo:   get('etqPrefixo') || 'INV',
-    numInicio: parseInt(get('etqNumInicio'))||1,
+    prefixo:   prefixo,
+    numInicio: numInicio,
     qtd:       Math.min(100, parseInt(get('etqQtd'))||1),
     formato:   get('etqFormato')  || '60x40',
     extra:     get('etqExtra')    || '',
     aviso:     get('etqAviso')    || 'SE VIOLADO EMITIR NOVO LACRE',
+    showQR:    getB('etiqShowQR'),
+    showLoc:   getB('etiqShowLoc'),
   };
 }
 
@@ -6855,61 +7037,98 @@ function tipoConfig(tipo) {
 }
 
 // Gerar QR Code simples em canvas (matriz de módulos)
+// drawQRCode — gera QR real via qrcodejs em canvas interno e copia sincronamente.
+// Quando chamado no preview (desenharEtiqueta), gera o QR e o aplica via requestAnimationFrame.
+// Quando chamado no PDF (gerarEtiquetasPDF), o _gerarComQRReal cuida do timing.
 function drawQRCode(ctx, data, x, y, size) {
-  if (window.QRCode) {
-    try {
-      var tmpDiv = document.createElement('div'); tmpDiv.style.display='none'; document.body.appendChild(tmpDiv);
-      new QRCode(tmpDiv, {text:data, width:size, height:size, correctLevel:QRCode.CorrectLevel.M});
-      setTimeout(function(){
-        var qrImg = tmpDiv.querySelector('img');
-        if(qrImg&&qrImg.complete){ var img=new Image(); img.onload=function(){ctx.drawImage(img,x,y,size,size);}; img.src=qrImg.src; }
-        document.body.removeChild(tmpDiv);
-      }, 150); return;
-    } catch(e) {}
-  }
-  // Fallback visual
-  var cell = size / 21;
-  // Padrão de finder corners
-  var pattern = [
-    [1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1],
-    [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1],
-    [1,0,1,1,1,0,1,0,0,0,0,0,0,0,1,0,1,1,1,0,1],
-    [1,0,1,1,1,0,1,0,0,0,0,0,0,0,1,0,1,1,1,0,1],
-    [1,0,1,1,1,0,1,0,0,0,0,0,0,0,1,0,1,1,1,0,1],
-    [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1],
-    [1,1,1,1,1,1,1,0,1,0,1,0,1,0,1,1,1,1,1,1,1],
-    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-    [0,0,0,1,0,0,0,0,1,1,0,1,0,1,0,0,1,0,1,1,0],
-    [0,1,0,0,1,0,1,0,0,1,1,0,1,0,0,1,0,1,0,0,1],
-    [0,0,1,0,0,1,0,0,1,0,1,1,0,0,1,0,0,1,1,0,0],
-    [0,1,1,0,1,0,1,0,0,1,0,1,1,0,0,1,0,0,1,0,1],
-    [0,0,0,1,0,1,0,0,1,1,0,0,1,1,0,0,1,1,0,1,0],
-    [0,0,0,0,0,0,0,0,0,1,0,1,0,0,1,0,1,0,0,1,0],
-    [1,1,1,1,1,1,1,0,1,0,1,1,0,1,0,1,0,1,1,0,1],
-    [1,0,0,0,0,0,1,0,0,1,0,0,1,0,1,0,1,0,0,1,0],
-    [1,0,1,1,1,0,1,0,1,1,1,0,0,1,0,1,1,0,1,0,1],
-    [1,0,1,1,1,0,1,0,0,0,1,1,0,0,1,0,0,1,0,1,1],
-    [1,0,1,1,1,0,1,0,1,0,0,1,1,0,0,1,1,0,1,0,0],
-    [1,0,0,0,0,0,1,0,0,1,0,0,1,1,0,0,1,0,0,1,1],
-    [1,1,1,1,1,1,1,0,1,1,0,1,0,0,1,1,0,1,1,0,1],
-  ];
-  // Seed baseado no data para variar o QR
-  var seed = 0;
-  for (var ci=0;ci<data.length;ci++) seed = (seed*31+data.charCodeAt(ci))&0xFFFF;
-
-  ctx.fillStyle = '#000000';
-  for (var row=0;row<21;row++) {
-    for (var col=0;col<21;col++) {
-      var mod = pattern[row][col];
-      // Area de dados: variar com seed
-      if (row>=8 && row<=12 && col>=8 && col<=12) mod=0;
-      if (row>6 && col>6 && row<14 && col<14 && !pattern[row][col]) {
-        mod = ((seed>>((row*3+col)%16))&1);
+  // Fallback visual imediato (garante que algo aparece enquanto QR carrega)
+  function _fallback() {
+    var cell = size / 21;
+    var pat = [
+      [1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1],
+      [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1],
+      [1,0,1,1,1,0,1,0,0,0,0,0,0,0,1,0,1,1,1,0,1],
+      [1,0,1,1,1,0,1,0,0,0,0,0,0,0,1,0,1,1,1,0,1],
+      [1,0,1,1,1,0,1,0,0,0,0,0,0,0,1,0,1,1,1,0,1],
+      [1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1],
+      [1,1,1,1,1,1,1,0,1,0,1,0,1,0,1,1,1,1,1,1,1],
+      [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      [0,0,0,1,0,0,0,0,1,1,0,1,0,1,0,0,1,0,1,1,0],
+      [0,1,0,0,1,0,1,0,0,1,1,0,1,0,0,1,0,1,0,0,1],
+      [0,0,1,0,0,1,0,0,1,0,1,1,0,0,1,0,0,1,1,0,0],
+      [0,1,1,0,1,0,1,0,0,1,0,1,1,0,0,1,0,0,1,0,1],
+      [0,0,0,1,0,1,0,0,1,1,0,0,1,1,0,0,1,1,0,1,0],
+      [0,0,0,0,0,0,0,0,0,1,0,1,0,0,1,0,1,0,0,1,0],
+      [1,1,1,1,1,1,1,0,1,0,1,1,0,1,0,1,0,1,1,0,1],
+      [1,0,0,0,0,0,1,0,0,1,0,0,1,0,1,0,1,0,0,1,0],
+      [1,0,1,1,1,0,1,0,1,1,1,0,0,1,0,1,1,0,1,0,1],
+      [1,0,1,1,1,0,1,0,0,0,1,1,0,0,1,0,0,1,0,1,1],
+      [1,0,1,1,1,0,1,0,1,0,0,1,1,0,0,1,1,0,1,0,0],
+      [1,0,0,0,0,0,1,0,0,1,0,0,1,1,0,0,1,0,0,1,1],
+      [1,1,1,1,1,1,1,0,1,1,0,1,0,0,1,1,0,1,1,0,1],
+    ];
+    var seed = 0;
+    for (var ci = 0; ci < data.length; ci++) seed = (seed * 31 + data.charCodeAt(ci)) & 0xFFFF;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(x - 2, y - 2, size + 4, size + 4);
+    ctx.fillStyle = '#000000';
+    for (var row = 0; row < 21; row++) {
+      for (var col = 0; col < 21; col++) {
+        var mod = pat[row][col];
+        if (row > 6 && col > 6 && row < 14 && col < 14 && !pat[row][col]) {
+          mod = ((seed >> ((row * 3 + col) % 16)) & 1);
+        }
+        if (mod) ctx.fillRect(x + col * cell, y + row * cell, cell, cell);
       }
-      if (mod) ctx.fillRect(x+col*cell, y+row*cell, cell, cell);
     }
   }
+
+  // Tentar QR real com qrcodejs
+  if (window.QRCode) {
+    try {
+      var tmpDiv = document.createElement('div');
+      tmpDiv.style.cssText = 'position:fixed;left:-9999px;top:-9999px';
+      document.body.appendChild(tmpDiv);
+      new QRCode(tmpDiv, { text: data, width: size, height: size, correctLevel: QRCode.CorrectLevel.M });
+
+      // qrcodejs gera tanto <canvas> quanto <img>
+      // Tenta canvas primeiro (mais rápido, síncrono)
+      var qrCanvas = tmpDiv.querySelector('canvas');
+      if (qrCanvas && qrCanvas.width > 0) {
+        ctx.drawImage(qrCanvas, x, y, size, size);
+        document.body.removeChild(tmpDiv);
+        return;
+      }
+      // Fallback para img (pode precisar de tempo)
+      var attempts = 0;
+      var poll = setInterval(function() {
+        attempts++;
+        var qc = tmpDiv.querySelector('canvas');
+        var qi = tmpDiv.querySelector('img');
+        if (qc && qc.width > 0) {
+          clearInterval(poll);
+          ctx.drawImage(qc, x, y, size, size);
+          if (tmpDiv.parentNode) tmpDiv.parentNode.removeChild(tmpDiv);
+          return;
+        }
+        if (qi && qi.complete && qi.naturalWidth > 0) {
+          clearInterval(poll);
+          ctx.drawImage(qi, x, y, size, size);
+          if (tmpDiv.parentNode) tmpDiv.parentNode.removeChild(tmpDiv);
+          return;
+        }
+        if (attempts > 30) {
+          clearInterval(poll);
+          if (tmpDiv.parentNode) tmpDiv.parentNode.removeChild(tmpDiv);
+          _fallback();
+        }
+      }, 50);
+      return;
+    } catch(e) {}
+  }
+  _fallback();
 }
+
 
 function desenharEtiqueta(canvas, cfg, num) {
   var ctx = canvas.getContext('2d');
@@ -6949,13 +7168,17 @@ function desenharEtiqueta(canvas, cfg, num) {
   }
 
   // Desenhar QR
-  // Montar payload legível: SKU + descrição + localização
+  // Payload estruturado — ID da série é SEMPRE o primeiro campo
+  // Formato: ROTATIVO|ID|SKU|DESC|LOCAL para leitura pelo verificarLeitura()
   var qrLines = [];
-  if (cfg.sku)   qrLines.push('SKU: ' + cfg.sku);
-  if (cfg.desc)  qrLines.push(cfg.desc.substring(0, 50));
-  if (cfg.local) qrLines.push('Local: ' + cfg.local);
-  qrLines.push('RotativoApp Pro');
-  var qrPayload = qrLines.join('\n');
+  qrLines.push('ROTATIVO');          // marcador de protocolo
+  qrLines.push('ID:'+id);           // ID da série — campo primário
+  if (cfg.sku)   qrLines.push('SKU:' + cfg.sku);
+  if (cfg.desc)  qrLines.push('DESC:' + cfg.desc.substring(0, 50));
+  if (cfg.local) qrLines.push('LOCAL:' + cfg.local);
+  qrLines.push('OP:' + (cfg.auditor||''));
+  qrLines.push('DT:' + new Date().toISOString().slice(0,10));
+  var qrPayload = qrLines.join('|');
 
   if (cfg.showQR !== false) {
     drawQRCode(ctx, qrPayload, qrX, qrY, qrS);
@@ -7082,59 +7305,257 @@ function desenharEtiqueta(canvas, cfg, num) {
   ctx.fillText(aviso, 40, rfY+rfH*0.72);
 }
 
-function gerarEtiquetasPDF() {
-  if (!window.jspdf) { toast('Aguarde PDF carregar...','wa'); return; }
-  var cfg = getEtqConfig();
+// ================================================================
+// ================================================================
+// MÓDULO ETIQUETAS — duas responsabilidades separadas:
+//
+//   gerarEtiquetasPDF()  → cria séries + registra + exibe lista + baixa PDF
+//   _soBaixarPDF()       → apenas monta e baixa PDF dos IDs já gerados
+//                          SEM registrar, SEM atualizar rastreabilidade
+// ================================================================
+
+// ── Motor de PDF — função compartilhada (pura, sem efeitos colaterais) ──
+// Recebe cfg e ids já calculados, gera o PDF e faz download.
+// Não registra, não atualiza nada.
+function _montarEBaixarPDF(cfg, ids, numeros) {
+  if (!window.jspdf) {
+    toast('Carregando PDF... aguarde','in');
+    var _t = 0;
+    var _w = setInterval(function() {
+      _t += 200;
+      if (window.jspdf) { clearInterval(_w); _montarEBaixarPDF(cfg, ids, numeros); }
+      else if (_t > 6000) { clearInterval(_w); toast('PDF não carregou — recarregue a página','er'); }
+    }, 200);
+    return;
+  }
+
+  var fmts  = { '60x40':[60,40], '100x50':[100,50], '80x40':[80,40] };
+  var fm    = fmts[cfg.formato] || [60,40];
+  var fW    = fm[0], fH = fm[1];
   var jsPDF = window.jspdf.jsPDF;
+  var doc   = new jsPDF({ orientation: fW>fH?'landscape':'portrait', unit:'mm', format:[fW,fH] });
+  var idx   = 0;
 
-  // Formato baseado na seleção (em mm)
-  var fmts = { '60x40':[60,40], '100x50':[100,50], '80x40':[80,40] };
-  var fm   = fmts[cfg.formato] || [60,40];
-  var fW   = fm[0], fH = fm[1];
+  toast('Gerando PDF ('+ids.length+' etiqueta(s))...','in');
 
-  var doc = new jsPDF({ orientation: fW>fH?'landscape':'portrait', unit:'mm', format:[fW,fH] });
+  function _proxima() {
+    if (idx >= numeros.length) {
+      doc.save('etiquetas_'+cfg.prefixo+'_'+numeros[0]+'_a_'+numeros[numeros.length-1]+'.pdf');
+      toast(ids.length+' etiqueta(s) — PDF baixado!','ok');
+      return;
+    }
+    var num     = numeros[idx];
+    var id      = ids[idx];
+    var isFirst = (idx === 0);
+    idx++;
 
-  for (var i=0; i<cfg.qtd; i++) {
-    if (i>0) doc.addPage([fW,fH], fW>fH?'landscape':'portrait');
+    var canvas = document.createElement('canvas');
+    canvas.width = 340; canvas.height = 226;
+    desenharEtiqueta(canvas, cfg, num);
 
-    // Criar canvas temporário para esta etiqueta
-    var tmpCanvas = document.createElement('canvas');
-    tmpCanvas.width  = 340;
-    tmpCanvas.height = 226;
-    desenharEtiqueta(tmpCanvas, cfg, cfg.numInicio+i);
-    var imgData = tmpCanvas.toDataURL('image/png',1.0);
-    doc.addImage(imgData, 'PNG', 0, 0, fW, fH);
+    var qrLines = ['ROTATIVO','ID:'+id];
+    if (cfg.sku)   qrLines.push('SKU:'+cfg.sku);
+    if (cfg.desc)  qrLines.push('DESC:'+cfg.desc.substring(0,50));
+    if (cfg.local) qrLines.push('LOCAL:'+cfg.local);
+    qrLines.push('OP:'+(cfg.auditor||''));
+    qrLines.push('DT:'+new Date().toISOString().slice(0,10));
+    var payload = qrLines.join('|');
+
+    function _add(finalCanvas) {
+      if (!isFirst) doc.addPage([fW,fH], fW>fH?'landscape':'portrait');
+      doc.addImage(finalCanvas.toDataURL('image/png',1.0), 'PNG', 0, 0, fW, fH);
+      _proxima();
+    }
+
+    if (!window.QRCode || cfg.showQR === false) { _add(canvas); return; }
+
+    try {
+      var qrArea = 110;
+      var qrX = 340 - qrArea - 8, qrY = 8, qrS = 94;
+      var div = document.createElement('div');
+      div.style.cssText = 'position:fixed;left:-9999px;top:-9999px';
+      document.body.appendChild(div);
+      new QRCode(div, { text: payload, width: qrS, height: qrS, correctLevel: QRCode.CorrectLevel.M });
+
+      var att = 0;
+      var poll = setInterval(function() {
+        att++;
+        var qrC = div.querySelector('canvas');
+        var qrI = div.querySelector('img');
+        var src = (qrC && qrC.width > 0) ? qrC : (qrI && qrI.complete && qrI.naturalWidth > 0 ? qrI : null);
+        if (src) {
+          clearInterval(poll);
+          var ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#F5F0EB';
+          ctx.beginPath();
+          if (ctx.roundRect) ctx.roundRect(qrX-4, qrY-4, qrArea, qrS+28, 6);
+          else ctx.rect(qrX-4, qrY-4, qrArea, qrS+28);
+          ctx.fill();
+          ctx.drawImage(src, qrX, qrY, qrS, qrS);
+          ctx.fillStyle = '#8B7355'; ctx.font = '9px Arial';
+          ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+          ctx.fillText('ESCANEIE', qrX+qrS/2, qrY+qrS+4);
+          ctx.fillText('O ITEM',   qrX+qrS/2, qrY+qrS+14);
+          if (div.parentNode) div.parentNode.removeChild(div);
+          _add(canvas);
+        } else if (att > 40) {
+          clearInterval(poll);
+          if (div.parentNode) div.parentNode.removeChild(div);
+          _add(canvas);
+        }
+      }, 50);
+    } catch(e) { _add(canvas); }
   }
 
-  // Atualizar lista de IDs do lote
-  var idListEl = document.getElementById('etqIdList');
-  if(idListEl) {
-    var ids = [];
-    for(var _k=0; _k<cfg.qtd; _k++) ids.push(gerarIdEtiqueta(cfg.prefixo, cfg.numInicio+_k));
-    idListEl.innerHTML = ids.map(function(id,i){
-      return '<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 8px;border-bottom:1px solid rgba(0,200,150,.05)">'
-        +'<span style="font-size:9px;color:var(--t3);min-width:20px">'+(i+1)+'.</span>'
-        +'<span style="font-family:monospace;font-size:11px;color:var(--acid);flex:1">'+id+'</span>'
-        +'<span style="font-size:9px;color:var(--t3)">'+new Date().toLocaleDateString('pt-BR')+'</span>'
-        +'</div>';
-    }).join('');
-  }
-  // Preencher lista de IDs do lote
-  var _idEl = document.getElementById('etqIdList');
-  if(_idEl) {
-    var _ids=[];
-    for(var _ii=0;_ii<cfg.qtd;_ii++) _ids.push(gerarIdEtiqueta(cfg.prefixo,cfg.numInicio+_ii));
-    _idEl.innerHTML = _ids.map(function(id,i){
-      return '<div style="display:flex;align-items:center;gap:8px;padding:4px 8px;border-bottom:1px solid rgba(0,200,150,.04)">'
-        +'<span style="font-size:9px;color:var(--t3);min-width:18px">'+(i+1)+'</span>'
-        +'<span style="font-family:monospace;font-size:11px;color:var(--acid);flex:1">'+id+'</span>'
-        +'<span style="font-size:9px;color:var(--t3)">'+new Date().toLocaleDateString('pt-BR')+'</span>'
-        +'</div>';
-    }).join('');
-  }
-  doc.save('etiquetas_'+cfg.prefixo+'_'+cfg.numInicio+'_a_'+(cfg.numInicio+cfg.qtd-1)+'.pdf');
-  toast(cfg.qtd+' etiqueta(s) PDF gerada(s)!','ok');
+  _proxima();
 }
+
+// ── GERAR ETIQUETAS — cria séries, registra rastreabilidade, exibe lista, baixa PDF ──
+function gerarEtiquetasPDF() {
+  var cfg     = getEtqConfig();
+  var numeros = [];
+  for (var _n = 0; _n < cfg.qtd; _n++) numeros.push(cfg.numInicio + _n);
+  var ids = numeros.map(function(n){ return gerarIdEtiqueta(cfg.prefixo, n); });
+
+  // Exibir lista imediatamente
+  var idListEl = document.getElementById('etqIdList');
+  if (idListEl) {
+    idListEl.innerHTML = ids.map(function(id, i){
+      return '<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;border-bottom:1px solid rgba(0,200,150,.05)">'
+        +'<span style="font-size:9px;color:var(--t3);min-width:22px">'+(i+1)+'.</span>'
+        +'<span style="font-family:monospace;font-size:11px;color:var(--acid);flex:1;font-weight:700">'+id+'</span>'
+        +'<span style="font-size:9px;color:var(--t3)">'+new Date().toLocaleDateString('pt-BR')+'</span>'
+        +'</div>';
+    }).join('');
+  }
+  // Mostrar número calculado automaticamente no campo
+  var numInicioEl = document.getElementById('etqNumInicio');
+  if (numInicioEl && (!numInicioEl.value || parseInt(numInicioEl.value) <= 0)) {
+    numInicioEl.value = cfg.numInicio;
+  }
+
+  // Registrar na rastreabilidade (síncrono, antes do PDF)
+  _etqRegistrarNaRastreabilidade(cfg, ids);
+
+  // Baixar PDF com todas as etiquetas
+  _montarEBaixarPDF(cfg, ids, numeros);
+}
+
+// ── APENAS BAIXAR PDF — sem registrar, sem alterar rastreabilidade ──
+// Lê os IDs já exibidos na lista (etqIdList) ou recalcula a partir do cfg atual.
+function _soBaixarPDF() {
+  var cfg = getEtqConfig();
+
+  // Tentar ler IDs já gerados da lista visível (evita recalcular / criar novos)
+  var ids = [];
+  var numeros = [];
+  var listEl = document.getElementById('etqIdList');
+  if (listEl) {
+    var spans = listEl.querySelectorAll('span[style*="monospace"]');
+    spans.forEach(function(sp) {
+      var id = sp.textContent.trim();
+      if (id) {
+        ids.push(id);
+        // Extrair número do final do ID: "INV-000005" → 5
+        var partes = id.split('-');
+        var num = parseInt(partes[partes.length-1]);
+        numeros.push(isNaN(num) ? (cfg.numInicio + ids.length - 1) : num);
+      }
+    });
+  }
+
+  // Se lista vazia, calcular a partir do cfg (mesmo comportamento de gerarEtiquetasPDF)
+  if (!ids.length) {
+    for (var _n = 0; _n < cfg.qtd; _n++) numeros.push(cfg.numInicio + _n);
+    ids = numeros.map(function(n){ return gerarIdEtiqueta(cfg.prefixo, n); });
+  }
+
+  // PDF puro — sem registrar nada
+  _montarEBaixarPDF(cfg, ids, numeros);
+}
+
+
+function _etqRegistrarNaRastreabilidade(cfg, ids) {
+  // Escreve DIRETAMENTE no localStorage — sem depender de window.Rast estar pronto.
+  // É a garantia mínima de que o registro sempre acontece.
+  var SK = 'rp_series_etiquetas';
+  try {
+    var agora  = new Date().toISOString();
+    var hoje   = new Date().toLocaleDateString('pt-BR');
+    var op     = cfg.auditor
+              || (window._appState && window._appState.cfg && window._appState.cfg.op)
+              || 'Operador';
+    var data   = [];
+    try { data = JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) { data = []; }
+
+    var adicionados = 0;
+    for (var i = 0; i < ids.length; i++) {
+      var id = ids[i];
+      // Não duplicar
+      var existe = false;
+      for (var s = 0; s < data.length; s++) {
+        if (data[s].idNovo === id && data[s].status === 'ativa') { existe = true; break; }
+      }
+      if (existe) continue;
+      data.push({
+        id:         Date.now() + i,
+        prefixo:    cfg.prefixo.toUpperCase(),
+        num:        cfg.numInicio + i,
+        idOriginal: id,
+        idNovo:     id,
+        status:     'ativa',
+        origem:     'ETIQUETAS',
+        produto:    cfg.desc   || '',
+        sku:        cfg.sku    || '',
+        local:      cfg.local  || '',
+        emp:        cfg.emp    || '',
+        auditor:    op,
+        tipo:       cfg.tipo   || 'validado',
+        criadoEm:   agora,
+        criadoPor:  op,
+        dataBR:     hoje,
+        motivo:     'Gerado via PDF',
+        reserva:    '', matricula: '', destino: '',
+        tipoEvento: 'etiqueta',
+        historico:  [{ acao: 'criada', ts: agora, op: op, origem: 'ETIQUETAS' }]
+      });
+      adicionados++;
+    }
+
+    if (adicionados === 0) return;
+
+    localStorage.setItem(SK, JSON.stringify(data));
+
+    // Atualizar badge (sempre, independente da tela estar aberta)
+    var total = data.length;
+    try {
+      var badge = document.getElementById('rastNavBadge')
+               || document.querySelector('[data-page="rastreabilidade"] .nav-badge');
+      if (badge) badge.textContent = total;
+    } catch(eb) {}
+
+    // Atualizar tela de rastreabilidade se estiver aberta
+    try {
+      var pageEl = document.getElementById('page-rastreabilidade');
+      if (pageEl && pageEl.classList.contains('active') && window.Rast) {
+        window.Rast.renderLista();
+        window.Rast.renderHistoricoSeries('rastSeriesLista');
+        var sv = document.getElementById('rastSeriesVazio');
+        var sl = document.getElementById('rastSeriesLista');
+        var rv = document.getElementById('rastVazio');
+        if (sv) sv.style.display = 'none';
+        if (sl) sl.style.display = 'block';
+        if (rv) rv.style.display = 'none';
+      }
+    } catch(er) {}
+
+    if (window.App) window.App.toast('✅ ' + adicionados + ' série(s) registrada(s)', 'ok');
+
+  } catch(e) {
+    console.error('[Etq] _etqRegistrarNaRastreabilidade falhou:', e);
+  }
+}
+
 
 function gerarZPL() {
   var cfg = getEtqConfig();
@@ -7930,6 +8351,1300 @@ function closeCamera() {
   if (modal) modal.style.display = 'none';
 }
 
+// ================================================================
+// MÓDULO RASTREABILIDADE — window.Rast  v3 (storage unificado)
+// Aditivo: não altera nenhum fluxo existente.
+// Storage único: rp_series_etiquetas
+//   • alimentado por gerarEtiquetasPDF() automaticamente
+//   • alimentado por registrar() quando rotativo tem contexto
+//   • lido por renderKpis(), renderLista(), buscarSerie()
+// ================================================================
+window.Rast = (function() {
+
+  // ── STORAGE ÚNICO ────────────────────────────────────────────
+  // Toda série (de etiqueta ou de rotativo) mora aqui.
+  var SK = 'rp_series_etiquetas';
+
+  function _load() {
+    try { return JSON.parse(localStorage.getItem(SK) || '[]'); } catch(e) { return []; }
+  }
+  function _save(d) {
+    try { localStorage.setItem(SK, JSON.stringify(d)); } catch(e) {}
+  }
+
+  // Compat: mesclar dados legados de 'rp_rastreabilidade' na primeira leitura
+  (function _migrarLegado() {
+    try {
+      var legado = JSON.parse(localStorage.getItem('rp_rastreabilidade') || '[]');
+      if (!legado.length) return;
+      var atual = _load();
+      var ids   = {};
+      atual.forEach(function(s){ ids[s.idNovo||s.id] = true; });
+      var novos = 0;
+      legado.forEach(function(r) {
+        var fakeId = 'ROT-' + String(r.rotId||Date.now()).slice(-6);
+        if (ids[fakeId]) return;
+        atual.push({
+          id: r.rotId || Date.now(),
+          prefixo: 'ROT', num: 0,
+          idOriginal: fakeId, idNovo: fakeId,
+          status: 'ativa', origem: 'ROTATIVO',
+          produto: '', sku: '',
+          local: r.centro || '',
+          emp: '', auditor: r.op || '',
+          tipo: 'inventario',
+          criadoEm: r.date || r.ts || new Date().toISOString(),
+          criadoPor: r.op || '',
+          dataBR: r.date ? new Date(r.date).toLocaleDateString('pt-BR') : '',
+          motivo: 'Migrado de rp_rastreabilidade',
+          reserva: r.reserva || '',
+          matricula: r.matricula || '',
+          destino: r.destino || '',
+          tipoEvento: r.tipoEvento || 'lote',
+          historico: [{ acao: 'migrado', ts: new Date().toISOString() }]
+        });
+        ids[fakeId] = true;
+        novos++;
+      });
+      if (novos > 0) { _save(atual); localStorage.removeItem('rp_rastreabilidade'); }
+    } catch(e) {}
+  })();
+
+  // ── SESSÃO (reimpressão inteligente) ─────────────────────────
+  var _sessionLidas = {};
+
+  // ── REGISTRAR serie vinda de rotativo com contexto ───────────
+  function registrar(rot) {
+    if (!rot || !rot.rast) return;
+    var data  = _load();
+    var agora = new Date().toISOString();
+    var fakeId = 'ROT-' + String(rot.id).slice(-6);
+    // Evitar duplicata
+    for (var i = 0; i < data.length; i++) {
+      if (data[i].idNovo === fakeId) { data[i].reserva = rot.rast.reserva; data[i].matricula = rot.rast.matricula; data[i].destino = rot.rast.destino; _save(data); renderLista(); return; }
+    }
+    data.unshift({
+      id: rot.id, prefixo: 'ROT', num: 0,
+      idOriginal: fakeId, idNovo: fakeId,
+      status: 'ativa', origem: 'ROTATIVO',
+      produto: '', sku: '',
+      local: rot.centro || '',
+      emp: (window._appState&&window._appState.cfg&&window._appState.cfg.emp)||'',
+      auditor: rot.rast.op || rot.op || '',
+      tipo: 'inventario',
+      criadoEm: rot.date || agora,
+      criadoPor: rot.rast.op || '',
+      dataBR: new Date(rot.date||agora).toLocaleDateString('pt-BR'),
+      motivo: '',
+      reserva: rot.rast.reserva || '',
+      matricula: rot.rast.matricula || '',
+      destino: rot.rast.destino || '',
+      tipoEvento: 'lote',
+      qtdItens: (rot.items||[]).length,
+      stats: rot.stats || {},
+      historico: [{ acao: 'criada', ts: agora, op: rot.rast.op }]
+    });
+    _save(data);
+    renderLista();
+  }
+
+  // ── REGISTRAR lote de etiquetas (chamado por gerarEtiquetasPDF) ──
+  function registrarLoteEtiquetas(cfg) {
+    var data  = _load();
+    var agora = new Date().toISOString();
+    var hoje  = new Date().toLocaleDateString('pt-BR');
+    var op    = cfg.auditor || (window._appState&&window._appState.cfg&&window._appState.cfg.op) || 'Operador';
+    var adicionados = 0;
+
+    // Usar lista pré-calculada se disponível, senão calcular
+    var idsParaRegistrar = cfg._ids || (function(){
+      var list = [];
+      for (var _k = 0; _k < cfg.qtd; _k++) {
+        list.push(cfg.prefixo.toUpperCase() + '-' + String(cfg.numInicio + _k).padStart(6,'0'));
+      }
+      return list;
+    })();
+
+    for (var i = 0; i < idsParaRegistrar.length; i++) {
+      var id = idsParaRegistrar[i];
+      // Não duplicar série ativa
+      var existe = false;
+      for (var s = 0; s < data.length; s++) {
+        if ((data[s].idNovo||'') === id && data[s].status === 'ativa') { existe = true; break; }
+      }
+      if (existe) continue;
+
+      data.push({
+        id:         Date.now() + i,
+        prefixo:    cfg.prefixo.toUpperCase(),
+        num:        cfg.numInicio + i,
+        idOriginal: id,
+        idNovo:     id,
+        status:     'ativa',
+        origem:     'ETIQUETAS',
+        produto:    cfg.desc   || '',
+        sku:        cfg.sku    || '',
+        local:      cfg.local  || '',
+        emp:        cfg.emp    || '',
+        auditor:    op,
+        tipo:       cfg.tipo   || 'validado',
+        criadoEm:   agora,
+        criadoPor:  op,
+        dataBR:     hoje,
+        motivo:     'Gerado via PDF',
+        reserva:    '', matricula: '', destino: '',
+        tipoEvento: 'etiqueta',
+        historico:  [{ acao: 'criada', ts: agora, op: op, origem: 'ETIQUETAS' }]
+      });
+      adicionados++;
+    }
+
+    if (adicionados === 0) return; // nada novo para salvar
+
+    _save(data);
+
+    // ── Atualizar badge SEMPRE (tela aberta ou não) ───────────
+    var total = data.length;
+    try {
+      var badge = document.getElementById('rastNavBadge')
+               || document.querySelector('[data-page="rastreabilidade"] .nav-badge');
+      if (badge) badge.textContent = total;
+    } catch(e) {}
+
+    // ── Atualizar tela se estiver aberta ─────────────────────
+    var pageRast = document.getElementById('page-rastreabilidade');
+    if (pageRast && pageRast.classList.contains('active')) {
+      renderLista();
+      renderHistoricoSeries('rastSeriesLista');
+      var sv = document.getElementById('rastSeriesVazio');
+      var sl = document.getElementById('rastSeriesLista');
+      var rv = document.getElementById('rastVazio');
+      if (sv) sv.style.display = 'none';
+      if (sl) sl.style.display = 'block';
+      if (rv) rv.style.display = 'none';
+    }
+
+    if (window.App) window.App.toast('✅ ' + adicionados + ' série(s) registrada(s)', 'ok');
+  }
+
+  // ── REGISTRAR reimpressão ─────────────────────────────────────
+  function registrarReimpressao(idAntigo, novoId, op) {
+    var data  = _load();
+    // Inativar série antiga
+    data.forEach(function(s) {
+      if ((s.idNovo||s.idOriginal) === idAntigo && s.status === 'ativa') {
+        s.status       = 'inativa';
+        s.inativadoEm  = new Date().toISOString();
+        s.inativadoPor = op;
+        s.motivo       = 'Reimpressão — nova série: ' + novoId;
+      }
+    });
+    // Registrar nova série
+    var agora = new Date().toISOString();
+    data.push({
+      id:         Date.now(),
+      prefixo:    novoId.split('-')[0] || '',
+      num:        parseInt(novoId.split('-').pop()) || 0,
+      idOriginal: idAntigo,
+      idNovo:     novoId,
+      status:     'ativa',
+      origem:     'REIMPRESSÃO',
+      produto:    '', sku: '', local: '', emp: '',
+      auditor:    op,
+      tipo:       'validado',
+      criadoEm:   agora,
+      criadoPor:  op,
+      dataBR:     new Date().toLocaleDateString('pt-BR'),
+      motivo:     'Reimpressão de ' + idAntigo,
+      reserva: '', matricula: '', destino: '',
+      tipoEvento: 'reimpressao',
+      serieAntiga: idAntigo,
+      historico:  [{ acao: 'reimpressao', de: idAntigo, para: novoId, ts: agora, op: op }]
+    });
+    _save(data);
+    renderLista();
+    renderHistoricoSeries('rastSeriesLista');
+  }
+
+  // ── BUSCAR série ──────────────────────────────────────────────
+  function buscarSerie(idBruto) {
+    if (!idBruto) return null;
+    var id = String(idBruto).trim().toUpperCase();
+    // Payload QR estruturado: "ROTATIVO|ID:INV-000005|..."
+    if (id.indexOf('ROTATIVO|') === 0 || id.indexOf('ID:') >= 0) {
+      var partes = id.split('|');
+      for (var p = 0; p < partes.length; p++) {
+        if (partes[p].indexOf('ID:') === 0) { id = partes[p].slice(3).trim(); break; }
+      }
+    }
+    var data = _load();
+    for (var i = 0; i < data.length; i++) {
+      var s = data[i];
+      if ((s.idNovo||'').toUpperCase() === id || (s.idOriginal||'').toUpperCase() === id) return s;
+    }
+    return null;
+  }
+
+  // ── BAIXA POR RESERVA ─────────────────────────────────────────
+  function registrarBaixa(idSerie, reserva, responsavel) {
+    var data  = _load();
+    var agora = new Date().toISOString();
+    var op    = (window._appState&&window._appState.cfg&&window._appState.cfg.op) || 'Operador';
+    var ok    = false;
+    data.forEach(function(s) {
+      if ((s.idNovo||s.idOriginal) === idSerie) {
+        s.reserva    = reserva;
+        s.responsavel= responsavel;
+        s.baixaEm    = agora;
+        s.baixaPor   = op;
+        s.status     = 'baixada';
+        s.destino    = reserva ? 'Reserva ' + reserva : s.destino;
+        if (!s.historico) s.historico = [];
+        s.historico.push({ acao: 'baixa', reserva: reserva, responsavel: responsavel, ts: agora, op: op });
+        ok = true;
+      }
+    });
+    if (ok) { _save(data); renderLista(); renderHistoricoSeries('rastSeriesLista'); }
+    return ok;
+  }
+
+  // ── RETORNO AO ESTOQUE ────────────────────────────────────────
+  function registrarRetorno(idSerie, motivo) {
+    var data  = _load();
+    var agora = new Date().toISOString();
+    var op    = (window._appState&&window._appState.cfg&&window._appState.cfg.op) || 'Operador';
+    var ok    = false;
+    data.forEach(function(s) {
+      if ((s.idNovo||s.idOriginal) === idSerie) {
+        var reservaAnterior = s.reserva || '';
+        s.status      = 'ativa';
+        s.reserva     = '';
+        s.responsavel = '';
+        s.retornoEm   = agora;
+        s.retornoPor  = op;
+        if (!s.historico) s.historico = [];
+        s.historico.push({
+          acao:           'retorno',
+          reservaAnterior: reservaAnterior,
+          motivo:         motivo || 'Retorno ao estoque',
+          ts:             agora,
+          op:             op
+        });
+        ok = true;
+      }
+    });
+    if (ok) { _save(data); renderLista(); renderHistoricoSeries('rastSeriesLista'); }
+    return ok;
+  }
+
+  // ── CANCELAR ETIQUETA ─────────────────────────────────────────
+  // Marca série como CANCELADA. Não exclui — mantém histórico.
+  function registrarCancelamento(idSerie, motivo) {
+    var data  = _load();
+    var agora = new Date().toISOString();
+    var op    = (window._appState&&window._appState.cfg&&window._appState.cfg.op) || 'Operador';
+    var ok    = false;
+    data.forEach(function(s) {
+      if ((s.idNovo||s.idOriginal) === idSerie) {
+        s.status        = 'cancelada';
+        s.canceladaEm   = agora;
+        s.canceladaPor  = op;
+        if (!s.historico) s.historico = [];
+        s.historico.push({ acao: 'cancelamento', motivo: motivo||'Cancelada pelo operador', ts: agora, op: op });
+        ok = true;
+      }
+    });
+    if (ok) { _save(data); renderLista(); renderHistoricoSeries('rastSeriesLista'); }
+    return ok;
+  }
+
+  // ── SUBSTITUIR ETIQUETA ───────────────────────────────────────
+  // Marca série atual como SUBSTITUÍDA e cria nova série no storage.
+  // Retorna o novo ID gerado.
+  function registrarSubstituicao(idAntigo, motivo) {
+    var data   = _load();
+    var agora  = new Date().toISOString();
+    var op     = (window._appState&&window._appState.cfg&&window._appState.cfg.op) || 'Operador';
+    var partes = idAntigo.match(/^(.+)-(\d+)$/);
+    var prefixo= partes ? partes[1] : idAntigo;
+
+    // Maior número existente para este prefixo
+    var maiores = data
+      .filter(function(s){ return (s.prefixo||'').toUpperCase() === prefixo.toUpperCase() || (s.idNovo||'').startsWith(prefixo+'-'); })
+      .map(function(s){ return s.num || parseInt((s.idNovo||'').split('-').pop()) || 0; });
+    var novoNum = (maiores.length ? Math.max.apply(null, maiores) : parseInt(partes ? partes[2] : 0) || 0) + 1;
+    var novoId  = prefixo.toUpperCase() + '-' + String(novoNum).padStart(6,'0');
+
+    // Buscar dados da série original para copiar produto/sku
+    var serieOriginal = null;
+    data.forEach(function(s) {
+      if ((s.idNovo||s.idOriginal) === idAntigo) {
+        s.status         = 'substituida';
+        s.substituidaEm  = agora;
+        s.substituidaPor = op;
+        s.substituidaPor_id = novoId;
+        if (!s.historico) s.historico = [];
+        s.historico.push({ acao: 'substituicao', motivo: motivo||'Substituída', substituidaPor: novoId, ts: agora, op: op });
+        serieOriginal = s;
+      }
+    });
+
+    // Criar nova série como cópia da original
+    var hoje = new Date().toLocaleDateString('pt-BR');
+    data.push({
+      id:         Date.now(),
+      prefixo:    prefixo.toUpperCase(),
+      num:        novoNum,
+      idOriginal: novoId,
+      idNovo:     novoId,
+      status:     'ativa',
+      origem:     'SUBSTITUIÇÃO',
+      produto:    serieOriginal ? (serieOriginal.produto || '') : '',
+      sku:        serieOriginal ? (serieOriginal.sku || '') : '',
+      local:      serieOriginal ? (serieOriginal.local || '') : '',
+      emp:        serieOriginal ? (serieOriginal.emp || '') : '',
+      auditor:    op,
+      tipo:       serieOriginal ? (serieOriginal.tipo || 'validado') : 'validado',
+      criadoEm:   agora,
+      criadoPor:  op,
+      dataBR:     hoje,
+      motivo:     'Substitui ' + idAntigo,
+      reserva: '', matricula: '', destino: '',
+      tipoEvento: 'substituicao',
+      historico:  [{ acao: 'criada_por_substituicao', de: idAntigo, ts: agora, op: op }]
+    });
+
+    _save(data);
+    renderLista();
+    renderHistoricoSeries('rastSeriesLista');
+    return novoId;
+  }
+
+  // ── REIMPRIMIR MESMA SÉRIE ────────────────────────────────────
+  // Gera PDF da série sem criar novo registro, sem alterar status.
+  function _reimprimir(idSerie) {
+    var serie = buscarSerie(idSerie);
+    if (!serie) { if(window.App) window.App.toast('Série não encontrada','er'); return; }
+
+    var cfg = (typeof getEtqConfig === 'function') ? getEtqConfig() : {};
+    var partes = idSerie.match(/^(.+)-(\d+)$/);
+    var prefixo = partes ? partes[1] : 'INV';
+    var num     = partes ? parseInt(partes[2]) : 1;
+
+    // Preencher campos da tela de etiquetas com dados da série
+    function _sv(id, val) { var el = document.getElementById(id); if (el) el.value = val; }
+    _sv('etqPrefixo',   prefixo);
+    _sv('etqNumInicio', num);
+    _sv('etqQtd',       1);
+    if (serie.sku)     _sv('etqSku',     serie.sku);
+    if (serie.produto) _sv('etqDesc',    serie.produto);
+    if (serie.auditor) _sv('etqAuditor', serie.auditor);
+    if (serie.local)   _sv('etqLocal',   serie.local);
+    _sv('etqExtra', 'REIMPRESSÃO ' + idSerie);
+    if (typeof previewEtiqueta === 'function') previewEtiqueta();
+
+    // Gerar PDF diretamente (sem registrar)
+    var cfgAtual = (typeof getEtqConfig === 'function') ? getEtqConfig() : cfg;
+    var ids = [idSerie];
+    var numeros = [num];
+    if (typeof _montarEBaixarPDF === 'function') {
+      _montarEBaixarPDF(cfgAtual, ids, numeros);
+      if (window.App) window.App.toast('🖨 Reimprimindo ' + idSerie + '...','ok');
+    } else {
+      // Fallback: ir para tela de etiquetas
+      if (window.navigate) navigate('etiquetas');
+      if (window.App) window.App.toast('Configure a etiqueta e clique em Baixar PDF','in');
+    }
+  }
+  function abrirModalRetorno(idSerie) {
+    var serie = buscarSerie(idSerie);
+    var m = document.createElement('div');
+    m.id  = 'modalRetorno';
+    m.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.75);backdrop-filter:blur(6px)';
+    m.innerHTML =
+      '<div style="background:var(--c2,#0C1525);border:1px solid rgba(0,153,255,.3);border-radius:14px;padding:26px;max-width:400px;width:90%;box-shadow:0 24px 80px rgba(0,0,0,.8)">'
+        +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">'
+          +'<div style="width:34px;height:34px;border-radius:9px;background:rgba(0,153,255,.12);border:1px solid rgba(0,153,255,.3);display:flex;align-items:center;justify-content:center;font-size:16px">↩</div>'
+          +'<div>'
+            +'<div style="font-size:14px;font-weight:800;font-family:Syne,sans-serif;color:var(--blue)">Retornar ao Estoque</div>'
+            +'<div style="font-family:monospace;font-size:11px;color:var(--t3);margin-top:1px">'+esc(idSerie)+'</div>'
+          +'</div>'
+        +'</div>'
+        +(serie&&serie.produto?'<div style="background:rgba(0,0,0,.3);border-radius:7px;padding:8px 12px;margin-bottom:6px;font-size:11px;color:var(--t2)">'+esc(serie.produto)+'</div>':'')
+        +(serie&&serie.reserva?'<div style="background:rgba(255,176,32,.06);border:1px solid rgba(255,176,32,.2);border-radius:7px;padding:8px 12px;margin-bottom:14px;font-size:11px;color:var(--amber)">Reserva vinculada: <strong>'+esc(serie.reserva)+'</strong> será removida</div>':'<div style="margin-bottom:14px"></div>')
+        +'<div style="margin-bottom:16px">'
+          +'<label style="font-size:10px;color:var(--t3);font-weight:700;letter-spacing:.8px;display:block;margin-bottom:4px">MOTIVO (opcional)</label>'
+          +'<input id="retornoMotivo" class="field-input" placeholder="Ex: Item devolvido sem uso" style="width:100%;font-size:12px;padding:8px 12px"/>'
+        +'</div>'
+        +'<div style="display:flex;flex-direction:column;gap:8px">'
+          +'<button id="btnConfRetorno" style="padding:12px;border-radius:9px;border:1px solid rgba(0,153,255,.35);background:rgba(0,153,255,.1);color:var(--blue);font-size:13px;font-weight:800;cursor:pointer">↩ Confirmar Retorno ao Estoque</button>'
+          +'<button id="btnCancRetorno" style="padding:9px;border-radius:9px;border:1px solid rgba(255,255,255,.08);background:transparent;color:var(--t3);font-size:11px;cursor:pointer">Cancelar</button>'
+        +'</div>'
+      +'</div>';
+    document.body.appendChild(m);
+    setTimeout(function(){ var el=document.getElementById('retornoMotivo'); if(el) el.focus(); }, 80);
+    document.getElementById('btnCancRetorno').onclick = function(){ document.body.removeChild(m); };
+    m.onclick = function(e){ if(e.target===m) document.body.removeChild(m); };
+    document.getElementById('btnConfRetorno').onclick = function() {
+      var motivo = (document.getElementById('retornoMotivo')||{}).value || '';
+      var ok = registrarRetorno(idSerie, motivo.trim());
+      document.body.removeChild(m);
+      if (ok) {
+        if (window.App) window.App.toast('↩ Série '+idSerie+' retornada ao estoque','ok');
+        exibirResultadoLeitura(idSerie);
+      }
+    };
+  }
+
+  // ── KPIs ──────────────────────────────────────────────────────
+  function renderKpis(data) {
+    var el = document.getElementById('rastKpis');
+    if (!el) return;
+    var total     = data.length;
+    var comReserva= data.filter(function(d){ return d.reserva; }).length;
+    var ativos    = data.filter(function(d){ return d.status === 'ativa'; }).length;
+    var origens   = {}; data.forEach(function(d){ origens[d.origem||'—']=true; });
+    var kpis = [
+      { label:'Séries Registradas', val: total,      icon:'🔗', color:'var(--blue)' },
+      { label:'Séries Ativas',      val: ativos,     icon:'✓',  color:'var(--acid)' },
+      { label:'Com Reserva/Baixa',  val: comReserva, icon:'📋', color:'var(--amber)' },
+      { label:'Origens',            val: Object.keys(origens).length, icon:'📍', color:'var(--green)' },
+    ];
+    el.innerHTML = kpis.map(function(k){
+      return '<div style="background:var(--c2);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;cursor:default">'
+        +'<div style="font-size:18px;margin-bottom:4px">'+k.icon+'</div>'
+        +'<div style="font-size:22px;font-weight:800;font-family:\'Syne\',sans-serif;color:'+k.color+'">'+k.val+'</div>'
+        +'<div style="font-size:10px;color:var(--t3);margin-top:2px">'+k.label+'</div>'
+        +'</div>';
+    }).join('');
+  }
+
+  // ── LISTA ─────────────────────────────────────────────────────
+  function renderLista() {
+    var el    = document.getElementById('rastLista');
+    var vazio = document.getElementById('rastVazio');
+    if (!el) return;
+    var data   = _load();
+    var search = ((document.getElementById('rastSearch')||{}).value||'').toLowerCase();
+    if (search) {
+      data = data.filter(function(d){
+        return [(d.idNovo||''),(d.idOriginal||''),(d.produto||''),(d.sku||''),(d.reserva||''),(d.auditor||''),(d.destino||'')]
+          .some(function(v){ return v.toLowerCase().indexOf(search)>=0; });
+      });
+    }
+    renderKpis(_load());
+    if (!data.length) {
+      el.innerHTML = '';
+      if (vazio) vazio.style.display = search ? 'none' : 'block';
+      return;
+    }
+    if (vazio) vazio.style.display = 'none';
+    // Ordenar: mais recentes primeiro
+    data = data.slice().sort(function(a,b){ return new Date(b.criadoEm)-new Date(a.criadoEm); });
+    el.innerHTML = data.map(function(d) {
+      var ativa  = d.status === 'ativa';
+      var col    = ativa ? 'var(--acid)' : 'rgba(255,59,92,.65)';
+      var dt     = new Date(d.criadoEm);
+      var dtFmt  = isNaN(dt) ? '—' : dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'});
+      var hrFmt  = isNaN(dt) ? '' : dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+      var idExib = d.idNovo || d.idOriginal;
+      function badge(lbl, val, c) {
+        if (!val) return '';
+        return '<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);border-radius:5px;padding:2px 8px;font-size:10px;color:'+c+'">'
+          +'<span style="font-size:9px;color:var(--t3)">'+lbl+'</span> '
+          +'<span style="font-weight:700;font-family:monospace">'+esc(val)+'</span></span>';
+      }
+      return '<div style="background:var(--c2);border:1px solid var(--bd);border-radius:var(--r);padding:12px 16px;display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">'
+        +'<div style="flex:1;min-width:180px">'
+          +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">'
+            +(d.tipoEvento==='reimpressao'?'<span style="font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(0,153,255,.12);color:var(--blue);font-weight:700">🔄 REIMPR.</span>':'')
+            +'<span style="font-family:monospace;font-size:13px;font-weight:800;color:'+col+'">'+esc(idExib)+'</span>'
+            +'<span style="font-size:9px;padding:2px 8px;border-radius:4px;font-weight:700;background:'+(ativa?'rgba(0,255,178,.1)':'rgba(255,59,92,.1)')+';color:'+(ativa?'var(--acid)':'var(--red)')+'">'+( ativa?'✓ ATIVO':'✕ INATIVO')+'</span>'
+          +'</div>'
+          +(d.produto?'<div style="font-size:11px;color:var(--t2);margin-bottom:5px">'+esc(d.produto)+'</div>':'')
+          +'<div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px">'
+            +badge('SKU',   d.sku,        'var(--t2)')
+            +badge('RESERVA',d.reserva,   'var(--acid)')
+            +badge('RESP.', d.responsavel,'var(--amber)')
+            +badge('LOCAL', d.local,      'var(--blue)')
+            +badge('PROC.',d.origem,     'var(--t3)')
+          +'</div>'
+        +'</div>'
+        +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">'
+          +'<div style="font-size:10px;color:var(--t3)">'+dtFmt+(hrFmt?' · '+hrFmt:'')+'</div>'
+          +'<div style="font-size:10px;color:var(--t3)">'+esc(d.auditor||d.criadoPor||'')+'</div>'
+          +'<button onclick="Rast.abrirModalBaixa(\''+idExib+'\')" style="margin-top:4px;padding:4px 10px;border-radius:6px;border:1px solid rgba(0,255,178,.25);background:rgba(0,255,178,.06);color:var(--acid);font-size:10px;font-weight:700;cursor:pointer">📋 Baixa</button>'
+        +'</div>'
+      +'</div>';
+    }).join('');
+  }
+
+  // ── HISTÓRICO DE SÉRIES ───────────────────────────────────────
+  function renderHistoricoSeries(containerId) {
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    var data = _load();
+    if (!data.length) {
+      el.innerHTML = '<div style="color:var(--t3);font-size:12px;text-align:center;padding:20px">Nenhuma série registrada — gere etiquetas para registrar automaticamente</div>';
+      return;
+    }
+    var sorted = data.slice().sort(function(a,b){ return new Date(b.criadoEm)-new Date(a.criadoEm); });
+    el.innerHTML = sorted.map(function(s) {
+      var ativa  = s.status === 'ativa';
+      var idExib = s.idNovo || s.idOriginal;
+      var dt     = new Date(s.criadoEm);
+      var dtStr  = isNaN(dt)?'—':dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid rgba(0,200,150,.04);cursor:pointer;transition:background .1s" '
+        +'onmouseover="this.style.background=\'rgba(0,200,150,.03)\'" onmouseout="this.style.background=\'transparent\'" '
+        +'onclick="Rast.exibirResultadoLeitura(\''+idExib+'\');document.getElementById(\'rastLeituraInput\').value=\''+idExib+'\'">'
+        +'<div style="flex:1;min-width:100px">'
+          +'<div style="font-family:monospace;font-size:12px;font-weight:700;color:'+(ativa?'var(--acid)':'rgba(255,59,92,.6)')+'">'+esc(idExib)+'</div>'
+          +(s.produto?'<div style="font-size:10px;color:var(--t2);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px">'+esc(s.produto)+'</div>':'')
+        +'</div>'
+        +'<span style="font-size:9px;padding:2px 7px;border-radius:4px;font-weight:700;background:'+(ativa?'rgba(0,255,178,.1)':'rgba(255,59,92,.1)')+';color:'+(ativa?'var(--acid)':'var(--red)')+'">'+( ativa?'ATIVO':'INATIVO')+'</span>'
+        +(s.origem?'<span style="font-size:9px;color:var(--t3);padding:1px 5px;background:var(--c3);border-radius:3px">'+esc(s.origem)+'</span>':'')
+        +'<span style="font-size:9px;color:var(--t3)">'+dtStr+'</span>'
+        +'</div>';
+    }).join('');
+  }
+
+  // ── EXIBIR RESULTADO DE LEITURA ───────────────────────────────
+  function exibirResultadoLeitura(idBruto) {
+    var el = document.getElementById('rastLeituraResultado');
+    if (!el) return;
+    var s = buscarSerie(idBruto);
+    if (!s) {
+      el.innerHTML = '<div style="background:rgba(255,59,92,.08);border:1px solid rgba(255,59,92,.3);border-radius:9px;padding:14px 18px;display:flex;align-items:center;gap:12px">'
+        +'<span style="font-size:24px">❌</span><div>'
+        +'<div style="font-size:13px;font-weight:700;color:var(--red)">Série não cadastrada</div>'
+        +'<div style="font-size:11px;color:var(--t3);margin-top:3px">ID <span style="font-family:monospace;color:var(--t2)">'+esc(idBruto)+'</span> não encontrado.</div>'
+        +'</div></div>';
+      return;
+    }
+
+    var idExib    = s.idNovo || s.idOriginal;
+    var st        = s.status || 'ativa';
+    var ativa     = st === 'ativa';
+    var baixada   = st === 'baixada';
+    var cancelada = st === 'cancelada';
+    var substituida = st === 'substituida';
+
+    var statusMap = {
+      ativa:       { txt: '✓ ATIVO',       col: 'var(--acid)',  bg: 'rgba(0,255,178,.12)',    bdr: 'rgba(0,255,178,.25)' },
+      baixada:     { txt: '↓ BAIXADA',     col: 'var(--amber)', bg: 'rgba(255,176,32,.12)',   bdr: 'rgba(255,176,32,.3)' },
+      cancelada:   { txt: '✕ CANCELADA',   col: 'var(--red)',   bg: 'rgba(255,59,92,.12)',    bdr: 'rgba(255,59,92,.3)' },
+      substituida: { txt: '→ SUBSTITUÍDA', col: 'var(--t3)',    bg: 'rgba(100,120,140,.12)',  bdr: 'rgba(100,120,140,.3)' },
+    };
+    var sm = statusMap[st] || statusMap.ativa;
+
+    // ── Botões contextuais por status ──────────────────────────
+    // Sempre disponíveis: Reimprimir + Substituir + Cancelar (se não cancelada)
+    // Condicional: Estornar Baixa (se baixada) / Registrar Baixa (se ativa)
+    function _btn(label, col, bgAlpha, fn) {
+      return '<button data-rast-btn="'+fn+'" style="padding:6px 12px;border-radius:7px;border:1px solid rgba('+col+',.3);background:rgba('+col+',.08);color:rgb('+col+');font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">'+label+'</button>';
+    }
+
+    var btns = '';
+    // Reimprimir — sempre (mesma série, sem criar registro)
+    btns += '<button data-rast-btn="reimpr" style="padding:6px 12px;border-radius:7px;border:1px solid rgba(0,255,178,.3);background:rgba(0,255,178,.08);color:var(--acid);font-size:11px;font-weight:700;cursor:pointer">🖨 Reimprimir</button>';
+    // Estornar Baixa — só se baixada
+    if (baixada) {
+      btns += '<button data-rast-btn="estorno" style="padding:6px 12px;border-radius:7px;border:1px solid rgba(255,176,32,.3);background:rgba(255,176,32,.08);color:var(--amber);font-size:11px;font-weight:700;cursor:pointer">↩ Estornar Baixa</button>';
+    }
+    // Registrar Baixa — só se ativa
+    if (ativa) {
+      btns += '<button data-rast-btn="baixa" style="padding:6px 12px;border-radius:7px;border:1px solid rgba(0,153,255,.3);background:rgba(0,153,255,.08);color:var(--blue);font-size:11px;font-weight:700;cursor:pointer">📋 Baixa</button>';
+    }
+    // Substituir — se não cancelada
+    if (!cancelada) {
+      btns += '<button data-rast-btn="subst" style="padding:6px 12px;border-radius:7px;border:1px solid rgba(138,43,226,.3);background:rgba(138,43,226,.08);color:#A855F7;font-size:11px;font-weight:700;cursor:pointer">🔁 Substituir</button>';
+    }
+    // Cancelar — se não cancelada/substituída
+    if (!cancelada && !substituida) {
+      btns += '<button data-rast-btn="cancel" style="padding:6px 12px;border-radius:7px;border:1px solid rgba(255,59,92,.3);background:rgba(255,59,92,.06);color:var(--red);font-size:11px;font-weight:700;cursor:pointer">✕ Cancelar</button>';
+    }
+
+    // Histórico com labels legíveis
+    var histHtml = '';
+    if (s.historico && s.historico.length) {
+      var acaoMap = {
+        criada: '● Criada', baixa: '↓ Baixa', retorno: '↩ Retorno',
+        retorno_estoque: '↩ Retorno Estoque',
+        reimpressao: '🔄 Reimpressão', cancelamento: '✕ Cancelamento',
+        substituicao: '→ Substituída', criada_por_substituicao: '● Criada (subst.)',
+        migrado: '● Migrado'
+      };
+      histHtml = '<div style="margin-top:12px;border-top:1px solid var(--bd);padding-top:10px">'
+        +'<div style="font-size:9px;font-weight:700;letter-spacing:1px;color:var(--t3);margin-bottom:6px">HISTÓRICO</div>'
+        + s.historico.map(function(h) {
+          var lbl = acaoMap[h.acao] || ('● ' + esc(h.acao||''));
+          return '<div style="display:flex;align-items:baseline;gap:8px;padding:3px 0;font-size:10px;color:var(--t2)">'
+            +'<span style="color:var(--acid);font-weight:600;white-space:nowrap;min-width:110px">'+lbl+'</span>'
+            +(h.reserva     ?'<span style="color:var(--t3)">Res: '+esc(h.reserva)+'</span>':'')
+            +(h.responsavel ?'<span style="color:var(--t3)">Resp: '+esc(h.responsavel)+'</span>':'')
+            +(h.motivo      ?'<span style="color:var(--t3)">'+esc(h.motivo)+'</span>':'')
+            +(h.substituidaPor?'<span style="color:var(--t3)">→ '+esc(h.substituidaPor)+'</span>':'')
+            +(h.de          ?'<span style="color:var(--t3)">'+esc(h.de)+' → '+esc(h.para||'')+'</span>':'')
+            +'<span style="color:var(--t3);margin-left:auto">'+( h.ts?new Date(h.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'2-digit'}):'')+'</span>'
+            +'</div>';
+        }).join('')
+        +'</div>';
+    }
+
+    el.innerHTML =
+      '<div style="background:rgba(0,0,0,.3);border:1px solid '+sm.bdr+';border-radius:9px;padding:14px 18px">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">'
+          +'<div style="font-family:monospace;font-size:17px;font-weight:800;color:'+sm.col+'">'+esc(idExib)+'</div>'
+          +'<span style="font-size:10px;padding:3px 10px;border-radius:5px;font-weight:700;background:'+sm.bg+';color:'+sm.col+'">'+sm.txt+'</span>'
+        +'</div>'
+        +'<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:7px;font-size:11px;margin-bottom:12px">'
+          +_campo('Produto',     s.produto)
+          +_campo('SKU',         s.sku)
+          +_campo('Auditor',     s.auditor)
+          +_campo('Data Criação',s.dataBR||new Date(s.criadoEm).toLocaleDateString('pt-BR'))
+          +_campo('Local',       s.local)
+          +_campo('Procedência', s.origem)
+          +_campo('Reserva',     s.reserva)
+          +_campo('Responsável', s.responsavel)
+        +'</div>'
+        // Botões de ação
+        +'<div id="rastAcoesBtns" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:'+( histHtml ? '12px' : '0')+'">'+btns+'</div>'
+        + histHtml
+      +'</div>';
+
+    // Delegação de eventos nos botões — sem onclick inline
+    var cont = el.querySelector('#rastAcoesBtns');
+    if (cont) {
+      cont.onclick = function(e) {
+        var btn = e.target.closest('[data-rast-btn]');
+        if (!btn) return;
+        var acao = btn.getAttribute('data-rast-btn');
+        if (acao === 'reimpr')  { _reimprimir(idExib); }
+        if (acao === 'estorno') { _abrirModalConfirm(idExib, 'estorno'); }
+        if (acao === 'baixa')   { abrirModalBaixa(idExib); }
+        if (acao === 'subst')   { _abrirModalConfirm(idExib, 'substituicao'); }
+        if (acao === 'cancel')  { _abrirModalConfirm(idExib, 'cancelamento'); }
+      };
+    }
+  }
+
+  // ── MODAL GENÉRICO DE CONFIRMAÇÃO (Cancelar / Substituir / Estornar) ──
+  function _abrirModalConfirm(idSerie, tipo) {
+    var serie = buscarSerie(idSerie);
+    var cfgMap = {
+      cancelamento: { titulo: '✕ Cancelar Etiqueta',   cor: 'rgba(255,59,92,.35)',    colTxt: 'var(--red)',   icon: '✕', descr: 'A série será marcada como CANCELADA. O histórico será mantido.', btnTxt: '✕ Confirmar Cancelamento', campo: 'Motivo do cancelamento' },
+      substituicao: { titulo: '🔁 Substituir Etiqueta', cor: 'rgba(168,85,247,.35)',   colTxt: '#A855F7',     icon: '🔁', descr: 'A série atual será marcada como SUBSTITUÍDA e uma nova série será gerada automaticamente.', btnTxt: '🔁 Confirmar Substituição', campo: 'Motivo da substituição' },
+      estorno:      { titulo: '↩ Estornar Baixa',       cor: 'rgba(255,176,32,.35)',   colTxt: 'var(--amber)',icon: '↩', descr: 'Remove o vínculo da reserva e retorna o item ao estoque como ATIVO.', btnTxt: '↩ Confirmar Estorno', campo: 'Motivo do estorno (opcional)' },
+    };
+    var cfg = cfgMap[tipo];
+    if (!cfg) return;
+
+    var m = document.createElement('div');
+    m.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.78);backdrop-filter:blur(6px)';
+    m.innerHTML =
+      '<div style="background:var(--c2,#0C1525);border:1px solid '+cfg.cor+';border-radius:14px;padding:26px;max-width:400px;width:90%;box-shadow:0 24px 80px rgba(0,0,0,.85)">'
+        +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">'
+          +'<div style="width:34px;height:34px;border-radius:9px;flex-shrink:0;border:1px solid '+cfg.cor+';display:flex;align-items:center;justify-content:center;font-size:17px">'+cfg.icon+'</div>'
+          +'<div>'
+            +'<div style="font-size:14px;font-weight:800;font-family:Syne,sans-serif;color:'+cfg.colTxt+'">'+cfg.titulo+'</div>'
+            +'<div style="font-family:monospace;font-size:11px;color:var(--t3);margin-top:1px">'+esc(idSerie)+'</div>'
+          +'</div>'
+        +'</div>'
+        +(serie&&serie.produto?'<div style="background:rgba(0,0,0,.3);border-radius:7px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--t2)">'+esc(serie.produto)+'</div>':'')
+        +'<div style="font-size:11px;color:var(--t3);margin-bottom:14px;line-height:1.6">'+cfg.descr+'</div>'
+        +'<div style="margin-bottom:16px">'
+          +'<label style="font-size:10px;color:var(--t3);font-weight:700;letter-spacing:.8px;display:block;margin-bottom:4px">'+cfg.campo.toUpperCase()+'</label>'
+          +'<input id="confirmMotivo" class="field-input" placeholder="'+cfg.campo+'" style="width:100%;font-size:12px;padding:8px 12px"/>'
+        +'</div>'
+        +'<div style="display:flex;flex-direction:column;gap:8px">'
+          +'<button id="btnConfirmar" style="padding:12px;border-radius:9px;border:1px solid '+cfg.cor+';background:rgba(255,255,255,.05);color:'+cfg.colTxt+';font-size:13px;font-weight:800;cursor:pointer">'+cfg.btnTxt+'</button>'
+          +'<button id="btnCancelarModal" style="padding:9px;border-radius:9px;border:1px solid rgba(255,255,255,.08);background:transparent;color:var(--t3);font-size:11px;cursor:pointer">Cancelar</button>'
+        +'</div>'
+      +'</div>';
+    document.body.appendChild(m);
+    setTimeout(function(){ var el=document.getElementById('confirmMotivo'); if(el) el.focus(); }, 80);
+    m.onclick = function(e){ if(e.target===m) document.body.removeChild(m); };
+    document.getElementById('btnCancelarModal').onclick = function(){ document.body.removeChild(m); };
+    document.getElementById('btnConfirmar').onclick = function() {
+      var motivo = (document.getElementById('confirmMotivo')||{}).value || '';
+      document.body.removeChild(m);
+      if (tipo === 'cancelamento') {
+        var ok = registrarCancelamento(idSerie, motivo.trim());
+        if (ok) { if(window.App) window.App.toast('✕ Série '+idSerie+' cancelada','ok'); exibirResultadoLeitura(idSerie); }
+      } else if (tipo === 'substituicao') {
+        var novoId = registrarSubstituicao(idSerie, motivo.trim());
+        if (novoId) {
+          if(window.App) window.App.toast('🔁 Substituída → '+novoId,'ok');
+          exibirResultadoLeitura(idSerie);
+          // Preencher etiqueta com nova série e oferecer download
+          var partes = novoId.match(/^(.+)-(\d+)$/);
+          if (partes) {
+            var sv = function(id,v){ var el=document.getElementById(id); if(el) el.value=v; };
+            sv('etqPrefixo', partes[1]); sv('etqNumInicio', parseInt(partes[2])); sv('etqQtd', 1);
+            if (typeof previewEtiqueta === 'function') previewEtiqueta();
+          }
+          // Oferecer download do PDF da nova série
+          setTimeout(function() {
+            var cfgEtq = typeof getEtqConfig==='function' ? getEtqConfig() : {};
+            var p = novoId.match(/^(.+)-(\d+)$/);
+            if (p && typeof _montarEBaixarPDF==='function') {
+              _montarEBaixarPDF(cfgEtq, [novoId], [parseInt(p[2])]);
+            }
+          }, 300);
+        }
+      } else if (tipo === 'estorno') {
+        var ok2 = registrarRetorno(idSerie, motivo.trim() || 'Estorno de baixa');
+        if (ok2) { if(window.App) window.App.toast('↩ Estorno realizado — '+idSerie+' ATIVO','ok'); exibirResultadoLeitura(idSerie); }
+      }
+    };
+  }
+
+  function _campo(lbl, val) {
+    if (!val) return '';
+    return '<div style="background:rgba(255,255,255,.04);border-radius:6px;padding:7px 10px">'
+      +'<div style="font-size:9px;color:var(--t3);letter-spacing:.8px;margin-bottom:2px">'+lbl.toUpperCase()+'</div>'
+      +'<div style="font-weight:600;color:var(--t1)">'+esc(val)+'</div>'
+      +'</div>';
+  }
+
+  // ── MODAL BAIXA POR RESERVA ───────────────────────────────────
+  function abrirModalBaixa(idSerie) {
+    var serie = buscarSerie(idSerie);
+    var m = document.createElement('div');
+    m.id = 'modalBaixa';
+    m.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.75);backdrop-filter:blur(6px)';
+    m.innerHTML =
+      '<div style="background:var(--c2,#0C1525);border:1px solid rgba(0,255,178,.25);border-radius:14px;padding:26px;max-width:400px;width:90%;box-shadow:0 24px 80px rgba(0,0,0,.8)">'
+        +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">'
+          +'<div style="width:34px;height:34px;border-radius:9px;background:rgba(0,255,178,.1);border:1px solid rgba(0,255,178,.3);display:flex;align-items:center;justify-content:center;font-size:16px">📋</div>'
+          +'<div>'
+            +'<div style="font-size:14px;font-weight:800;font-family:Syne,sans-serif;color:var(--acid)">Baixa por Reserva</div>'
+            +'<div style="font-family:monospace;font-size:11px;color:var(--t3);margin-top:1px">'+esc(idSerie)+'</div>'
+          +'</div>'
+        +'</div>'
+        +(serie&&serie.produto?'<div style="background:rgba(0,0,0,.3);border-radius:7px;padding:8px 12px;margin-bottom:14px;font-size:11px;color:var(--t2)">'+esc(serie.produto)+'</div>':'')
+        +'<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">'
+          +'<div>'
+            +'<label style="font-size:10px;color:var(--t3);font-weight:700;letter-spacing:.8px;display:block;margin-bottom:4px">RESERVA / Nº DO DOCUMENTO</label>'
+            +'<input id="baixaReserva" class="field-input mono" placeholder="Ex: 45879" style="width:100%;font-size:13px;padding:8px 12px"/>'
+          +'</div>'
+          +'<div>'
+            +'<label style="font-size:10px;color:var(--t3);font-weight:700;letter-spacing:.8px;display:block;margin-bottom:4px">RESPONSÁVEL</label>'
+            +'<input id="baixaResponsavel" class="field-input" placeholder="Nome do responsável" style="width:100%;font-size:13px;padding:8px 12px"/>'
+          +'</div>'
+        +'</div>'
+        +'<div style="display:flex;flex-direction:column;gap:8px">'
+          +'<button id="btnConfirmarBaixa" style="padding:12px;border-radius:9px;border:1px solid rgba(0,255,178,.35);background:rgba(0,255,178,.1);color:var(--acid);font-size:13px;font-weight:800;cursor:pointer">✓ Registrar Baixa</button>'
+          +'<button id="btnCancelarBaixa" style="padding:9px;border-radius:9px;border:1px solid rgba(255,255,255,.08);background:transparent;color:var(--t3);font-size:11px;cursor:pointer">Cancelar</button>'
+        +'</div>'
+      +'</div>';
+    document.body.appendChild(m);
+    setTimeout(function(){ var el=document.getElementById('baixaReserva'); if(el) el.focus(); }, 80);
+    document.getElementById('btnCancelarBaixa').onclick = function(){ document.body.removeChild(m); };
+    m.onclick = function(e){ if(e.target===m) document.body.removeChild(m); };
+    document.getElementById('btnConfirmarBaixa').onclick = function() {
+      var reserva      = (document.getElementById('baixaReserva')||{}).value||'';
+      var responsavel  = (document.getElementById('baixaResponsavel')||{}).value||'';
+      if (!reserva.trim()) { var el=document.getElementById('baixaReserva'); if(el){el.style.border='1px solid var(--red)';el.focus();} return; }
+      var ok = registrarBaixa(idSerie, reserva.trim(), responsavel.trim());
+      document.body.removeChild(m);
+      if (ok) {
+        if (window.App) window.App.toast('Baixa registrada — Reserva '+reserva,'ok');
+        exibirResultadoLeitura(idSerie);
+      }
+    };
+  }
+
+  // ── CÂMERA QR CODE ────────────────────────────────────────────
+  var _qrStream = null;
+  var _qrAnimFrame = null;
+
+  function abrirCameraQR() {
+    // Fechar se já aberta
+    if (document.getElementById('modalCameraQR')) { fecharCameraQR(); return; }
+
+    var m = document.createElement('div');
+    m.id = 'modalCameraQR';
+    m.style.cssText = 'position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.88);backdrop-filter:blur(4px)';
+    m.innerHTML =
+      '<div style="background:var(--c2,#0C1525);border:1px solid rgba(0,255,178,.2);border-radius:14px;padding:20px;max-width:380px;width:92%;box-shadow:0 24px 80px rgba(0,0,0,.9)">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">'
+          +'<div style="font-size:14px;font-weight:800;font-family:Syne,sans-serif;color:var(--acid)">📷 Leitor de QR Code</div>'
+          +'<button onclick="Rast.fecharCameraQR()" style="background:none;border:none;color:var(--t3);font-size:20px;cursor:pointer;padding:0 4px">×</button>'
+        +'</div>'
+        +'<div style="position:relative;border-radius:10px;overflow:hidden;background:#000;aspect-ratio:1">'
+          +'<video id="qrVideo" style="width:100%;height:100%;object-fit:cover" playsinline autoplay muted></video>'
+          +'<canvas id="qrCanvas" style="display:none"></canvas>'
+          // Mira visual
+          +'<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none">'
+            +'<div style="width:60%;height:60%;border:2px solid rgba(0,255,178,.7);border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,.4)"></div>'
+          +'</div>'
+        +'</div>'
+        +'<div id="qrStatus" style="text-align:center;font-size:11px;color:var(--t3);margin-top:10px">Aponte a câmera para o QR Code da etiqueta</div>'
+        +'<div style="display:flex;gap:8px;margin-top:12px">'
+          +'<button onclick="Rast.fecharCameraQR()" style="flex:1;padding:9px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:transparent;color:var(--t3);font-size:12px;cursor:pointer">Cancelar</button>'
+        +'</div>'
+      +'</div>';
+    document.body.appendChild(m);
+    m.onclick = function(e){ if(e.target===m) fecharCameraQR(); };
+
+    // Iniciar câmera
+    navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' } })
+      .then(function(stream) {
+        _qrStream = stream;
+        var video = document.getElementById('qrVideo');
+        if (!video) { fecharCameraQR(); return; }
+        video.srcObject = stream;
+        video.play();
+        video.addEventListener('loadedmetadata', function(){ _scanLoop(); });
+      })
+      .catch(function(err) {
+        var st = document.getElementById('qrStatus');
+        if (st) st.innerHTML = '<span style="color:var(--red)">Câmera indisponível: '+err.message+'</span>';
+      });
+  }
+
+  function _scanLoop() {
+    var video  = document.getElementById('qrVideo');
+    var canvas = document.getElementById('qrCanvas');
+    var status = document.getElementById('qrStatus');
+    if (!video || !canvas || !document.getElementById('modalCameraQR')) return;
+
+    canvas.width  = video.videoWidth  || 320;
+    canvas.height = video.videoHeight || 320;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Tentar BarcodeDetector (Chrome/Edge nativo)
+    if (window.BarcodeDetector) {
+      var bd = new BarcodeDetector({ formats: ['qr_code'] });
+      bd.detect(canvas).then(function(barcodes) {
+        if (barcodes.length > 0) {
+          var raw = barcodes[0].rawValue;
+          fecharCameraQR();
+          var input = document.getElementById('rastLeituraInput');
+          if (input) input.value = raw;
+          exibirResultadoLeitura(raw);
+          verificarLeitura(raw);
+          return;
+        }
+        _qrAnimFrame = requestAnimationFrame(_scanLoop);
+      }).catch(function(){ _qrAnimFrame = requestAnimationFrame(_scanLoop); });
+    } else {
+      // Fallback: instrução manual
+      if (status) status.innerHTML = '<span style="color:var(--amber)">Câmera ativa. Cole o ID no campo acima se o leitor não detectar automaticamente.</span>';
+      // Continuar loop por 30s tentando
+      _qrAnimFrame = requestAnimationFrame(_scanLoop);
+    }
+  }
+
+  function fecharCameraQR() {
+    if (_qrAnimFrame) { cancelAnimationFrame(_qrAnimFrame); _qrAnimFrame = null; }
+    if (_qrStream)    { _qrStream.getTracks().forEach(function(t){ t.stop(); }); _qrStream = null; }
+    var m = document.getElementById('modalCameraQR');
+    if (m && m.parentNode) m.parentNode.removeChild(m);
+  }
+
+  // ── TOGGLE barra de contexto (captura) ───────────────────────
+  function toggleBar() {
+    var bar = document.getElementById('rastContextBar');
+    if (!bar) return;
+    var vis = bar.style.display === 'flex';
+    bar.style.display = vis ? 'none' : 'flex';
+    if (!vis) { var first = bar.querySelector('input'); if (first) setTimeout(function(){ first.focus(); }, 80); }
+  }
+
+  // ── REIMPRESSÃO INTELIGENTE ───────────────────────────────────
+  var _sessionLidas2 = {};
+
+  function verificarLeitura(id) {
+    if (!id) return;
+    id = String(id).trim().toUpperCase();
+    // Extrair ID do payload QR estruturado
+    if (id.indexOf('ID:') >= 0) {
+      id.split('|').forEach(function(p){ if(p.indexOf('ID:')===0) id=p.slice(3).trim(); });
+    }
+
+    // Verificar status no storage PRIMEIRO
+    var serie = buscarSerie(id);
+    if (serie && serie.status === 'baixada') {
+      // Série baixada — mostrar opções de estorno/reimpressão
+      _beepOk();
+      abrirModalEstorno(id);
+      return;
+    }
+
+    // Série ativa lida pela segunda vez na sessão → reimpressão
+    if (_sessionLidas2[id]) { _abrirModalReimpressao(id); return; }
+
+    _sessionLidas2[id] = Date.now();
+    _beepOk();
+  }
+
+  function _beepOk() {
+    try {
+      var ctx = new (window.AudioContext||window.webkitAudioContext)();
+      var o=ctx.createOscillator(), g=ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type='sine'; o.frequency.value=880;
+      g.gain.setValueAtTime(0.18, ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.18);
+      o.start(ctx.currentTime); o.stop(ctx.currentTime+0.18);
+    } catch(e){}
+  }
+
+  function _abrirModalReimpressao(id) {
+    var serie = buscarSerie(id);
+    var m = document.createElement('div');
+    m.id = 'modalReimpressao';
+    m.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.75);backdrop-filter:blur(6px)';
+    m.innerHTML =
+      '<div style="background:var(--c2,#0C1525);border:1px solid rgba(255,59,92,.35);border-radius:14px;padding:26px;max-width:400px;width:90%;box-shadow:0 24px 80px rgba(0,0,0,.8)">'
+        +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">'
+          +'<div style="width:34px;height:34px;border-radius:9px;background:rgba(255,59,92,.12);border:1px solid rgba(255,59,92,.35);display:flex;align-items:center;justify-content:center;font-size:18px">⚠</div>'
+          +'<div><div style="font-size:14px;font-weight:800;color:var(--red)">Etiqueta já lida</div><div style="font-size:10px;color:var(--t3)">Detectada nesta sessão</div></div>'
+        +'</div>'
+        +'<div style="background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:10px;margin-bottom:14px;font-family:monospace;font-size:15px;font-weight:700;color:var(--acid);text-align:center;letter-spacing:2px">'+esc(id)+'</div>'
+        +(serie&&serie.produto?'<div style="font-size:11px;color:var(--t2);text-align:center;margin-bottom:12px">'+esc(serie.produto)+'</div>':'')
+        +'<div style="display:flex;flex-direction:column;gap:8px">'
+          +'<button id="bReimp" style="padding:11px;border-radius:9px;border:1px solid rgba(0,255,178,.3);background:rgba(0,255,178,.08);color:var(--acid);font-size:13px;font-weight:700;cursor:pointer">🖨 Reimprimir Etiqueta</button>'
+          +'<button id="bCorr" style="padding:11px;border-radius:9px;border:1px solid rgba(0,153,255,.3);background:rgba(0,153,255,.08);color:var(--blue);font-size:13px;font-weight:700;cursor:pointer">✏ Corrigir Cadastro</button>'
+          +'<button id="bCanc" style="padding:9px;border-radius:9px;border:1px solid rgba(255,255,255,.08);background:transparent;color:var(--t3);font-size:12px;cursor:pointer">Cancelar</button>'
+        +'</div>'
+      +'</div>';
+    document.body.appendChild(m);
+    document.getElementById('bCanc').onclick = function(){ document.body.removeChild(m); };
+    document.getElementById('bCorr').onclick = function(){ document.body.removeChild(m); if(window.navigate) navigate('etiquetas'); };
+    document.getElementById('bReimp').onclick = function(){ document.body.removeChild(m); _executarReimpressao(id); };
+    m.onclick = function(e){ if(e.target===m) document.body.removeChild(m); };
+  }
+
+  function _executarReimpressao(idAntigo) {
+    var data    = _load();
+    var partes  = idAntigo.match(/^(.+)-(\d+)$/);
+    var prefixo = partes ? partes[1] : idAntigo;
+    var maiores = data.filter(function(s){ return (s.prefixo||'')+'-'===(prefixo+'-')||(s.idNovo||'').startsWith(prefixo+'-'); })
+                      .map(function(s){ return s.num||parseInt((s.idNovo||'').split('-').pop())||0; });
+    var novoNum = (maiores.length ? Math.max.apply(null,maiores) : parseInt(partes?partes[2]:0)||0) + 1;
+    var novoId  = prefixo + '-' + String(novoNum).padStart(6,'0');
+    var op      = (window._appState&&window._appState.cfg&&window._appState.cfg.op)||'Operador';
+    registrarReimpressao(idAntigo, novoId, op);
+    // Preencher campos de etiqueta
+    var sv = function(id,v){ var el=document.getElementById(id); if(el) el.value=v; };
+    sv('etqPrefixo', prefixo); sv('etqNumInicio', novoNum); sv('etqQtd', 1); sv('etqAuditor', op);
+    sv('etqExtra', 'REIMPRESSÃO DE '+idAntigo);
+    if (typeof previewEtiqueta==='function') previewEtiqueta();
+    // Modal de confirmação
+    var conf = document.createElement('div');
+    conf.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.75);backdrop-filter:blur(6px)';
+    conf.innerHTML =
+      '<div style="background:var(--c2,#0C1525);border:1px solid rgba(0,255,178,.25);border-radius:14px;padding:26px;max-width:380px;width:90%;box-shadow:0 24px 80px rgba(0,0,0,.8)">'
+        +'<div style="text-align:center;margin-bottom:16px"><div style="font-size:28px">✅</div><div style="font-size:14px;font-weight:800;color:var(--acid);font-family:Syne,sans-serif">Nova série gerada</div></div>'
+        +'<div style="background:rgba(0,0,0,.4);border-radius:10px;padding:14px;margin-bottom:16px;display:flex;justify-content:space-around;align-items:center">'
+          +'<div style="text-align:center"><div style="font-size:9px;color:var(--t3)">INATIVA</div><div style="font-family:monospace;font-size:12px;color:rgba(255,59,92,.7);text-decoration:line-through">'+esc(idAntigo)+'</div></div>'
+          +'<div style="color:var(--t3)">→</div>'
+          +'<div style="text-align:center"><div style="font-size:9px;color:var(--t3)">NOVA ATIVA</div><div style="font-family:monospace;font-size:15px;font-weight:800;color:var(--acid)">'+esc(novoId)+'</div></div>'
+        +'</div>'
+        +'<div style="display:flex;flex-direction:column;gap:8px">'
+          +'<button id="bPDF" style="padding:11px;border-radius:9px;border:1px solid rgba(0,255,178,.35);background:rgba(0,255,178,.1);color:var(--acid);font-size:13px;font-weight:800;cursor:pointer">🖨 Gerar PDF e Imprimir</button>'
+          +'<button id="bEtq" style="padding:9px;border-radius:9px;border:1px solid rgba(0,153,255,.25);background:rgba(0,153,255,.07);color:var(--blue);font-size:12px;cursor:pointer">🏷 Ir para Etiquetas</button>'
+          +'<button id="bFch" style="padding:9px;border-radius:9px;border:1px solid rgba(255,255,255,.08);background:transparent;color:var(--t3);font-size:11px;cursor:pointer">Fechar</button>'
+        +'</div>'
+      +'</div>';
+    document.body.appendChild(conf);
+    document.getElementById('bFch').onclick = function(){ document.body.removeChild(conf); };
+    document.getElementById('bEtq').onclick = function(){ document.body.removeChild(conf); if(window.navigate) navigate('etiquetas'); };
+    document.getElementById('bPDF').onclick = function(){
+      document.body.removeChild(conf);
+      if (typeof gerarEtiquetasPDF==='function') gerarEtiquetasPDF();
+      else if (window.App&&window.App.gerarEtiquetasPDF) window.App.gerarEtiquetasPDF();
+      if (window.App) window.App.toast('PDF '+novoId+' gerado!','ok');
+    };
+    conf.onclick = function(e){ if(e.target===conf) document.body.removeChild(conf); };
+  }
+
+  // ── IMPRESSÃO DIRETA ──────────────────────────────────────────
+  function imprimirDireto() {
+    // Renderiza TODAS as etiquetas do lote atual (não apenas o preview)
+    var cfg = (typeof getEtqConfig === 'function') ? getEtqConfig() : null;
+    if (!cfg) { if(window.App) window.App.toast('Configuração de etiqueta não encontrada','er'); return; }
+
+    var win = window.open('','_blank','width=900,height=700');
+    if (!win) { if(window.App) window.App.toast('Permita pop-ups para impressão direta','wa'); return; }
+
+    // Calcular tamanho da etiqueta em mm→px (96dpi)
+    var fmts = { '60x40':[60,40], '100x50':[100,50], '80x40':[80,40] };
+    var fm   = fmts[cfg.formato] || [60,40];
+    var wMM  = fm[0], hMM = fm[1];
+
+    // Renderizar cada etiqueta como canvas e converter para DataURL
+    var imagens = [];
+    for (var _i = 0; _i < cfg.qtd; _i++) {
+      var num = cfg.numInicio + _i;
+      var c   = document.createElement('canvas');
+      c.width = 340; c.height = 226;
+      if (typeof desenharEtiqueta === 'function') desenharEtiqueta(c, cfg, num);
+      imagens.push(c.toDataURL('image/png', 1.0));
+    }
+
+    var imgs = imagens.map(function(src) {
+      return '<div style="width:'+wMM+'mm;height:'+hMM+'mm;display:inline-block;margin:1mm;page-break-inside:avoid">'
+        +'<img src="'+src+'" style="width:100%;height:100%;display:block"/>'
+        +'</div>';
+    }).join('');
+
+    win.document.write('<!DOCTYPE html><html><head><title>Impressão — '+cfg.qtd+' Etiqueta(s)</title>'
+      +'<style>'
+        +'*{margin:0;padding:0;box-sizing:border-box;}'
+        +'body{background:#fff;display:flex;flex-wrap:wrap;align-items:flex-start;padding:4mm;}'
+        +'@page{size:'+wMM+'mm '+hMM+'mm;margin:0;}'
+        +'@media print{'
+          +'body{padding:0;}'
+          +'div{margin:0!important;page-break-inside:avoid;}'
+        +'}'
+      +'</style></head>'
+      +'<body>'+imgs
+      +'<script>'
+        +'window.onload=function(){'
+          +'setTimeout(function(){window.print();},400);'
+          +'window.onafterprint=function(){window.close();};'
+        +'};'
+      +'<\/script>'
+      +'</body></html>');
+    win.document.close();
+  }
+
+  // ── EXPORTAR CSV ──────────────────────────────────────────────
+  function exportCSV() {
+    var data = _load();
+    if (!data.length) { if(window.App) window.App.toast('Nenhum dado para exportar','er'); return; }
+    var rows=[['ID','Produto','SKU','Auditor','Data','Status','Origem','Reserva','Responsável','Local']];
+    data.forEach(function(d){
+      rows.push([d.idNovo||d.idOriginal,d.produto,d.sku,d.auditor||d.criadoPor,d.dataBR||'',d.status,d.origem,d.reserva,d.responsavel||'',d.local]);
+    });
+    var csv=rows.map(function(r){return r.map(function(c){return'"'+String(c||'').replace(/"/g,'""')+'"';}).join(';');}).join('\n');
+    var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url; a.download='rastreabilidade_'+new Date().toLocaleDateString('pt-BR').replace(/\//g,'-')+'.csv';
+    a.click(); URL.revokeObjectURL(url);
+    if(window.App) window.App.toast('CSV exportado!','ok');
+  }
+
+  function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+
+
+  // ── ESTORNO / RETORNO AO ESTOQUE (aditivo) ───────────────────
+  // Chamado quando uma série baixada precisa voltar ao estoque.
+  // Não altera nenhuma função existente.
+  function retornarAoEstoque(idSerie) {
+    var data  = _load();
+    var agora = new Date().toISOString();
+    var op    = (window._appState&&window._appState.cfg&&window._appState.cfg.op)||'Operador';
+    var ok    = false;
+    data.forEach(function(s) {
+      if ((s.idNovo||s.idOriginal) === idSerie) {
+        var reservaAnterior = s.reserva || '';
+        s.status      = 'ativa';
+        s.reserva     = '';
+        s.responsavel = '';
+        s.baixaEm     = null;
+        s.baixaPor    = null;
+        s.retornoEm   = agora;
+        s.retornoPor  = op;
+        if (!s.historico) s.historico = [];
+        s.historico.push({
+          acao:            'retorno_estoque',
+          reservaAnterior: reservaAnterior,
+          ts:              agora,
+          op:              op
+        });
+        ok = true;
+      }
+    });
+    if (!ok) return false;
+    _save(data);
+    renderLista();
+    renderHistoricoSeries('rastSeriesLista');
+    return true;
+  }
+
+  // ── MODAL ESTORNO / RETORNO AO ESTOQUE ───────────────────────
+  function abrirModalEstorno(idSerie) {
+    var serie = buscarSerie(idSerie);
+    if (!serie) { if(window.App) window.App.toast('Série não encontrada','er'); return; }
+
+    var m = document.createElement('div');
+    m.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.75);backdrop-filter:blur(6px)';
+    m.innerHTML =
+      '<div style="background:var(--c2,#0C1525);border:1px solid rgba(255,176,32,.3);border-radius:14px;padding:26px;max-width:400px;width:90%;box-shadow:0 24px 80px rgba(0,0,0,.8)">'
+        +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">'
+          +'<div style="width:34px;height:34px;border-radius:9px;background:rgba(255,176,32,.12);border:1px solid rgba(255,176,32,.35);display:flex;align-items:center;justify-content:center;font-size:18px">↩</div>'
+          +'<div>'
+            +'<div style="font-size:14px;font-weight:800;font-family:Syne,sans-serif;color:var(--amber)">Item já baixado</div>'
+            +'<div style="font-family:monospace;font-size:11px;color:var(--t3);margin-top:1px">'+esc(idSerie)+'</div>'
+          +'</div>'
+        +'</div>'
+        +(serie.produto?'<div style="background:rgba(0,0,0,.3);border-radius:7px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--t2)">'+esc(serie.produto)+'</div>':'')
+        +(serie.reserva?'<div style="font-size:11px;color:var(--t3);margin-bottom:14px">Reserva atual: <strong style="color:var(--amber)">'+esc(serie.reserva)+'</strong></div>':'')
+        +'<div style="display:flex;flex-direction:column;gap:8px">'
+          +'<button id="bEstornoRetornar" style="padding:11px;border-radius:9px;border:1px solid rgba(0,255,178,.3);background:rgba(0,255,178,.08);color:var(--acid);font-size:13px;font-weight:700;cursor:pointer">↩ Retornar ao Estoque</button>'
+          +'<button id="bEstornoReimp"   style="padding:11px;border-radius:9px;border:1px solid rgba(0,153,255,.3);background:rgba(0,153,255,.08);color:var(--blue);font-size:13px;font-weight:700;cursor:pointer">🖨 Reimprimir Etiqueta</button>'
+          +'<button id="bEstornoCancelar" style="padding:9px;border-radius:9px;border:1px solid rgba(255,255,255,.08);background:transparent;color:var(--t3);font-size:12px;cursor:pointer">Cancelar</button>'
+        +'</div>'
+      +'</div>';
+    document.body.appendChild(m);
+    m.onclick = function(e){ if(e.target===m) document.body.removeChild(m); };
+    document.getElementById('bEstornoCancelar').onclick = function(){ document.body.removeChild(m); };
+    document.getElementById('bEstornoReimp').onclick = function(){
+      document.body.removeChild(m);
+      _executarReimpressao(idSerie);
+    };
+    document.getElementById('bEstornoRetornar').onclick = function(){
+      document.body.removeChild(m);
+      var ok = retornarAoEstoque(idSerie);
+      if (ok) {
+        if(window.App) window.App.toast('↩ '+idSerie+' retornada ao estoque — status ATIVO','ok');
+        exibirResultadoLeitura(idSerie);
+      }
+    };
+  }
+
+  // ── CONSULTA RÁPIDA (aditivo) ────────────────────────────────
+  // Busca por reserva, série, SKU ou produto.
+  // Retorna lista filtrada para exibição.
+  function consultarSeries(q) {
+    if (!q) return _load();
+    var sq = String(q).toLowerCase().trim();
+    return _load().filter(function(s) {
+      return [(s.idNovo||''),(s.idOriginal||''),(s.produto||''),(s.sku||''),(s.reserva||''),(s.responsavel||''),(s.auditor||''),(s.local||'')]
+        .some(function(v){ return v.toLowerCase().indexOf(sq) >= 0; });
+    });
+  }
+
+  function renderConsulta(q) {
+    var el     = document.getElementById('rastConsultaResultado');
+    var painel = document.getElementById('rastConsultaPanel');
+    if (!el) return;
+    if (painel) painel.style.display = (q && q.trim()) ? 'block' : 'none';
+    if (!q || !q.trim()) return;
+    var resultados = consultarSeries(q);
+    if (!resultados.length) {
+      el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--t3);font-size:12px">Nenhum resultado para ' + esc(q) + '</div>';
+      return;
+    }
+    // Usar data-id em vez de onclick inline para evitar problemas de aspas
+    el.innerHTML = resultados.slice(0,50).map(function(s) {
+      var ativa   = s.status === 'ativa';
+      var baixada = s.status === 'baixada';
+      var col     = ativa ? 'var(--acid)' : (baixada ? 'var(--amber)' : 'var(--red)');
+      var statusTxt = ativa ? 'ATIVO' : (baixada ? 'BAIXADA' : 'INATIVO');
+      var statusBg  = ativa ? 'rgba(0,255,178,.1)' : (baixada ? 'rgba(255,176,32,.1)' : 'rgba(255,59,92,.1)');
+      var idV = esc(s.idNovo||s.idOriginal);
+      return '<div data-serie-id="'+idV+'" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(0,200,150,.04);cursor:pointer;transition:background .1s" onmouseover="this.style.background=\'rgba(0,200,150,.03)\'" onmouseout="this.style.background=\'\'">'
+        +'<div style="flex:1;min-width:0">'
+          +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+            +'<span style="font-family:monospace;font-size:12px;font-weight:800;color:'+col+'">'+esc(s.idNovo||s.idOriginal)+'</span>'
+            +'<span style="font-size:9px;padding:2px 7px;border-radius:4px;font-weight:700;background:'+statusBg+';color:'+col+'">'+statusTxt+'</span>'
+            +(s.reserva ? '<span style="font-size:9px;color:var(--amber);font-family:monospace">Res: '+esc(s.reserva)+'</span>' : '')
+          +'</div>'
+          +(s.produto ? '<div style="font-size:10px;color:var(--t2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(s.produto)+'</div>' : '')
+          +'<div style="display:flex;gap:8px;margin-top:2px;flex-wrap:wrap">'
+            +(s.sku        ? '<span style="font-size:9px;color:var(--t3)">SKU: '+esc(s.sku)+'</span>' : '')
+            +(s.responsavel? '<span style="font-size:9px;color:var(--t3)">Resp: '+esc(s.responsavel)+'</span>' : '')
+            +(s.dataBR     ? '<span style="font-size:9px;color:var(--t3)">'+esc(s.dataBR)+'</span>' : '')
+          +'</div>'
+        +'</div>'
+        +'<span style="font-size:9px;color:var(--t3);flex-shrink:0">'+esc(s.origem||'')+'</span>'
+        +'</div>';
+    }).join('');
+    // Delegação de eventos — sem onclick inline
+    el.onclick = function(e) {
+      var row = e.target.closest('[data-serie-id]');
+      if (!row) return;
+      var sid = row.getAttribute('data-serie-id');
+      exibirResultadoLeitura(sid);
+      var inp = document.getElementById('rastLeituraInput');
+      if (inp) inp.value = sid;
+    };
+  }
+
+
+  return {
+    // Core
+    registrar,
+    retornarAoEstoque,
+    abrirModalEstorno,
+    consultarSeries,
+    renderConsulta,
+    registrarLoteEtiquetas,
+    registrarReimpressao,
+    registrarBaixa,
+    registrarRetorno,
+    registrarCancelamento,
+    registrarSubstituicao,
+    buscarSerie,
+    // UI
+    toggleBar,
+    renderLista,
+    renderHistoricoSeries,
+    exibirResultadoLeitura,
+    abrirModalBaixa,
+    abrirModalRetorno,
+    // Câmera
+    abrirCameraQR,
+    fecharCameraQR,
+    // Reimpressão / ações
+    verificarLeitura,
+    // Impressão
+    imprimirDireto,
+    exportCSV,
+  };
+
+})();
+
+
+// ── BUSCA RÁPIDA DE ETIQUETAS ─────────────────────────────────
+// Busca no storage de séries por ID, SKU ou produto.
+// Chamada pelo campo de busca da tela de Etiquetas.
+function _etqBuscar(q) {
+  var el = document.getElementById('etqBuscaResultado');
+  if (!el) return;
+  if (!q || !q.trim()) { el.style.display = 'none'; return; }
+  var sq = q.trim().toLowerCase();
+  var series = [];
+  try { series = JSON.parse(localStorage.getItem('rp_series_etiquetas') || '[]'); } catch(e) {}
+  var res = series.filter(function(s) {
+    return [(s.idNovo||''),(s.idOriginal||''),(s.sku||''),(s.produto||'')]
+      .some(function(v){ return v.toLowerCase().indexOf(sq) >= 0; });
+  }).slice(0, 20);
+
+  if (!res.length) {
+    el.style.display = 'block';
+    el.innerHTML = '<div style="color:var(--t3);font-size:12px;text-align:center;padding:8px">Nenhuma série encontrada para "'+q+'"</div>';
+    return;
+  }
+
+  function esc2(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+  el.style.display = 'block';
+  el.innerHTML = '<div style="font-size:10px;font-weight:700;color:var(--t3);letter-spacing:.8px;margin-bottom:8px">'+res.length+' RESULTADO(S)</div>'
+    + res.map(function(s) {
+      var ativa   = s.status === 'ativa';
+      var baixada = s.status === 'baixada';
+      var col     = ativa ? 'var(--acid)' : (baixada ? 'var(--amber)' : 'var(--red)');
+      var statusTxt = ativa ? 'ATIVO' : (baixada ? 'BAIXADA' : 'INATIVO');
+      return '<div style="display:flex;align-items:center;gap:12px;padding:8px 10px;background:var(--c3);border-radius:7px;margin-bottom:6px;flex-wrap:wrap">'
+        +'<span style="font-family:monospace;font-size:13px;font-weight:800;color:'+col+'">'+esc2(s.idNovo||s.idOriginal)+'</span>'
+        +'<span style="font-size:9px;padding:2px 8px;border-radius:4px;font-weight:700;background:'+(ativa?'rgba(0,255,178,.1)':baixada?'rgba(255,176,32,.1)':'rgba(255,59,92,.1)')+';color:'+col+'">'+statusTxt+'</span>'
+        +(s.produto?'<span style="font-size:11px;color:var(--t2);flex:1">'+esc2(s.produto)+'</span>':'')
+        +(s.sku?'<span style="font-size:10px;color:var(--t3);font-family:monospace">SKU: '+esc2(s.sku)+'</span>':'')
+        +(s.dataBR?'<span style="font-size:10px;color:var(--t3)">'+esc2(s.dataBR)+'</span>':'')
+        +(s.reserva?'<span style="font-size:10px;color:var(--amber)">Res: '+esc2(s.reserva)+'</span>':'')
+        +'</div>';
+    }).join('');
+}
+
 // ── BOOT ──────────────────────────────────────────────────────
 function navigate(p) { if(window.App) window.App.navigate(p); }
 
@@ -7949,6 +9664,12 @@ document.addEventListener('DOMContentLoaded', function() {
     console.error('[Boot]', e);
     document.body.innerHTML = '<div style="font-family:sans-serif;background:#050A14;color:#fff;height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px"><div style="color:#00FFB2;font-size:22px;font-weight:800">ROTATIVO APP PRO</div><div style="color:#FF3B5C;font-size:12px">Erro: ' + e.message + '</div><button onclick="location.reload()" style="background:#00FFB2;color:#000;border:none;padding:10px 22px;border-radius:8px;font-weight:700;cursor:pointer">Recarregar</button></div>';
   }
+  // Atualizar badge de rastreabilidade com contagem real do storage
+  try {
+    var _rastTotal = JSON.parse(localStorage.getItem('rp_series_etiquetas')||'[]').length;
+    var _rastBadge = document.getElementById('rastNavBadge');
+    if (_rastBadge) _rastBadge.textContent = _rastTotal || '0';
+  } catch(e) {}
 });
 
 </script>
@@ -8141,8 +9862,14 @@ function fmtBRL(v){
 
 // ── Funções adicionadas ──
 window.imprimirDiretaFn = function(){
-  if(window.App) window.App.gerarEtiquetasPDF();
-  setTimeout(function(){ window.print(); }, 1800);
+  // Tenta impressão direta via Rast (abre janela de impressão do SO)
+  // Fallback: comportamento original (gerar PDF + print)
+  if (window.Rast && window.Rast.imprimirDireto) {
+    window.Rast.imprimirDireto();
+  } else {
+    if(window.App) window.App.gerarEtiquetasPDF();
+    setTimeout(function(){ window.print(); }, 1800);
+  }
 };
 
 window.abrirFichaDigital = function(skuOrMat) {
