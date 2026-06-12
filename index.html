@@ -3870,7 +3870,7 @@ window.App = (function() {
         // Verificar pendências cadastradas para este material
         var _impPendDb = [];
         try { _impPendDb = JSON.parse(localStorage.getItem('rp_pendencias_v2')||'[]'); } catch(e2){}
-        var _impPend = _impPendDb.find(function(p){ return p.mat===(itE.mat||'').toUpperCase() && p.status!=='resolvida'; });
+        var _impPend = _impPendDb.find(function(p){ return p.status!=='resolvida' && (typeof _pendTemMaterial==='function' ? _pendTemMaterial(p,(itE.mat||'').toUpperCase()) : p.mat===(itE.mat||'').toUpperCase()); });
         if (_impPend) { bg = 'rgba(255,176,32,.12)'; ic = '⚠'; }
         var pendBadge = _impPend
           ? '<span title="⚠ Possui pendência: '+({'aguardando_baixa':'Ag. Baixa','aguardando_mov':'Ag. Movimentação','em_separacao':'Em Separação','transferencia_interna':'Transf. Interna','conferencia_pendente':'Conf. Pendente','outro':'Pendência'}[_impPend.tipo]||'Pendência')+'" style="font-size:9px;background:rgba(255,176,32,.2);border:1px solid rgba(255,176,32,.4);border-radius:3px;padding:1px 5px;color:var(--amber);margin-left:4px;cursor:help">⚠ Pend.</span>'
@@ -4684,7 +4684,7 @@ window.App = (function() {
       var matUp = (it.mat||it.material||'').toUpperCase();
       var _pendDb = [];
       try { _pendDb = JSON.parse(localStorage.getItem('rp_pendencias_v2')||'[]'); } catch(e){}
-      var _pendItem = _pendDb.find(function(p){ return p.mat===matUp && p.status!=='resolvida'; });
+      var _pendItem = _pendDb.find(function(p){ return p.status!=='resolvida' && (typeof _pendTemMaterial==='function' ? _pendTemMaterial(p,matUp) : p.mat===matUp); });
       var _tipoLabel = _pendItem ? ({'aguardando_baixa':'Ag. Baixa','aguardando_mov':'Ag. Movimentação','em_separacao':'Em Separação','transferencia_interna':'Transf. Interna','conferencia_pendente':'Conf. Pendente','outro':'Pendência'}[_pendItem.tipo]||'Pendência') : '';
       var statusBadge = `<span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;white-space:nowrap;background:${s==='ok'?'rgba(0,232,122,.1)':s==='pendente'?'rgba(255,176,32,.15)':s==='pos'?'rgba(255,176,32,.1)':'rgba(255,59,92,.1)'};color:${s==='ok'?'var(--green)':s==='pendente'||s==='pos'?'var(--amber)':'var(--red)'}">${s==='ok'?'✓ Conferido':s==='pendente'?'🟠 Pendente':s==='pos'?'↑ Excedente':'↓ Divergência'}</span>`;
       // Badge de pendência cadastrada — destaque visual completo
@@ -10551,6 +10551,14 @@ var _logSistema = [];
 // ════════════════════════════════════════════════════════
 // MÓDULO PENDÊNCIAS
 // ════════════════════════════════════════════════════════
+// esc() global — necessária aqui pois este bloco está fora do
+// IIFE window.App (onde existe uma versão local de esc).
+// Sem isso, pendAbrir() lançava ReferenceError e o modal nunca abria.
+if (typeof esc !== 'function') {
+  window.esc = function(s) {
+    return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  };
+}
 var _PEND_KEY = 'rp_pendencias_v2';
 
 function _getPendencias() {
@@ -10565,6 +10573,178 @@ function _setPendencias(arr) {
   } catch(e){}
 }
 
+// ── HELPERS: compatibilidade entre formato antigo (1 item) e novo (múltiplos itens) ──
+// Pendências antigas tinham {mat,descricao,loc,qtd} direto na raiz.
+// Pendências novas têm {reserva, itens:[{mat,desc,qtd,loc},...]}.
+function _pendItensOf(p) {
+  if (!p) return [];
+  if (p.itens && p.itens.length) return p.itens;
+  if (p.mat || p.descricao || p.desc) {
+    return [{ mat: p.mat||'', desc: p.descricao||p.desc||'', qtd: p.qtd||0, loc: p.loc||'' }];
+  }
+  return [];
+}
+function _pendTemMaterial(p, matUp) {
+  return _pendItensOf(p).some(function(it){ return (it.mat||'').toUpperCase()===matUp; });
+}
+
+// ── GERENCIAMENTO DAS LINHAS DE ITEM (formulário multi-item) ──────
+window._pendItemSeq = window._pendItemSeq || 0;
+
+window._pendAddItemRow = function(data) {
+  data = data || {};
+  var rid = ++window._pendItemSeq;
+  var container = document.getElementById('pItensContainer');
+  if (!container) return rid;
+  var row = document.createElement('div');
+  row.className = 'pend-item-row';
+  row.setAttribute('data-rowid', String(rid));
+  row.style.cssText = 'border:1px solid var(--bd);border-radius:8px;padding:8px;margin-bottom:6px;background:var(--c2)';
+  row.innerHTML =
+      '<div style="display:flex;gap:6px;margin-bottom:6px;align-items:flex-end">'
+    +   '<div style="flex:1">'
+    +     '<label style="font-size:9px;color:var(--t3);font-weight:700;display:block;margin-bottom:2px">MATERIAL</label>'
+    +     '<div style="display:flex;gap:5px">'
+    +       '<input class="field-input" id="pi-mat-'+rid+'" value="'+esc(data.mat||'')+'" placeholder="Código SAP" style="flex:1;font-family:monospace;font-size:11px" oninput="window._pendBuscarMaterial(this.value,false,'+rid+')"/>'
+    +       '<button type="button" onclick="window._pendBuscarMaterial(document.getElementById(\'pi-mat-'+rid+'\').value,true,'+rid+')" title="Buscar e preencher automaticamente" style="padding:0 10px;background:rgba(0,255,178,.1);border:1px solid rgba(0,255,178,.3);border-radius:5px;color:var(--acid);font-size:12px;cursor:pointer">🔍</button>'
+    +     '</div>'
+    +   '</div>'
+    +   '<div style="width:78px">'
+    +     '<label style="font-size:9px;color:var(--t3);font-weight:700;display:block;margin-bottom:2px">QTD</label>'
+    +     '<input class="field-input" id="pi-qtd-'+rid+'" type="number" min="0" value="'+esc(data.qtd!=null&&data.qtd!==''?String(data.qtd):'')+'" placeholder="0" style="width:100%"/>'
+    +   '</div>'
+    +   '<button type="button" onclick="window._pendRemoverItem('+rid+')" title="Remover item" style="padding:6px 8px;background:rgba(255,59,92,.08);border:1px solid rgba(255,59,92,.2);border-radius:5px;color:var(--red);font-size:12px;cursor:pointer;height:32px;flex-shrink:0">✕</button>'
+    + '</div>'
+    + '<div id="pItemResultados_'+rid+'" style="display:none;background:var(--c3);border:1px solid var(--bd2);border-radius:6px;max-height:150px;overflow-y:auto;margin-bottom:6px"></div>'
+    + '<div style="margin-bottom:6px">'
+    +   '<label style="font-size:9px;color:var(--t3);font-weight:700;display:block;margin-bottom:2px">DESCRIÇÃO</label>'
+    +   '<input class="field-input" id="pi-desc-'+rid+'" value="'+esc(data.desc||'')+'" placeholder="Descrição completa do material" style="width:100%;font-size:11px"/>'
+    + '</div>'
+    + '<div>'
+    +   '<label style="font-size:9px;color:var(--t3);font-weight:700;display:block;margin-bottom:2px">LOCALIZAÇÃO</label>'
+    +   '<input class="field-input" id="pi-loc-'+rid+'" value="'+esc((data.loc||'').toUpperCase())+'" placeholder="Ex: CT101C03C" style="width:100%;font-family:monospace;font-size:11px"/>'
+    + '</div>';
+  container.appendChild(row);
+  return rid;
+};
+
+window._pendRemoverItem = function(rid) {
+  var container = document.getElementById('pItensContainer');
+  if (!container) return;
+  var rows = container.querySelectorAll('.pend-item-row');
+  var row = container.querySelector('.pend-item-row[data-rowid="'+rid+'"]');
+  if (rows.length <= 1) {
+    // Mantém ao menos 1 linha — apenas limpa os campos
+    if (row) row.querySelectorAll('input').forEach(function(inp){ inp.value=''; });
+    if (window.toast) toast('A pendência precisa ter ao menos 1 item','in');
+    return;
+  }
+  if (row) row.remove();
+};
+
+// Lê todas as linhas de item preenchidas no formulário
+function _pendColetarItens() {
+  var container = document.getElementById('pItensContainer');
+  if (!container) return [];
+  var itens = [];
+  container.querySelectorAll('.pend-item-row').forEach(function(row){
+    var rid  = row.getAttribute('data-rowid');
+    var mat  = (document.getElementById('pi-mat-'+rid)  ||{}).value || '';
+    var desc = (document.getElementById('pi-desc-'+rid) ||{}).value || '';
+    var qtd  = (document.getElementById('pi-qtd-'+rid)  ||{}).value || '';
+    var loc  = (document.getElementById('pi-loc-'+rid)  ||{}).value || '';
+    mat = mat.trim(); desc = desc.trim(); loc = loc.trim();
+    if (!mat && !desc) return; // ignora linhas vazias
+    itens.push({ mat: mat.toUpperCase(), desc: desc, qtd: parseFloat(qtd)||0, loc: loc.toUpperCase() });
+  });
+  return itens;
+}
+
+// ── BUSCA AUTOMÁTICA DE MATERIAL (preenche Desc/Posição de uma linha específica) ──
+window._pendBuscarMaterial = function(q, forcar, rid) {
+  var div = document.getElementById('pItemResultados_'+rid);
+  if (!div) return;
+  q = String(q||'').trim();
+  if (!q || (q.length < 2 && !forcar)) { div.style.display='none'; div.innerHTML=''; return; }
+  var ql = q.toLowerCase();
+
+  // Coletar candidatos de TODAS as fontes: itens atuais + histórico + base de SKUs
+  var candidatos = [];
+  var seen = {};
+  function addItem(it, origem) {
+    var mat = (it.mat||it.material||it.cod||'').toString();
+    if (!mat) return;
+    var key = mat.toUpperCase();
+    if (seen[key]) return;
+    seen[key] = true;
+    candidatos.push({
+      mat: mat,
+      desc: it.desc||it.descricao||'',
+      loc: it.loc||it.localizacao||'',
+      origem: origem,
+    });
+  }
+  // 1. Itens do inventário atual
+  try { (window._appState&&window._appState.items||[]).forEach(function(it){ addItem(it,'Inventário atual'); }); } catch(e){}
+  // 2. Histórico (mais recentes primeiro)
+  try {
+    var hist = (window._appState&&window._appState.history)||[];
+    hist.forEach(function(r){ (r.items||[]).forEach(function(it){ addItem(it,'Histórico'); }); });
+  } catch(e){}
+  // 3. Base de SKUs cadastrados
+  try {
+    (typeof _skuGet==='function'?_skuGet():[]).forEach(function(s){
+      addItem({mat:s.cod, desc:s.desc, loc:s.loc||''}, 'Base de SKUs');
+    });
+  } catch(e){}
+
+  // Filtrar por código OU descrição
+  var res = candidatos.filter(function(c){
+    return c.mat.toLowerCase().indexOf(ql)>=0 || (c.desc||'').toLowerCase().indexOf(ql)>=0;
+  }).slice(0, 8);
+
+  // Se busca exata por código e forçado (botão clicado) e só achou 1 → preenche direto
+  if (forcar && res.length === 1) {
+    window._pendPreencherMaterial(res[0], rid);
+    div.style.display = 'none';
+    return;
+  }
+  if (forcar) {
+    var exato = candidatos.find(function(c){ return c.mat.toUpperCase()===q.toUpperCase(); });
+    if (exato) { window._pendPreencherMaterial(exato, rid); div.style.display='none'; return; }
+  }
+
+  if (!res.length) {
+    div.innerHTML = '<div style="padding:8px 10px;font-size:11px;color:var(--t3)">Nenhum material encontrado para "'+esc(q)+'"</div>';
+    div.style.display = 'block';
+    return;
+  }
+
+  div.innerHTML = res.map(function(c,i){
+    var dataAttr = JSON.stringify(c).replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+    return '<div onclick="window._pendPreencherMaterial('+dataAttr+','+rid+');document.getElementById(\'pItemResultados_'+rid+'\').style.display=\'none\'"'
+      + ' style="padding:7px 10px;border-bottom:1px solid var(--bd);cursor:pointer;font-size:11px;display:flex;justify-content:space-between;gap:8px;align-items:center">'
+      + '<div style="min-width:0">'
+        + '<span style="font-family:monospace;color:var(--acid);font-weight:700">'+esc(c.mat)+'</span>'
+        + '<div style="color:var(--t2);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(c.desc||'—')+'</div>'
+      + '</div>'
+      + '<span style="font-size:9px;color:var(--t3);flex-shrink:0">'+esc(c.origem)+(c.loc?' · 📍'+esc(c.loc):'')+'</span>'
+    + '</div>';
+  }).join('');
+  div.style.display = 'block';
+};
+
+// ── Preencher campos de uma linha de item a partir de um material encontrado ──
+window._pendPreencherMaterial = function(c, rid) {
+  var elMat  = document.getElementById('pi-mat-'+rid);
+  var elDesc = document.getElementById('pi-desc-'+rid);
+  var elLoc  = document.getElementById('pi-loc-'+rid);
+  if (elMat)  elMat.value  = (c.mat||'').toUpperCase();
+  if (elDesc && c.desc) elDesc.value = c.desc;
+  if (elLoc  && c.loc)  elLoc.value  = (c.loc||'').toUpperCase();
+  if (window.toast) toast('✓ Dados preenchidos automaticamente', 'ok');
+};
+
 // Abre modal de nova pendência ou edição
 function pendAbrir(idxEdit) {
   // Garantir exposição global
@@ -10573,20 +10753,30 @@ function pendAbrir(idxEdit) {
   var p = (idxEdit !== undefined && idxEdit >= 0) ? pends[idxEdit] : null;
   var titulo = p ? 'Editar Pendência' : 'Nova Pendência';
 
-  // Sugestões dos itens com problema no inventário atual
+  // Itens existentes (modo edição) ou linha vazia inicial (nova pendência)
+  var itensIniciais = p ? _pendItensOf(p) : [{mat:'',desc:'',qtd:'',loc:''}];
+
+  // Sugestões dos itens com problema no inventário atual (apenas em nova pendência)
   var sugs = '';
-  try {
-    var items = window._appState && window._appState.items || [];
-    var divItems = items.filter(function(it){ return it._pendente || (typeof diffStatus==='function' && diffStatus(it)==='neg'); }).slice(0,5);
-    if (divItems.length) {
-      sugs = '<div style="margin-top:4px;font-size:9px;color:var(--t3)">Do inventário: ';
-      sugs += divItems.map(function(it){ 
-        var mat = it.mat||it.material||'';
-        return '<span onclick="document.getElementById(\'pMat\').value=\''+mat+'\';document.getElementById(\'pDesc\').value=\''+(it.desc||it.descricao||'').replace(/'/g,'')+'\';" style="cursor:pointer;color:var(--blue);margin-right:6px;text-decoration:underline">'+mat+'</span>'; 
-      }).join('');
-      sugs += '</div>';
-    }
-  } catch(e){}
+  var sugItens = [];
+  if (!p) {
+    try {
+      var items = window._appState && window._appState.items || [];
+      sugItens = items.filter(function(it){ return it._pendente || (typeof diffStatus==='function' && diffStatus(it)==='neg'); }).slice(0,5);
+      if (sugItens.length) {
+        sugs = '<div style="margin-top:2px;font-size:9px;color:var(--t3)">Sugestões do inventário (clique para adicionar): ';
+        sugs += sugItens.map(function(it,i){
+          var mat = it.mat||it.material||'';
+          return '<span onclick="window._pendAddSugestao('+i+')" style="cursor:pointer;color:var(--blue);margin-right:6px;text-decoration:underline">+ '+esc(mat)+'</span>';
+        }).join('');
+        sugs += '</div>';
+      }
+    } catch(e){}
+  }
+  // Guardar sugestões para o handler _pendAddSugestao
+  window._pendSugItens = sugItens.map(function(it){
+    return { mat: it.mat||it.material||'', desc: it.desc||it.descricao||'', loc: it.loc||it.localizacao||'', qtd: '' };
+  });
 
   // Contexto do rotativo atual
   var rotInfo = '';
@@ -10604,7 +10794,7 @@ function pendAbrir(idxEdit) {
   m.setAttribute('data-idx', idxEdit !== undefined ? idxEdit : '');
   m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
 
-  var html = '<div style="background:var(--c1);border:1px solid var(--bd2);border-radius:12px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto">';
+  var html = '<div style="background:var(--c1);border:1px solid var(--bd2);border-radius:12px;width:100%;max-width:540px;max-height:92vh;overflow-y:auto">';
   html += '<div style="padding:14px 18px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--c1);z-index:1">';
   html += '<div style="font-size:14px;font-weight:700">🟠 '+titulo+'</div>';
   html += '<button onclick="document.getElementById(\'modalPend\').remove()" style="background:none;border:none;color:var(--t3);font-size:20px;cursor:pointer;line-height:1">×</button>';
@@ -10612,30 +10802,32 @@ function pendAbrir(idxEdit) {
   html += '<div style="padding:16px 18px;display:flex;flex-direction:column;gap:10px">';
 
   if (rotInfo) {
-    html += '<div style="font-size:10px;background:rgba(0,200,150,.05);border:1px solid rgba(0,200,150,.15);border-radius:6px;padding:6px 10px;color:var(--acid)">📋 Inventário: '+rotInfo+'</div>';
+    html += '<div style="font-size:10px;background:rgba(0,200,150,.05);border:1px solid rgba(0,200,150,.15);border-radius:6px;padding:6px 10px;color:var(--acid)">📋 Inventário: '+esc(rotInfo)+'</div>';
   }
 
-  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
-  html += '<div><label style="font-size:10px;color:var(--t3);font-weight:700;display:block;margin-bottom:3px">MATERIAL</label>';
-  html += '<input id="pMat" class="field-input" value="'+(p?esc(p.mat||''):'')+'" placeholder="Código SAP (ex: S00162359)" style="width:100%;font-family:monospace"/>';
-  html += sugs + '</div>';
-  html += '<div><label style="font-size:10px;color:var(--t3);font-weight:700;display:block;margin-bottom:3px">QUANTIDADE</label>';
-  html += '<input id="pQtd" type="number" min="0" class="field-input" value="'+(p?esc(String(p.qtd||0)):'0')+'" placeholder="Qtd pendente"/></div>';
-  html += '</div>'; // fim grid
+  // ── RESERVA / DOCUMENTO ──
+  html += '<div><label style="font-size:10px;color:var(--t3);font-weight:700;display:block;margin-bottom:3px">RESERVA / DOCUMENTO</label>';
+  html += '<input id="pReserva" class="field-input" value="'+(p?esc(p.reserva||''):'')+'" placeholder="Nº da reserva SAP (opcional — pode ter vários itens)" style="width:100%;font-family:monospace"/></div>';
 
-  html += '<div><label style="font-size:10px;color:var(--t3);font-weight:700;display:block;margin-bottom:3px">TEXTO BREVE MATERIAL</label>';
-  html += '<input id="pDesc" class="field-input" value="'+(p?esc(p.descricao||p.desc||''):'')+'" placeholder="Descrição completa do material" style="width:100%"/></div>';
+  // ── ITENS ──
+  html += '<div>';
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:4px">';
+  html += '<label style="font-size:10px;color:var(--t3);font-weight:700">ITENS DESTA RESERVA</label>';
+  html += '<button type="button" onclick="window._pendAddItemRow()" style="padding:4px 12px;background:rgba(0,255,178,.1);border:1px solid rgba(0,255,178,.3);border-radius:6px;color:var(--acid);font-size:10px;font-weight:700;cursor:pointer">+ Adicionar Item</button>';
+  html += '</div>';
+  html += '<div id="pItensContainer"></div>';
+  html += sugs;
+  html += '</div>';
 
-  html += '<div><label style="font-size:10px;color:var(--t3);font-weight:700;display:block;margin-bottom:3px">POSIÇÃO NO DEPÓSITO</label>';
-  html += '<input id="pLoc" class="field-input" value="'+(p?esc(p.loc||''):'')+'" placeholder="Ex: CT101C03C" style="width:100%;font-family:monospace"/></div>';
-
+  // ── RESPONSÁVEL + DATA ──
   html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
   html += '<div><label style="font-size:10px;color:var(--t3);font-weight:700;display:block;margin-bottom:3px">RESPONSÁVEL</label>';
-  html += '<input id="pResp" class="field-input" value="'+(p?esc(p.resp||''):'')+'" placeholder="Nome"/></div>';
+  html += '<input id="pResp" class="field-input" value="'+(p?esc(p.resp||''):esc((window._appState&&window._appState.cfg&&window._appState.cfg.op)||''))+'" placeholder="Nome"/></div>';
   html += '<div><label style="font-size:10px;color:var(--t3);font-weight:700;display:block;margin-bottom:3px">DATA</label>';
   html += '<input id="pData" type="date" class="field-input" value="'+(p?esc(p.dataISO||''):new Date().toISOString().slice(0,10))+'"/></div>';
   html += '</div>';
 
+  // ── TIPO + STATUS ──
   html += '<div><label style="font-size:10px;color:var(--t3);font-weight:700;display:block;margin-bottom:3px">TIPO / MOTIVO</label>';
   html += '<select id="pTipo" class="field-input" style="width:100%">';
   var tipoOpts = [
@@ -10666,22 +10858,33 @@ function pendAbrir(idxEdit) {
 
   m.innerHTML = html;
   document.body.appendChild(m);
+
+  // Criar as linhas de item (precisa ser depois do appendChild, pois usa getElementById)
+  itensIniciais.forEach(function(it){ window._pendAddItemRow(it); });
 }
+
+// Adiciona uma sugestão (item divergente do inventário) como nova linha de item
+window._pendAddSugestao = function(i) {
+  var it = (window._pendSugItens||[])[i];
+  if (!it) return;
+  window._pendAddItemRow(it);
+};
+
 
 function pendSalvar() {
   var m    = document.getElementById('modalPend');
   var idx  = m ? m.getAttribute('data-idx') : '';
   var idxN = (idx !== '' && idx !== null) ? parseInt(idx) : -1;
-  var mat  = (document.getElementById('pMat')   ||{}).value||'';
-  var desc = (document.getElementById('pDesc')  ||{}).value||'';
-  var loc  = (document.getElementById('pLoc')   ||{}).value||'';
-  var resp = (document.getElementById('pResp')  ||{}).value||'';
-  var dataISO = (document.getElementById('pData')||{}).value||new Date().toISOString().slice(0,10);
-  var status  = (document.getElementById('pStatus')||{}).value||'aberta';
-  var obs     = (document.getElementById('pObs') ||{}).value||'';
-  var qtd     = parseFloat((document.getElementById('pQtd')||{}).value)||0;
-  var tipo    = (document.getElementById('pTipo')||{}).value||'outro';
-  if (!desc && !mat) { if(window.toast) toast('Informe o material ou a descrição','er'); return; }
+
+  var reserva = ((document.getElementById('pReserva')||{}).value||'').trim();
+  var itens   = _pendColetarItens();
+  var resp    = (document.getElementById('pResp')   ||{}).value||'';
+  var dataISO = (document.getElementById('pData')   ||{}).value||new Date().toISOString().slice(0,10);
+  var status  = (document.getElementById('pStatus') ||{}).value||'aberta';
+  var obs     = (document.getElementById('pObs')    ||{}).value||'';
+  var tipo    = (document.getElementById('pTipo')   ||{}).value||'outro';
+
+  if (!itens.length) { if(window.toast) toast('Adicione pelo menos um item (material ou descrição)','er'); return; }
 
   // Contexto do rotativo atual
   var rotId = '', rotTitulo = '';
@@ -10697,9 +10900,13 @@ function pendSalvar() {
   var pends = _getPendencias();
   var nova = {
     id:        (idxN >= 0 && pends[idxN]) ? pends[idxN].id : Date.now(),
-    mat:       mat.toUpperCase(),
-    descricao: desc, desc: desc,
-    loc:       loc.toUpperCase(),
+    reserva:   reserva,
+    itens:     itens,
+    // Campos legados — espelham o 1º item, para compatibilidade com código antigo
+    mat:       itens[0].mat,
+    descricao: itens[0].desc, desc: itens[0].desc,
+    loc:       itens[0].loc,
+    qtd:       itens[0].qtd,
     resp:      resp,
     dataISO:   dataISO,
     data:      new Date(dataISO+'T12:00:00').toLocaleDateString('pt-BR'),
@@ -10708,7 +10915,6 @@ function pendSalvar() {
     obs:       obs,
     rotId:     rotId,
     rotTitulo: rotTitulo,
-    qtd:       qtd,
     criadoEm:  (idxN >= 0 && pends[idxN]) ? (pends[idxN].criadoEm||new Date().toISOString()) : new Date().toISOString(),
     atualizadoEm: new Date().toISOString(),
   };
@@ -10716,16 +10922,18 @@ function pendSalvar() {
   else pends.unshift(nova);
   _setPendencias(pends);
 
-  // Marcar item na tabela se existir
-  if (mat && window._appState && window._appState.items) {
-    window._appState.items.forEach(function(it){
-      if ((it.mat||'').toUpperCase()===mat) it._pendente = true;
+  // Marcar TODOS os itens da reserva na tabela do inventário atual, se existirem
+  if (window._appState && window._appState.items) {
+    var matsSet = {};
+    itens.forEach(function(it){ if (it.mat) matsSet[it.mat] = true; });
+    window._appState.items.forEach(function(it2){
+      if (matsSet[(it2.mat||'').toUpperCase()]) it2._pendente = true;
     });
     if (typeof renderTable==='function') renderTable();
   }
   if (m) m.remove();
   pendRender();
-  if (window.toast) toast('🟠 Pendência salva', 'ok');
+  if (window.toast) toast('🟠 Pendência salva ('+itens.length+' item'+(itens.length!==1?'s':'')+')', 'ok');
 }
 
 function pendRender(filtro) {
@@ -10759,21 +10967,39 @@ function pendRender(filtro) {
 
   el.innerHTML = lista.map(function(p){
     var ri = pends.indexOf(p);
+    var itensP = _pendItensOf(p);
+
+    // Lista de itens da reserva
+    var itensHtml = itensP.map(function(it){
+      return '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05)">'
+        + '<div style="min-width:0;flex:1">'
+          + '<span style="font-size:11px;font-weight:800;font-family:monospace;color:var(--acid)">'+esc(it.mat||'—')+'</span>'
+          + (it.desc ? '<div style="font-size:12px;color:var(--t1);word-break:break-word;margin-top:1px">'+esc(it.desc)+'</div>' : '')
+        + '</div>'
+        + '<div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:1px;font-size:10px;color:var(--t3)">'
+          + (it.qtd ? '<span>Qtd: <b style="color:var(--t2)">'+esc(String(it.qtd))+'</b></span>' : '')
+          + (it.loc ? '<span>📍 '+esc(it.loc)+'</span>' : '')
+        + '</div>'
+      + '</div>';
+    }).join('');
+
     return '<div style="background:'+(bg[p.status]||'var(--c2)')+';border:1px solid var(--bd);border-radius:10px;padding:14px 16px;margin-bottom:10px">'
       + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">'
         + '<div style="flex:1;min-width:0">'
-          // Badge status + material + data
-          + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap">'
-            + '<span style="font-size:11px;font-weight:800;font-family:monospace;color:var(--acid)">'+esc(p.mat||'—')+'</span>'
+          // Badge status + reserva + data + nº de itens
+          + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">'
+            + (p.reserva
+                ? '<span style="font-size:11px;font-weight:800;font-family:monospace;color:var(--blue)">📋 Reserva '+esc(p.reserva)+'</span>'
+                : '<span style="font-size:11px;font-weight:700;color:var(--t3)">Sem nº de reserva</span>')
             + '<span style="font-size:9px;padding:2px 8px;border-radius:10px;border:1px solid '+(cor[p.status]||'var(--t3)')+';color:'+(cor[p.status]||'var(--t3)')+';font-weight:700">'+(ic[p.status]||'')+'&nbsp;'+(p.status||'').toUpperCase()+'</span>'
             + (p.tipo ? '<span style="font-size:9px;padding:2px 8px;border-radius:10px;background:rgba(255,176,32,.1);border:1px solid rgba(255,176,32,.2);color:var(--amber)">'+({'aguardando_baixa':'⬇ Ag. Baixa','aguardando_mov':'🔄 Ag. Mov.','em_separacao':'📦 Em Separação','transferencia_interna':'🔀 Transf. Interna','conferencia_pendente':'🔍 Conf. Pendente','outro':'📝 Outro'}[p.tipo]||p.tipo)+'</span>' : '')
             + '<span style="font-size:9px;color:var(--t3)">'+esc(p.data||'')+'</span>'
+            + '<span style="font-size:9px;color:var(--t3);margin-left:auto;background:rgba(255,255,255,.05);padding:1px 7px;border-radius:8px">'+itensP.length+' item'+(itensP.length!==1?'s':'')+'</span>'
           + '</div>'
-          // Descrição completa
-          + '<div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:5px;word-break:break-word">'+esc(p.descricao||p.desc||'—')+'</div>'
-          // Localização + responsável
-          + '<div style="font-size:11px;color:var(--t3);display:flex;gap:14px;flex-wrap:wrap">'
-            + (p.loc  ? '<span>📍 '+esc(p.loc)+'</span>'  : '')
+          // Lista de itens
+          + '<div style="display:flex;flex-direction:column">'+itensHtml+'</div>'
+          // Responsável + inventário vinculado
+          + '<div style="font-size:11px;color:var(--t3);display:flex;gap:14px;flex-wrap:wrap;margin-top:6px">'
             + (p.resp ? '<span>👤 '+esc(p.resp)+'</span>' : '')
             + (p.rotTitulo ? '<span>📋 '+esc(p.rotTitulo)+'</span>' : '')
           + '</div>'
@@ -10811,10 +11037,13 @@ function pendExcluir(idx) {
 function pendExportarCSV() {
   var pends = _getPendencias();
   if (!pends.length) { if(window.toast) toast('Nenhuma pendência','wa'); return; }
-  var linhas = ['Material,Descricao,Posicao,Responsavel,Data,Status,Observacoes,Inventario'];
+  var linhas = ['Reserva,Material,Descricao,Qtd,Posicao,Responsavel,Data,Status,Observacoes,Inventario'];
   pends.forEach(function(p){
-    linhas.push([p.mat||'',p.descricao||'',p.loc||'',p.resp||'',p.data||'',p.status||'',p.obs||'',p.rotTitulo||'']
-      .map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(','));
+    var itensP = _pendItensOf(p);
+    itensP.forEach(function(it){
+      linhas.push([p.reserva||'',it.mat||'',it.desc||'',it.qtd||'',it.loc||'',p.resp||'',p.data||'',p.status||'',p.obs||'',p.rotTitulo||'']
+        .map(function(v){ return '"'+String(v).replace(/"/g,'""')+'"'; }).join(','));
+    });
   });
   var blob = new Blob(['\uFEFF'+linhas.join('\n')], {type:'text/csv;charset=utf-8'});
   var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
@@ -10849,7 +11078,7 @@ function pendAbrirFoto() {
             role: 'user',
             content: [
               { type: 'image', source: { type: 'base64', media_type: mime, data: b64 } },
-              { type: 'text', text: 'Esta é uma reserva ou documento SAP de materiais. Extraia TODOS os itens listados e retorne SOMENTE um JSON válido no formato abaixo, sem explicações, sem markdown:\n{"itens":[{"mat":"CODIGO_SAP","desc":"DESCRICAO_COMPLETA","qtd":0,"loc":""}]}\nSe não encontrar itens, retorne {"itens":[]}.\nImportante: mat = código numérico ou alfanumérico do material SAP, desc = descrição completa do texto breve, qtd = quantidade, loc = posição/endereço se houver.' }
+              { type: 'text', text: 'Esta é uma reserva ou documento SAP de materiais. Extraia o número da reserva/documento (se houver) e TODOS os itens listados. Retorne SOMENTE um JSON válido no formato abaixo, sem explicações, sem markdown:\n{"reserva":"NUMERO_DA_RESERVA","itens":[{"mat":"CODIGO_SAP","desc":"DESCRICAO_COMPLETA","qtd":0,"loc":""}]}\nSe não encontrar número de reserva, use "". Se não encontrar itens, retorne {"reserva":"","itens":[]}.\nImportante: mat = código numérico ou alfanumérico do material SAP, desc = descrição completa do texto breve, qtd = quantidade, loc = posição/endereço se houver.' }
             ]
           }]
         })
@@ -10867,54 +11096,73 @@ function pendAbrirFoto() {
           if (typeof pendRender === 'function') pendRender();
           return;
         }
+        var reservaLida = (parsed.reserva||'').trim();
         var itens = parsed.itens || [];
         if (!itens.length) {
           if (window.toast) toast('Nenhum item identificado na imagem','wa');
           if (typeof pendRender === 'function') pendRender();
           return;
         }
-        // Salvar todos os itens como pendências
-        var pends = _getPendencias();
-        var adicionados = 0;
-        itens.forEach(function(it) {
-          if (!it.mat && !it.desc) return;
-          var matUp = (it.mat||'').toUpperCase();
-          // Não duplicar
-          var jaExiste = pends.some(function(p){ return p.mat===matUp && p.status!=='resolvida'; });
-          if (jaExiste) return;
-          var rotId='', rotTitulo='';
-          try {
-            var st3=window._appState;
-            if(st3&&st3.history&&st3.history.length){
-              var last3=st3.history[0];
-              rotId=last3.id||''; rotTitulo=last3.titulo||('R'+last3.id);
-            }
-          } catch(e){}
-          pends.unshift({
-            id: Date.now()+Math.random(),
-            mat: matUp,
-            descricao: it.desc||'', desc: it.desc||'',
-            loc: (it.loc||'').toUpperCase(),
-            resp: (window._appState&&window._appState.cfg&&window._appState.cfg.op)||'Operador',
-            dataISO: new Date().toISOString().slice(0,10),
-            data: new Date().toLocaleDateString('pt-BR'),
-            status: 'aberta',
-            tipo: 'aguardando_baixa',
-            obs: 'Importado via foto de reserva SAP',
-            qtd: Number(it.qtd)||0,
-            rotId: rotId, rotTitulo: rotTitulo,
-            criadoEm: new Date().toISOString(),
-            atualizadoEm: new Date().toISOString(),
-          });
-          adicionados++;
+        // Normalizar itens
+        var itensNorm = itens.filter(function(it){ return it.mat||it.desc; }).map(function(it){
+          return { mat:(it.mat||'').toUpperCase(), desc: it.desc||'', qtd: Number(it.qtd)||0, loc:(it.loc||'').toUpperCase() };
         });
+        if (!itensNorm.length) {
+          if (window.toast) toast('Nenhum item identificado na imagem','wa');
+          if (typeof pendRender === 'function') pendRender();
+          return;
+        }
+
+        // Não duplicar: se já existe pendência aberta com a mesma reserva, mesclar itens novos
+        var pends = _getPendencias();
+        var rotId='', rotTitulo='';
+        try {
+          var st3=window._appState;
+          if(st3&&st3.history&&st3.history.length){
+            var last3=st3.history[0];
+            rotId=last3.id||''; rotTitulo=last3.titulo||('R'+last3.id);
+          }
+        } catch(e){}
+
+        var existente = reservaLida ? pends.find(function(p){ return p.status!=='resolvida' && (p.reserva||'')===reservaLida; }) : null;
+        var idxAberto;
+        if (existente) {
+          // Mesclar: adicionar apenas itens cujo material ainda não está na pendência
+          var jaTem = {};
+          _pendItensOf(existente).forEach(function(it){ jaTem[(it.mat||'').toUpperCase()]=true; });
+          var novosItens = itensNorm.filter(function(it){ return it.mat && !jaTem[it.mat]; });
+          existente.itens = _pendItensOf(existente).concat(novosItens);
+          existente.atualizadoEm = new Date().toISOString();
+          idxAberto = pends.indexOf(existente);
+          _setPendencias(pends);
+          if (typeof pendRender === 'function') pendRender();
+          if (window.toast) toast('✅ '+novosItens.length+' novo(s) item(ns) adicionado(s) à reserva '+reservaLida, 'ok');
+          setTimeout(function(){ pendAbrir(idxAberto); }, 400);
+          return;
+        }
+
+        // Nova pendência com todos os itens da reserva
+        var nova = {
+          id: Date.now()+Math.random(),
+          reserva: reservaLida,
+          itens: itensNorm,
+          mat: itensNorm[0].mat, descricao: itensNorm[0].desc, desc: itensNorm[0].desc,
+          loc: itensNorm[0].loc, qtd: itensNorm[0].qtd,
+          resp: (window._appState&&window._appState.cfg&&window._appState.cfg.op)||'Operador',
+          dataISO: new Date().toISOString().slice(0,10),
+          data: new Date().toLocaleDateString('pt-BR'),
+          status: 'aberta',
+          tipo: 'aguardando_baixa',
+          obs: 'Importado via foto de reserva SAP',
+          rotId: rotId, rotTitulo: rotTitulo,
+          criadoEm: new Date().toISOString(),
+          atualizadoEm: new Date().toISOString(),
+        };
+        pends.unshift(nova);
         _setPendencias(pends);
         if (typeof pendRender === 'function') pendRender();
-        if (window.toast) toast('✅ ' + adicionados + ' pendência(s) criada(s) da reserva SAP', 'ok');
-        // Se algum item tinha dúvida, abrir o primeiro para revisão
-        if (adicionados > 0) {
-          setTimeout(function(){ pendAbrir(0); }, 400);
-        }
+        if (window.toast) toast('✅ Pendência criada com '+itensNorm.length+' item(ns)'+(reservaLida?' — Reserva '+reservaLida:''), 'ok');
+        setTimeout(function(){ pendAbrir(0); }, 400);
       })
       .catch(function(err) {
         if (loadingEl) loadingEl.innerHTML = oldContent;
@@ -10963,43 +11211,57 @@ function pendGerarPDF() {
   // Lista de pendências
   var corMap = {aberta:[200,0,0],andamento:[230,100,0],resolvida:[0,128,0]};
   pends.forEach(function(p, pi) {
-    if (y > 260) { doc.addPage(); y = 20; }
+    if (y > 250) { doc.addPage(); y = 20; }
     var gc = corMap[p.status]||[100,100,100];
     // Fundo colorido leve
     var bgMap = {aberta:[255,245,245],andamento:[255,252,240],resolvida:[245,255,248]};
     var bgC = bgMap[p.status]||[248,248,248];
+    var itensP = _pendItensOf(p);
+    function N(s){ s=String(s||''); return s.normalize?s.normalize('NFD').replace(/[\u0300-\u036f]/g,''):s; }
+
+    // Cabeçalho: nº da pendência + reserva + status + data
     doc.setFillColor.apply(doc, bgC); doc.rect(M,y,W-28,5,'F');
     doc.setFillColor.apply(doc, gc);  doc.rect(M,y,3,5,'F');
-    // Material + status
     doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor.apply(doc, gc);
-    doc.text(String(pi+1)+'. '+(p.mat||'—'), M+5, y+3.5);
+    var headerTxt = String(pi+1)+'. '+(p.reserva ? 'Reserva '+N(p.reserva) : 'Sem reserva')
+      + '  ('+itensP.length+' item'+(itensP.length!==1?'s':'')+')';
+    doc.text(headerTxt, M+5, y+3.5);
     doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(100,100,100);
-    doc.text((p.status||'').toUpperCase(), M+40, y+3.5);
+    doc.text((p.status||'').toUpperCase(), M+105, y+3.5);
     doc.text(p.data||'', W-M-20, y+3.5, {align:'right'});
     y += 6;
-    // Descrição
-    var descN = String(p.descricao||p.desc||'—');
-    descN = descN.normalize ? descN.normalize('NFD').replace(/[\u0300-\u036f]/g,'') : descN;
-    doc.setFillColor.apply(doc, bgC); doc.rect(M+3,y,W-31,5,'F');
-    var dLines = doc.splitTextToSize(descN, W-50);
-    var dH = Math.max(5, dLines.length * 3.5 + 2);
-    doc.setFillColor.apply(doc, bgC); doc.rect(M+3,y,W-31,dH,'F');
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(26,26,26);
-    doc.text(dLines, M+6, y+3.5);
-    y += dH;
-    // Metadados
+
+    // Tabela de itens da reserva
+    itensP.forEach(function(it){
+      if (y > 268) { doc.addPage(); y = 20; }
+      var descN = N(it.desc||'—');
+      doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+      var dLines = doc.splitTextToSize(descN, W-85);
+      var dH = Math.max(5, dLines.length * 3.5 + 2);
+      doc.setFillColor.apply(doc, bgC); doc.rect(M+3,y,W-31,dH,'F');
+      doc.setTextColor(0,80,160);
+      doc.text(N(it.mat||'—'), M+6, y+3.5);
+      doc.setFont('helvetica','normal'); doc.setTextColor(26,26,26);
+      doc.text(dLines, M+30, y+3.5);
+      if (it.qtd) { doc.setTextColor(100,100,100); doc.text('Qtd: '+it.qtd, W-M-32, y+3.5, {align:'right'}); }
+      if (it.loc) { doc.setTextColor(100,100,100); doc.text(N(it.loc), W-M-3, y+3.5, {align:'right'}); }
+      y += dH;
+    });
+
+    // Metadados (responsável + inventário vinculado)
     var meta = [];
-    if (p.loc)       meta.push('Pos: '+p.loc);
-    if (p.resp)      meta.push('Resp: '+p.resp);
-    if (p.rotTitulo) meta.push('Inv: '+p.rotTitulo.substring(0,30));
+    if (p.resp)      meta.push('Resp: '+N(p.resp));
+    if (p.rotTitulo) meta.push('Inv: '+N(p.rotTitulo).substring(0,30));
     if (meta.length) {
+      if (y > 268) { doc.addPage(); y = 20; }
       doc.setFillColor.apply(doc, bgC); doc.rect(M+3,y,W-31,5,'F');
       doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(100,100,100);
       doc.text(meta.join('  |  '), M+6, y+3.5);
       y += 5;
     }
     if (p.obs) {
-      var obsN = p.obs.normalize ? p.obs.normalize('NFD').replace(/[\u0300-\u036f]/g,'') : p.obs;
+      if (y > 265) { doc.addPage(); y = 20; }
+      var obsN = N(p.obs);
       var obLines = doc.splitTextToSize(obsN, W-50);
       var obH = Math.max(5, obLines.length*3.5+2);
       doc.setFillColor.apply(doc, bgC); doc.rect(M+3,y,W-31,obH,'F');
