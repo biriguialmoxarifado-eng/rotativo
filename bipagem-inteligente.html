@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Bipagem — Rotativo Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+
+<!-- Leitores de codigo: BarcodeDetector nativo (prioridade 1) + ZXing (prioridade 2: QR/EAN/Code128/UPC) -->
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
+
+<style>
+:root{
+  --bg:     #050A14;
+  --c1:     #080F1E;
+  --c2:     #0C1525;
+  --c3:     #111D30;
+  --c4:     #162035;
+
+  --t1:  #E8F0FF;
+  --t2:  #8098C0;
+  --t3:  #3A5070;
+  --t4:  #1A2840;
+
+  --acid:  #00FFB2;
+  --blue:  #0099FF;
+  --red:   #FF3B5C;
+  --amber: #FFB020;
+  --green: #00E87A;
+
+  --bd:   rgba(0,200,150,.06);
+  --bd2:  rgba(0,200,150,.18);
+
+  --r:   10px;
+  --rs:  7px;
+}
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body{ height:100%; margin:0; }
+body{
+  font-family:'Inter',sans-serif;
+  background: var(--bg);
+  color: var(--t1);
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+.app{ height:100vh; height:100dvh; display:flex; flex-direction:column; }
+.mono{ font-family:'JetBrains Mono',monospace; }
+
+/* ── TOPBAR ───────────────────────────────────────────── */
+.topbar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 12px 16px;
+  background: var(--c1);
+  border-bottom: 1px solid var(--bd);
+  gap:10px; flex-wrap:wrap;
+}
+.brand{ display:flex; align-items:center; gap:10px; min-width:0; }
+.logo-mark{
+  width:36px; height:36px; flex:0 0 auto;
+  background: rgba(0,255,178,.07);
+  border: 1px solid var(--bd2);
+  border-radius: 9px;
+  display:flex; align-items:center; justify-content:center;
+}
+.brand h1{
+  font-family:'Syne',sans-serif; font-size:14px; margin:0;
+  letter-spacing:2px; font-weight:800; color:var(--acid); line-height:1;
+}
+.brand h1 span{ color:var(--t2); }
+.brand .sub{ font-size:9px; color:var(--t3); letter-spacing:1.5px; margin-top:3px; }
+.topbar-right{ display:flex; align-items:center; gap:10px; }
+.pill{
+  display:flex; align-items:center; gap:6px;
+  padding:6px 12px; border-radius:999px; border:1px solid var(--bd2);
+  background: var(--c2); font-size:11px; color:var(--t2); white-space:nowrap;
+}
+.dot{ width:7px; height:7px; border-radius:50%; background:var(--acid); box-shadow:0 0 8px var(--acid); }
+.dot.off{ background:var(--red); box-shadow:0 0 8px var(--red); }
+
+/* Modo Entrada/Devolucao */
+.mode-toggle{ display:flex; border:1px solid var(--bd2); border-radius:var(--rs); overflow:hidden; }
+.mode-toggle button{
+  border:none; background:transparent; color:var(--t2);
+  font-family:'Syne',sans-serif; font-size:11px; font-weight:800; letter-spacing:1px;
+  padding:8px 14px; cursor:pointer; transition:.15s;
+}
+.mode-toggle button.active.entrada{ background: var(--acid); color:#04140F; }
+.mode-toggle button.active.devolucao{ background: var(--red); color:#1A0307; }
+
+/* ── AREA DA CAMERA ───────────────────────────────────── */
+.scanner{
+  position:relative; flex: 1 1 auto; min-height:0;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(0,255,178,.08), transparent 55%),
+    var(--c1);
+  overflow:hidden;
+}
+.scanner video{
+  position:absolute; inset:0; width:100%; height:100%;
+  object-fit:cover; filter: saturate(1.05);
+}
+.scanner canvas{ display:none; }
+
+.scan-overlay{
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  pointer-events:none;
+}
+.scan-frame{
+  position:relative;
+  width: min(78vw, 360px); height: min(78vw, 360px);
+  border-radius: var(--r);
+  box-shadow: 0 0 0 9999px rgba(5,10,20,.55);
+}
+.scan-frame::before,
+.scan-frame::after,
+.scan-frame i::before,
+.scan-frame i::after{
+  content:''; position:absolute; width:42px; height:42px;
+  border: 4px solid var(--acid);
+  filter: drop-shadow(0 0 6px rgba(0,255,178,.6));
+}
+.scan-frame::before{ top:0; left:0; border-right:none; border-bottom:none; border-radius:14px 0 0 0; }
+.scan-frame::after{ top:0; right:0; border-left:none; border-bottom:none; border-radius:0 14px 0 0; }
+.scan-frame i::before{ bottom:0; left:0; border-right:none; border-top:none; border-radius:0 0 0 14px; }
+.scan-frame i::after{ bottom:0; right:0; border-left:none; border-top:none; border-radius:0 0 14px 0; }
+.scan-line{
+  position:absolute; left:6%; right:6%; top:6%; height:2px;
+  background: var(--acid); box-shadow: 0 0 12px var(--acid), 0 0 4px #fff;
+  animation: scanmove 1.8s ease-in-out infinite;
+}
+@keyframes scanmove{
+  0%,100%{ top:6%; opacity:.9; }
+  50%{ top:94%; opacity:.4; }
+}
+.scan-frame .target{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:18px; height:18px; border:2px solid rgba(232,240,255,.4); border-radius:50%;
+}
+.scan-frame .target::before{
+  content:''; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:3px; height:3px; border-radius:50%; background:var(--acid);
+}
+
+.scan-flash{
+  position:absolute; inset:0; background:var(--acid); opacity:0; pointer-events:none;
+  transition: opacity .12s ease;
+}
+.scan-flash.on{ opacity:.30; }
+
+.hint-top, .hint-bottom{
+  position:absolute; left:50%; transform:translateX(-50%);
+  display:flex; align-items:center; gap:8px;
+  padding:8px 16px; border-radius:999px;
+  background: rgba(8,15,30,.8); border:1px solid var(--bd2);
+  font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:1.5px; color:var(--t1);
+  backdrop-filter: blur(6px);
+  white-space:nowrap;
+}
+.hint-top{ top:14px; color:var(--acid); }
+.hint-bottom{ bottom:14px; }
+.hint-bottom .dot{ animation: pulse 1.4s infinite; }
+@keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.35} }
+
+.cam-controls{
+  position:absolute; top:14px; right:14px; display:flex; gap:8px;
+}
+.cam-controls button{
+  pointer-events:auto;
+  display:flex; flex-direction:column; align-items:center; gap:2px;
+  background: rgba(8,15,30,.8); border:1px solid var(--bd2); color:var(--t2);
+  border-radius:var(--rs); padding:8px 10px; font-family:'Syne',sans-serif; font-size:9px;
+  font-weight:800; letter-spacing:.5px; cursor:pointer; line-height:1.4;
+}
+.cam-controls button .ico{ font-size:16px; }
+.cam-controls button.active{ color:var(--acid); border-color: var(--acid); }
+
+.toast{
+  position:absolute; left:50%; bottom:18px; transform:translate(-50%, 0);
+  background: var(--acid); color:#04140F; font-family:'Syne',sans-serif; font-weight:800; font-size:12px;
+  letter-spacing:1px; padding:10px 22px; border-radius:999px;
+  box-shadow: 0 8px 24px rgba(0,255,178,.25);
+  opacity:0; transition: opacity .25s, transform .25s;
+  pointer-events:none; white-space:nowrap; z-index:5;
+}
+.toast.show{ opacity:1; transform:translate(-50%,-46px); }
+
+/* ── PAINEL INFERIOR ──────────────────────────────────── */
+.panel{ background: var(--c1); border-top:1px solid var(--bd); }
+
+.last-read{
+  display:grid; grid-template-columns: 1.6fr 1fr; gap:1px;
+  background: var(--bd); border-bottom:1px solid var(--bd);
+}
+.last-read > div{ background: var(--c2); padding:14px 16px; }
+.lr-label{ font-family:'Syne',sans-serif; font-size:9px; color:var(--t3); letter-spacing:2px; margin-bottom:6px; font-weight:700; }
+.lr-code{ font-family:'JetBrains Mono',monospace; font-size:20px; font-weight:700; letter-spacing:1px; word-break:break-all; color:var(--t1); }
+.lr-desc{ font-size:12px; color:var(--t2); margin-top:4px; }
+.lr-loc{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--acid); margin-top:4px; }
+.lr-right{ display:flex; flex-direction:column; gap:10px; justify-content:center; }
+.lr-right .row{ display:flex; justify-content:space-between; align-items:baseline; }
+.lr-right .row .l{ font-family:'Syne',sans-serif; font-size:9px; color:var(--t3); letter-spacing:1.5px; font-weight:700; }
+.lr-right .row .v{ font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; color:var(--t1); }
+.lr-right .row.qtd .v{ color:var(--acid); }
+
+/* ── ESTADO ENTRADA / DEVOLUCAO ───────────────────────── */
+.modebar{ display:flex; gap:1px; background:var(--bd); }
+.modebar > div{
+  flex:1; padding:12px 16px; display:flex; align-items:center; gap:10px;
+  background: var(--c2); opacity:.4; transition:.2s;
+}
+.modebar > div.active{ opacity:1; }
+.modebar .ico{
+  width:38px; height:38px; border-radius:var(--rs); flex:0 0 auto;
+  display:flex; align-items:center; justify-content:center; font-size:18px;
+}
+.modebar .entrada .ico{ background: rgba(0,255,178,.10); color:var(--acid); border:1px solid var(--bd2); }
+.modebar .devolucao .ico{ background: rgba(255,59,92,.10); color:var(--red); border:1px solid rgba(255,59,92,.2); }
+.modebar .label{ font-family:'Syne',sans-serif; font-size:13px; font-weight:800; letter-spacing:.5px; color:var(--t1); }
+.modebar .sub{ font-size:9px; color:var(--t3); letter-spacing:1px; margin-top:2px; }
+
+/* ── BUSCA SKU ─────────────────────────────────────────  */
+.lookup{ padding:12px 16px; border-top:1px solid var(--bd); }
+.lookup .box{
+  display:flex; align-items:center; gap:8px;
+  background: var(--c2); border:1px solid var(--bd2);
+  border-radius:var(--rs); padding:10px 12px;
+}
+.lookup input{
+  flex:1; background:none; border:none; outline:none; color:var(--t1);
+  font-family:'JetBrains Mono',monospace; font-size:13px;
+}
+.lookup input::placeholder{ color:var(--t3); font-family:'Inter',sans-serif; }
+
+/* ── INDICADORES ──────────────────────────────────────── */
+.stats{
+  display:grid; grid-template-columns: repeat(4,1fr);
+  border-top:1px solid var(--bd);
+}
+.stats > div{
+  padding:12px 6px; text-align:center; border-right:1px solid var(--bd);
+}
+.stats > div:last-child{ border-right:none; }
+.stats .v{ font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; color:var(--acid); }
+.stats .l{ font-family:'Syne',sans-serif; font-size:8px; color:var(--t3); letter-spacing:1.5px; margin-top:4px; font-weight:700; }
+
+/* ── FOOTER ────────────────────────────────────────────── */
+.footer{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 16px; font-size:10px; color:var(--t3);
+  border-top:1px solid var(--bd); letter-spacing:.5px;
+}
+.footer span.on{ color:var(--acid); font-weight:700; }
+.footer button{
+  background:rgba(0,255,178,.07); border:1px solid var(--bd2); color:var(--acid); font-family:'Syne',sans-serif;
+  border-radius:var(--rs); padding:6px 12px;
+  font-size:10px; font-weight:800; letter-spacing:.5px; display:flex; align-items:center; gap:5px; cursor:pointer;
+}
+
+@media (min-width:760px){
+  .scan-frame{ width:min(40vw,380px); height:min(40vw,380px); }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOPO -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo-mark">
+        <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
+          <path d="M14 2L26 8V20L14 26L2 20V8L14 2Z" stroke="var(--acid)" stroke-width="1.5" fill="none"/>
+          <path d="M14 8L20 11V17L14 20L8 17V11L14 8Z" fill="var(--acid)" opacity=".3"/>
+          <circle cx="14" cy="14" r="2.5" fill="var(--acid)"/>
+        </svg>
+      </div>
+      <div>
+        <h1>ROTATIVO <span>BIPAGEM</span></h1>
+        <div class="sub mono" id="dataHoraTopo">— carregando —</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="pill"><span class="dot" id="dotOnline"></span> <span id="lblConexao" class="mono">ONLINE</span></div>
+      <div class="mode-toggle">
+        <button class="active entrada" id="btnModoEntrada" onclick="setModo('entrada')">&#8592; ENTRADA</button>
+        <button id="btnModoDevolucao" onclick="setModo('devolucao')">&#8594; DEVOLUCAO</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CAMERA -->
+  <div class="scanner">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas"></canvas>
+    <div class="scan-flash" id="flash"></div>
+
+    <div class="hint-top" id="hintTop">CAMERA ATIVA — INICIANDO...</div>
+
+    <div class="cam-controls">
+      <button id="btnTorch" onclick="toggleTorch()" title="Lanterna">
+        <span class="ico">&#128294;</span> FLASH
+      </button>
+      <button onclick="virarCamera()" title="Virar camera">
+        <span class="ico">&#128260;</span> VIRAR
+      </button>
+    </div>
+
+    <div class="scan-overlay">
+      <div class="scan-frame">
+        <div class="scan-line"></div>
+        <div class="target"></div>
+        <i></i>
+      </div>
+    </div>
+
+    <div class="hint-bottom"><span class="dot"></span> APONTE PARA O CODIGO</div>
+    <div class="toast" id="toast">ITEM REGISTRADO COM SUCESSO</div>
+  </div>
+
+  <!-- PAINEL INFERIOR -->
+  <div class="panel">
+
+    <!-- Ultima leitura -->
+    <div class="last-read">
+      <div>
+        <div class="lr-label">ULTIMA LEITURA</div>
+        <div class="lr-code" id="lrCodigo">—</div>
+        <div class="lr-desc" id="lrDesc">Aguardando leitura...</div>
+        <div class="lr-loc" id="lrLoc"></div>
+      </div>
+      <div class="lr-right">
+        <div class="row"><span class="l">HORA</span><span class="v" id="lrHora" style="font-size:13px">—</span></div>
+        <div class="row qtd"><span class="l">QTD</span><span class="v" id="lrQtd">0</span></div>
+      </div>
+    </div>
+
+    <!-- Estado do modo -->
+    <div class="modebar">
+      <div class="entrada active" id="modeboxEntrada">
+        <div class="ico">&#8592;</div>
+        <div>
+          <div class="label">ENTRADA</div>
+          <div class="sub">CADA LEITURA SOMA +1</div>
+        </div>
+      </div>
+      <div class="devolucao" id="modeboxDevolucao">
+        <div class="ico">&#8594;</div>
+        <div>
+          <div class="label">DEVOLUCAO</div>
+          <div class="sub">CADA LEITURA SUBTRAI -1</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Consulta SKU -->
+    <div class="lookup">
+      <div class="box">
+        <span>&#128269;</span>
+        <input id="inputBusca" placeholder="Consultar SKU / bipar aqui..." autocomplete="off"
+               onkeydown="if(event.key==='Enter'){ processarCodigo(this.value); this.value=''; }">
+      </div>
+    </div>
+
+    <!-- Indicadores -->
+    <div class="stats">
+      <div><div class="v" id="statTotal">0</div><div class="l">TOTAL HOJE</div></div>
+      <div><div class="v" id="statEntradas">0</div><div class="l">ENTRADAS</div></div>
+      <div><div class="v" id="statDevolucoes">0</div><div class="l">DEVOLUCOES</div></div>
+      <div><div class="v mono" id="statUltima">—</div><div class="l">ULT. LEITURA</div></div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <span>&#128266; BIP <span class="on">ATIVADO</span> &middot; &#128241; VIBRACAO <span class="on">ATIVADA</span></span>
+      <button onclick="abrirConfig()">&#9881; CONFIGURACOES</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   CONFIGURAÇÃO — integração com o Apps Script / Planilha
+   ============================================================
+   Coloque aqui a URL do seu Web App do Apps Script (/exec).
+   O doGet do Apps Script deve aceitar:
+     ?action=consultarSku&sku=XXXX
+   e responder JSON (ContentService, MimeType.JSON) como:
+     { "ok": true, "sku": "XXXX", "desc": "...", "qtd": 12,
+       "loc": "CT101C03B", "status": "ATIVO" }
+   Se EXEC_URL ficar vazio, o app funciona 100% offline/local
+   (sem consultar a planilha) — útil pra testar a câmera primeiro.
+============================================================ */
+var EXEC_URL = localStorage.getItem('bip_exec_url') || '';
+
+// "Memoria" local de SKUs ja vistos em rotativos anteriores (vinda do
+// historico que ja existe na planilha, via ?action=getHistory).
+// skuMap[SKU] = { desc, loc, qtd }
+var skuMap = {};
+
+/* ============================================================
+   ESTADO
+============================================================ */
+var modo = 'entrada'; // 'entrada' | 'devolucao'
+var stats = { total: 0, entradas: 0, devolucoes: 0, ultimaTs: null };
+var itens = {}; // sku -> { desc, qtd, loc, ultima }
+var ultimoCodigo = null, ultimoTs = 0;
+var stream = null, torchOn = false, facing = 'environment';
+var zxingReader = null;
+var usandoBarcodeDetector = false;
+var rafId = null;
+
+/* ============================================================
+   RELÓGIO
+============================================================ */
+function atualizarRelogio(){
+  var d = new Date();
+  var dias = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
+  var txt = dias[d.getDay()] + ' ' + String(d.getDate()).padStart(2,'0') + '/' +
+            String(d.getMonth()+1).padStart(2,'0') + '  ' +
+            d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('dataHoraTopo').textContent = txt;
+}
+atualizarRelogio();
+setInterval(atualizarRelogio, 1000);
+
+/* ============================================================
+   MODO ENTRADA / DEVOLUÇÃO
+============================================================ */
+function setModo(novo){
+  modo = novo;
+  document.getElementById('btnModoEntrada').classList.toggle('active', modo==='entrada');
+  document.getElementById('btnModoDevolucao').classList.toggle('active', modo==='devolucao');
+  document.getElementById('modeboxEntrada').classList.toggle('active', modo==='entrada');
+  document.getElementById('modeboxDevolucao').classList.toggle('active', modo==='devolucao');
+  mostrarToast(modo==='entrada' ? 'MODO: ENTRADA' : 'MODO: DEVOLUÇÃO');
+}
+
+/* ============================================================
+   FEEDBACK — bip, vibração, flash, toast
+============================================================ */
+function beep(){
+  try{
+    var ctx = new (window.AudioContext||window.webkitAudioContext)();
+    var osc = ctx.createOscillator(), gain = ctx.createGain();
+    osc.type='sine'; osc.frequency.value = 1500;
+    osc.connect(gain); gain.connect(ctx.destination);
+    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.09);
+  }catch(e){}
+}
+function vibrar(){ try{ if(navigator.vibrate) navigator.vibrate(60); }catch(e){} }
+function flashFrame(){
+  var f = document.getElementById('flash');
+  f.classList.add('on');
+  setTimeout(function(){ f.classList.remove('on'); }, 160);
+}
+function mostrarToast(txt){
+  var t = document.getElementById('toast');
+  t.textContent = txt;
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 1300);
+}
+
+/* ============================================================
+   CÂMERA — BarcodeDetector (prioridade) -> ZXing contínuo
+============================================================ */
+function iniciarCamera(){
+  pararCamera();
+  var hint = document.getElementById('hintTop');
+  hint.textContent = '🟡 ABRINDO CÂMERA...';
+
+  navigator.mediaDevices.getUserMedia({ video:{ facingMode: facing } })
+    .then(function(s){
+      stream = s;
+      var video = document.getElementById('video');
+      video.srcObject = s;
+      video.play();
+      hint.textContent = '🟢 CÂMERA ATIVA — APONTE PARA O CÓDIGO';
+
+      if (window.BarcodeDetector) {
+        usandoBarcodeDetector = true;
+        loopBarcodeDetector(video);
+      } else {
+        usandoBarcodeDetector = false;
+        loopZXing();
+      }
+    })
+    .catch(function(err){
+      hint.textContent = '🔴 CÂMERA INDISPONÍVEL: ' + err.name;
+    });
+}
+
+function pararCamera(){
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  if (zxingReader) { try{ zxingReader.reset(); }catch(e){} zxingReader = null; }
+  if (stream) { stream.getTracks().forEach(function(t){ t.stop(); }); stream = null; }
+}
+
+// ── Caminho 1: BarcodeDetector nativo (QR + códigos de barra) ──
+function loopBarcodeDetector(video){
+  var canvas = document.getElementById('canvas');
+  var detector;
+  try{
+    detector = new BarcodeDetector({ formats:
+      ['qr_code','code_128','ean_13','ean_8','upc_a','upc_e'] });
+  }catch(e){
+    usandoBarcodeDetector = false;
+    loopZXing();
+    return;
+  }
+  function tick(){
+    if (!stream) return;
+    if (video.readyState >= 2) {
+      detector.detect(video).then(function(codes){
+        if (codes && codes.length) processarCodigo(codes[0].rawValue);
+      }).catch(function(){});
+    }
+    rafId = requestAnimationFrame(tick);
+  }
+  tick();
+}
+
+// ── Caminho 2: ZXing — leitura contínua direto da câmera ──
+function loopZXing(){
+  if (!window.ZXing) {
+    document.getElementById('hintTop').textContent = '🔴 NENHUM LEITOR DISPONÍVEL';
+    return;
+  }
+  var hints = new Map();
+  var formatos = [
+    ZXing.BarcodeFormat.QR_CODE, ZXing.BarcodeFormat.CODE_128,
+    ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8,
+    ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.UPC_E
+  ];
+  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formatos);
+  hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+  zxingReader = new ZXing.BrowserMultiFormatReader(hints);
+  zxingReader.decodeFromStream(stream, 'video', function(result, err){
+    if (result) processarCodigo(result.getText());
+  }).catch(function(){
+    document.getElementById('hintTop').textContent = '🔴 ERRO AO INICIAR LEITOR';
+  });
+}
+
+function virarCamera(){
+  facing = (facing === 'environment') ? 'user' : 'environment';
+  iniciarCamera();
+}
+
+function toggleTorch(){
+  if (!stream) return;
+  var track = stream.getVideoTracks()[0];
+  if (!track) return;
+  var caps = track.getCapabilities ? track.getCapabilities() : {};
+  if (!caps.torch) { mostrarToast('LANTERNA INDISPONÍVEL'); return; }
+  torchOn = !torchOn;
+  track.applyConstraints({ advanced:[{ torch: torchOn }] }).catch(function(){});
+  document.getElementById('btnTorch').classList.toggle('active', torchOn);
+}
+
+/* ============================================================
+   PROCESSAR LEITURA
+============================================================ */
+function extrairSku(raw){
+  raw = String(raw||'').trim();
+  if (!raw) return '';
+  if (raw.indexOf('|') > -1) {
+    var sku = '';
+    raw.split('|').forEach(function(p){
+      var kv = p.split(':');
+      if (kv.length >= 2) {
+        var k = kv[0].trim().toUpperCase();
+        if (k==='SKU' || k==='MAT' || k==='MATERIAL' || k==='ID') sku = kv.slice(1).join(':').trim();
+      }
+    });
+    if (sku) return sku;
+  }
+  return raw;
+}
+function extrairCampo(raw, chaves){
+  raw = String(raw||'');
+  if (raw.indexOf('|') === -1) return '';
+  var achado = '';
+  raw.split('|').forEach(function(p){
+    var kv = p.split(':');
+    if (kv.length >= 2) {
+      var k = kv[0].trim().toUpperCase();
+      if (chaves.indexOf(k) > -1 && !achado) achado = kv.slice(1).join(':').trim();
+    }
+  });
+  return achado;
+}
+
+function processarCodigo(raw){
+  var agora = Date.now();
+  if (raw === ultimoCodigo && (agora - ultimoTs) < 1500) return; // anti-duplicado
+  ultimoCodigo = raw; ultimoTs = agora;
+
+  var sku  = extrairSku(raw);
+  var desc = extrairCampo(raw, ['DESC']);
+  var loc  = extrairCampo(raw, ['LOCAL','LOC']);
+  if (!sku) sku = raw;
+
+  registrarLeitura(sku, desc, loc);
+
+  // Consulta a planilha (se EXEC_URL configurado) pra completar/atualizar os dados
+  consultarSKU(sku).then(function(info){
+    if (info && info.ok) {
+      registrarLeitura(sku, info.desc || desc, info.loc || loc, info.qtd);
+    }
+  });
+}
+
+function registrarLeitura(sku, desc, loc, qtdSistema){
+  if (!itens[sku]) itens[sku] = { desc:'', loc:'', qtd:0, qtdSistema:null };
+  var it = itens[sku];
+  if (desc) it.desc = desc;
+  if (loc)  it.loc  = loc;
+  if (typeof qtdSistema === 'number') it.qtdSistema = qtdSistema;
+  it.qtd += (modo === 'entrada') ? 1 : -1;
+
+  stats.total++;
+  if (modo === 'entrada') stats.entradas++; else stats.devolucoes++;
+  stats.ultimaTs = new Date();
+
+  // Última leitura
+  document.getElementById('lrCodigo').textContent = sku;
+  document.getElementById('lrDesc').textContent = it.desc || 'SKU não cadastrado';
+  document.getElementById('lrLoc').textContent = it.loc ? '📍 ' + it.loc : '';
+  document.getElementById('lrHora').textContent = stats.ultimaTs.toLocaleTimeString('pt-BR');
+  document.getElementById('lrQtd').textContent = it.qtd;
+
+  // Indicadores
+  document.getElementById('statTotal').textContent = stats.total;
+  document.getElementById('statEntradas').textContent = stats.entradas;
+  document.getElementById('statDevolucoes').textContent = stats.devolucoes;
+  document.getElementById('statUltima').textContent = '0s';
+
+  beep(); vibrar(); flashFrame();
+  mostrarToast('ITEM REGISTRADO COM SUCESSO');
+}
+
+// Atualiza "Última leitura: Xs atrás"
+setInterval(function(){
+  if (!stats.ultimaTs) return;
+  var s = Math.round((Date.now() - stats.ultimaTs.getTime())/1000);
+  document.getElementById('statUltima').textContent = s < 60 ? (s+'s') : (Math.round(s/60)+'min');
+}, 1000);
+
+/* ============================================================
+   CONSULTA À PLANILHA (via Apps Script Web App)
+============================================================ */
+// Carrega o historico de rotativos (acao ja existente: getHistory) e
+// monta o skuMap. Chamado uma vez ao conectar, e via "Atualizar".
+function carregarHistorico(){
+  if (!EXEC_URL) return Promise.resolve();
+  var url = EXEC_URL + (EXEC_URL.indexOf('?')>-1?'&':'?') + 'action=getHistory&limit=10';
+  return fetch(url).then(function(r){ return r.json(); }).then(function(resp){
+    var lista = resp && (resp.data || resp.history || resp.result || resp) || [];
+    if (!Array.isArray(lista)) lista = [];
+    var novoMap = {};
+    lista.forEach(function(rotativo){
+      var itensRot = rotativo.items || rotativo.itens || [];
+      itensRot.forEach(function(it){
+        var sku = String(it.mat || it.sku || it.material || it.id || '').trim().toUpperCase();
+        if (!sku) return;
+        // mais recentes (primeiros na lista) tem prioridade; nao sobrescrever se ja existe
+        if (novoMap[sku]) return;
+        novoMap[sku] = {
+          desc: it.desc || it.descricao || '',
+          loc:  it.loc  || it.localizacao || '',
+          qtd:  (it.qtd != null ? it.qtd : (it.sis != null ? it.sis : null))
+        };
+      });
+    });
+    skuMap = novoMap;
+    mostrarToast('BASE ATUALIZADA: ' + Object.keys(skuMap).length + ' SKUS');
+  }).catch(function(){
+    mostrarToast('FALHA AO BUSCAR HISTORICO');
+  });
+}
+
+// Consulta local (sem rede) -- usa o skuMap montado a partir do historico.
+// Se o SKU nunca apareceu em nenhum rotativo, retorna null (e o app so
+// usa o que vier do proprio QR Code, sem travar nem mostrar erro).
+function consultarSKU(sku){
+  var info = skuMap[String(sku).trim().toUpperCase()];
+  if (!info) return Promise.resolve(null);
+  return Promise.resolve({ ok:true, desc: info.desc, loc: info.loc, qtd: info.qtd });
+}
+
+// Caixa de busca manual (Enter ou leitor BT/USB digitando aqui)
+document.getElementById('inputBusca').addEventListener('input', function(){
+  // sem ação contínua — a confirmação é pelo Enter (onkeydown no input)
+});
+
+/* ============================================================
+   CONFIGURAÇÃO (URL do Apps Script)
+============================================================ */
+function abrirConfig(){
+  var atual = EXEC_URL || '';
+  var nova = prompt('URL do Web App do Apps Script (/exec) para consultar a planilha:\n(deixe vazio para modo offline/local)', atual);
+  if (nova === null) return;
+  EXEC_URL = nova.trim();
+  localStorage.setItem('bip_exec_url', EXEC_URL);
+  document.getElementById('lblConexao').textContent = EXEC_URL ? 'ONLINE' : 'OFFLINE';
+  document.getElementById('dotOnline').classList.toggle('off', !EXEC_URL);
+  if (EXEC_URL) {
+    mostrarToast('CONECTANDO...');
+    carregarHistorico();
+  } else {
+    skuMap = {};
+    mostrarToast('MODO OFFLINE');
+  }
+}
+
+/* ============================================================
+   INÍCIO
+============================================================ */
+document.getElementById('lblConexao').textContent = EXEC_URL ? 'ONLINE' : 'OFFLINE';
+document.getElementById('dotOnline').classList.toggle('off', !EXEC_URL);
+if (EXEC_URL) carregarHistorico();
+window.addEventListener('load', iniciarCamera);
+window.addEventListener('beforeunload', pararCamera);
+
+</script>
+</body>
+</html>
