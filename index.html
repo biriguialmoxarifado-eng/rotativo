@@ -1,39 +1,40 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<title>Bipagem — Rotativo Pro</title>
+<title>Inventário — Bipagem</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
 
 <!-- Leitores de codigo: BarcodeDetector nativo (prioridade 1) + ZXing (prioridade 2: QR/EAN/Code128/UPC) -->
 <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
 
 <style>
 :root{
-  --bg:     #050A14;
-  --c1:     #080F1E;
-  --c2:     #0C1525;
-  --c3:     #111D30;
-  --c4:     #162035;
+  --bg:     #F2F4F8;
+  --surface:#FFFFFF;
+  --surface2:#F8FAFC;
+  --border: #E6EAF0;
+  --t1: #111827;
+  --t2: #6B7280;
+  --t3: #9CA3AF;
 
-  --t1:  #E8F0FF;
-  --t2:  #8098C0;
-  --t3:  #3A5070;
-  --t4:  #1A2840;
+  --primary:      #2563EB;
+  --primary-dark: #1D4ED8;
+  --primary-soft: #EAF1FF;
 
-  --acid:  #00FFB2;
-  --blue:  #0099FF;
-  --red:   #FF3B5C;
-  --amber: #FFB020;
-  --green: #00E87A;
+  --green:      #16A34A;
+  --green-soft: #E8F8EE;
+  --amber:      #D97706;
+  --amber-soft: #FEF3E2;
+  --red:        #DC2626;
+  --red-soft:   #FDECEC;
 
-  --bd:   rgba(0,200,150,.06);
-  --bd2:  rgba(0,200,150,.18);
-
-  --r:   10px;
-  --rs:  7px;
+  --r:  16px;
+  --rs: 12px;
+  --shadow: 0 2px 14px rgba(17,24,39,.06);
 }
 *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 html,body{ height:100%; margin:0; }
@@ -41,405 +42,383 @@ body{
   font-family:'Inter',sans-serif;
   background: var(--bg);
   color: var(--t1);
-  overflow:hidden;
   -webkit-font-smoothing:antialiased;
 }
-.app{ height:100vh; height:100dvh; display:flex; flex-direction:column; }
 .mono{ font-family:'JetBrains Mono',monospace; }
+.app{ max-width:520px; margin:0 auto; min-height:100vh; min-height:100dvh;
+      display:flex; flex-direction:column; background:var(--bg); }
 
-/* ── TOPBAR ───────────────────────────────────────────── */
-.topbar{
+/* ── HEADER ───────────────────────────────────────────── */
+.header{
   display:flex; align-items:center; justify-content:space-between;
-  padding: 12px 16px;
-  background: var(--c1);
-  border-bottom: 1px solid var(--bd);
-  gap:10px; flex-wrap:wrap;
+  padding:16px 18px 8px;
 }
-.brand{ display:flex; align-items:center; gap:10px; min-width:0; }
-.logo-mark{
-  width:36px; height:36px; flex:0 0 auto;
-  background: rgba(0,255,178,.07);
-  border: 1px solid var(--bd2);
-  border-radius: 9px;
-  display:flex; align-items:center; justify-content:center;
+.header .icon-btn{
+  width:38px; height:38px; border-radius:12px; background:var(--surface);
+  border:1px solid var(--border); display:flex; align-items:center; justify-content:center;
+  font-size:16px; color:var(--t1); box-shadow:var(--shadow); cursor:pointer; position:relative;
 }
-.brand h1{
-  font-family:'Syne',sans-serif; font-size:14px; margin:0;
-  letter-spacing:2px; font-weight:800; color:var(--acid); line-height:1;
+.header h1{ font-size:19px; font-weight:800; margin:0; letter-spacing:-.3px; }
+.header .badge{
+  position:absolute; top:-4px; right:-4px; background:var(--primary); color:#fff;
+  font-size:10px; font-weight:700; border-radius:999px; min-width:18px; height:18px;
+  display:flex; align-items:center; justify-content:center; padding:0 4px;
 }
-.brand h1 span{ color:var(--t2); }
-.brand .sub{ font-size:9px; color:var(--t3); letter-spacing:1.5px; margin-top:3px; }
-.topbar-right{ display:flex; align-items:center; gap:10px; }
-.pill{
-  display:flex; align-items:center; gap:6px;
-  padding:6px 12px; border-radius:999px; border:1px solid var(--bd2);
-  background: var(--c2); font-size:11px; color:var(--t2); white-space:nowrap;
-}
-.dot{ width:7px; height:7px; border-radius:50%; background:var(--acid); box-shadow:0 0 8px var(--acid); }
-.dot.off{ background:var(--red); box-shadow:0 0 8px var(--red); }
 
-/* Modo Entrada/Devolucao */
-.mode-toggle{ display:flex; border:1px solid var(--bd2); border-radius:var(--rs); overflow:hidden; }
-.mode-toggle button{
-  border:none; background:transparent; color:var(--t2);
-  font-family:'Syne',sans-serif; font-size:11px; font-weight:800; letter-spacing:1px;
-  padding:8px 14px; cursor:pointer; transition:.15s;
-}
-.mode-toggle button.active.entrada{ background: var(--acid); color:#04140F; }
-.mode-toggle button.active.devolucao{ background: var(--red); color:#1A0307; }
+/* ── CONTEUDO / PAGINAS ───────────────────────────────── */
+.page{ display:none; flex:1; padding:8px 18px 90px; }
+.page.active{ display:block; }
 
-/* ── AREA DA CAMERA ───────────────────────────────────── */
-.scanner{
-  position:relative; flex: 1 1 auto; min-height:0;
-  background:
-    radial-gradient(circle at 50% 35%, rgba(0,255,178,.08), transparent 55%),
-    var(--c1);
-  overflow:hidden;
-}
-.scanner video{
-  position:absolute; inset:0; width:100%; height:100%;
-  object-fit:cover; filter: saturate(1.05);
-}
-.scanner canvas{ display:none; }
-
-.scan-overlay{
-  position:absolute; inset:0;
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  pointer-events:none;
-}
-.scan-frame{
-  position:relative;
-  width: min(78vw, 360px); height: min(78vw, 360px);
+/* ── CARD DE LEITURA (camera) ────────────────────────── */
+.scan-card{
+  background: linear-gradient(180deg,#1B2433,#0F151F);
   border-radius: var(--r);
-  box-shadow: 0 0 0 9999px rgba(5,10,20,.55);
+  box-shadow: var(--shadow);
+  overflow:hidden; position:relative;
+  margin-top:10px;
 }
-.scan-frame::before,
-.scan-frame::after,
-.scan-frame i::before,
-.scan-frame i::after{
-  content:''; position:absolute; width:42px; height:42px;
-  border: 4px solid var(--acid);
-  filter: drop-shadow(0 0 6px rgba(0,255,178,.6));
+.scan-card .scan-head{
+  display:flex; align-items:center; gap:8px; justify-content:center;
+  padding:16px 16px 10px; color:#9DB6FF; font-weight:700; font-size:13px; letter-spacing:.3px;
 }
-.scan-frame::before{ top:0; left:0; border-right:none; border-bottom:none; border-radius:14px 0 0 0; }
-.scan-frame::after{ top:0; right:0; border-left:none; border-bottom:none; border-radius:0 14px 0 0; }
-.scan-frame i::before{ bottom:0; left:0; border-right:none; border-top:none; border-radius:0 0 0 14px; }
-.scan-frame i::after{ bottom:0; right:0; border-left:none; border-top:none; border-radius:0 0 14px 0; }
-.scan-line{
-  position:absolute; left:6%; right:6%; top:6%; height:2px;
-  background: var(--acid); box-shadow: 0 0 12px var(--acid), 0 0 4px #fff;
-  animation: scanmove 1.8s ease-in-out infinite;
+.scan-card .scan-head .dot{
+  width:8px; height:8px; border-radius:50%; background:#3B82F6; box-shadow:0 0 8px #3B82F6;
+  animation:pulse 1.5s infinite;
 }
-@keyframes scanmove{
-  0%,100%{ top:6%; opacity:.9; }
-  50%{ top:94%; opacity:.4; }
-}
-.scan-frame .target{
-  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-  width:18px; height:18px; border:2px solid rgba(232,240,255,.4); border-radius:50%;
-}
-.scan-frame .target::before{
-  content:''; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-  width:3px; height:3px; border-radius:50%; background:var(--acid);
-}
-
-.scan-flash{
-  position:absolute; inset:0; background:var(--acid); opacity:0; pointer-events:none;
-  transition: opacity .12s ease;
-}
-.scan-flash.on{ opacity:.30; }
-
-.hint-top, .hint-bottom{
-  position:absolute; left:50%; transform:translateX(-50%);
-  display:flex; align-items:center; gap:8px;
-  padding:8px 16px; border-radius:999px;
-  background: rgba(8,15,30,.8); border:1px solid var(--bd2);
-  font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:1.5px; color:var(--t1);
-  backdrop-filter: blur(6px);
-  white-space:nowrap;
-}
-.hint-top{ top:14px; color:var(--acid); }
-.hint-bottom{ bottom:14px; }
-.hint-bottom .dot{ animation: pulse 1.4s infinite; }
 @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:.35} }
 
-.cam-controls{
-  position:absolute; top:14px; right:14px; display:flex; gap:8px;
+.scan-video-wrap{
+  position:relative; margin:0 16px 14px; border-radius:14px; overflow:hidden;
+  aspect-ratio: 1; background:#000;
 }
+.scan-video-wrap video{
+  position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+}
+.scan-video-wrap canvas{ display:none; }
+.scan-flash{ position:absolute; inset:0; background:#3B82F6; opacity:0; transition:opacity .12s; }
+.scan-flash.on{ opacity:.30; }
+
+.scan-overlay{ position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+.scan-frame{ position:relative; width:70%; height:70%; }
+.scan-frame::before,.scan-frame::after,.scan-frame i::before,.scan-frame i::after{
+  content:''; position:absolute; width:34px; height:34px; border:4px solid #3B82F6; border-radius:8px;
+}
+.scan-frame::before{ top:0; left:0; border-right:none; border-bottom:none; }
+.scan-frame::after{ top:0; right:0; border-left:none; border-bottom:none; }
+.scan-frame i::before{ bottom:0; left:0; border-right:none; border-top:none; }
+.scan-frame i::after{ bottom:0; right:0; border-left:none; border-top:none; }
+.scan-line{
+  position:absolute; left:6%; right:6%; top:8%; height:2px; background:#60A5FA;
+  box-shadow:0 0 10px #60A5FA; animation: scanmove 1.8s ease-in-out infinite;
+}
+@keyframes scanmove{ 0%,100%{ top:8%; opacity:.9; } 50%{ top:92%; opacity:.35; } }
+
+.cam-controls{ position:absolute; top:10px; right:10px; display:flex; gap:6px; }
 .cam-controls button{
-  pointer-events:auto;
-  display:flex; flex-direction:column; align-items:center; gap:2px;
-  background: rgba(8,15,30,.8); border:1px solid var(--bd2); color:var(--t2);
-  border-radius:var(--rs); padding:8px 10px; font-family:'Syne',sans-serif; font-size:9px;
-  font-weight:800; letter-spacing:.5px; cursor:pointer; line-height:1.4;
+  pointer-events:auto; background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.15);
+  color:#E5EAF5; border-radius:10px; padding:7px 10px; font-family:inherit;
+  font-size:9px; font-weight:700; letter-spacing:.5px; display:flex; flex-direction:column;
+  align-items:center; gap:2px; cursor:pointer;
 }
-.cam-controls button .ico{ font-size:16px; }
-.cam-controls button.active{ color:var(--acid); border-color: var(--acid); }
+.cam-controls button.active{ color:#60A5FA; border-color:#60A5FA; }
+
+.hint-top{
+  position:absolute; top:10px; left:10px; pointer-events:none;
+  background:rgba(0,0,0,.45); border:1px solid rgba(255,255,255,.15); color:#9DB6FF;
+  font-size:10px; font-weight:700; letter-spacing:.5px; padding:6px 10px; border-radius:999px;
+}
+
+.scan-foot{
+  text-align:center; color:#7C90B8; font-size:11px; font-weight:600; padding:0 16px 16px;
+}
+
+/* ── TOGGLE ENTRADA/DEVOLUCAO ─────────────────────────── */
+.mode-toggle{
+  display:flex; background:var(--surface2); border:1px solid var(--border);
+  border-radius:var(--rs); padding:4px; margin-top:14px; gap:4px;
+}
+.mode-toggle button{
+  flex:1; border:none; background:transparent; padding:11px; border-radius:9px;
+  font-family:inherit; font-weight:700; font-size:13px; color:var(--t2); cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:6px;
+}
+.mode-toggle button.active.entrada{ background:var(--green); color:#fff; box-shadow:var(--shadow); }
+.mode-toggle button.active.devolucao{ background:var(--red); color:#fff; box-shadow:var(--shadow); }
+
+/* ── CARDS DE RESUMO ──────────────────────────────────── */
+.stats-row{
+  display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:14px;
+}
+.stat-card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--rs);
+  box-shadow:var(--shadow); padding:12px 6px; text-align:center;
+}
+.stat-card .v{ font-size:20px; font-weight:800; line-height:1; }
+.stat-card .l{ font-size:9px; color:var(--t2); margin-top:6px; font-weight:600; letter-spacing:.3px; }
+.stat-card.c-blue .v{ color:var(--primary); }
+.stat-card.c-green .v{ color:var(--green); }
+.stat-card.c-amber .v{ color:var(--amber); }
+.stat-card.c-grey .v{ color:var(--t1); }
+
+/* ── ULTIMO ITEM LIDO ─────────────────────────────────── */
+.section-title{
+  display:flex; align-items:center; justify-content:space-between;
+  margin:22px 0 10px; font-size:14px; font-weight:800;
+}
+.last-item{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--r);
+  box-shadow:var(--shadow); padding:16px; display:flex; gap:12px;
+}
+.last-item .icon{
+  width:46px; height:46px; border-radius:12px; background:var(--primary-soft);
+  display:flex; align-items:center; justify-content:center; font-size:20px; flex:0 0 auto;
+}
+.last-item .body{ flex:1; min-width:0; }
+.last-item .code{ font-size:17px; font-weight:800; letter-spacing:.3px; word-break:break-all; }
+.last-item .desc{ font-size:13px; color:var(--t2); margin-top:2px; }
+.last-item .meta{
+  display:flex; gap:14px; margin-top:10px; font-size:11px; color:var(--t2); flex-wrap:wrap;
+}
+.last-item .meta b{ color:var(--t1); font-weight:700; }
+.last-item .badge{
+  align-self:flex-start; background:var(--green-soft); color:var(--green);
+  font-size:11px; font-weight:700; padding:5px 10px; border-radius:999px; white-space:nowrap;
+}
+.last-item .badge.aviso{ background:var(--amber-soft); color:var(--amber); }
+.last-item .badge.erro{ background:var(--red-soft); color:var(--red); }
+
+/* ── CONSULTA ─────────────────────────────────────────── */
+.search-box{
+  display:flex; align-items:center; gap:10px; background:var(--surface);
+  border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--shadow);
+  padding:14px 16px; margin-top:10px;
+}
+.search-box input{
+  flex:1; border:none; outline:none; background:none; font-family:inherit;
+  font-size:15px; color:var(--t1);
+}
+.search-box input::placeholder{ color:var(--t3); }
+.search-box .ico{ font-size:18px; color:var(--t3); }
+
+.sr-head{ font-size:11px; color:var(--t2); font-weight:700; letter-spacing:.5px; margin:16px 0 8px; }
+.sr-item{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--rs);
+  box-shadow:var(--shadow); padding:12px 14px; margin-bottom:8px;
+}
+.sr-item .sku{ font-size:14px; font-weight:800; }
+.sr-item .desc{ font-size:12px; color:var(--t2); margin-top:2px; }
+.sr-item .loc{ font-size:11px; color:var(--primary); margin-top:4px; font-weight:700; }
+.sr-empty{ text-align:center; color:var(--t3); font-size:13px; padding:30px 10px; }
+
+/* ── RELATORIOS ───────────────────────────────────────── */
+.report-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
+.report-btn{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--r);
+  box-shadow:var(--shadow); padding:18px 14px; text-align:center; opacity:.5;
+}
+.report-btn .ico{ font-size:24px; margin-bottom:8px; }
+.report-btn .label{ font-size:13px; font-weight:700; }
+.report-btn .tag{ font-size:10px; color:var(--t3); margin-top:4px; }
+
+/* ── CONFIGURACOES ────────────────────────────────────── */
+.cfg-card{
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--r);
+  box-shadow:var(--shadow); padding:16px; margin-top:14px;
+}
+.cfg-card label{ font-size:12px; font-weight:700; color:var(--t2); display:block; margin-bottom:6px; }
+.cfg-card input{
+  width:100%; border:1px solid var(--border); border-radius:var(--rs); padding:12px;
+  font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--t1); outline:none;
+}
+.cfg-card .btn{
+  width:100%; background:var(--primary); color:#fff; border:none; border-radius:var(--rs);
+  padding:13px; font-family:inherit; font-weight:700; font-size:14px; margin-top:10px; cursor:pointer;
+}
+.cfg-card .btn.secondary{ background:var(--surface2); color:var(--t1); border:1px solid var(--border); }
+.cfg-row{ display:flex; align-items:center; justify-content:space-between; padding:10px 0; font-size:13px; }
+.cfg-row b{ font-weight:700; }
+.cfg-list-item{ display:flex; align-items:center; gap:12px; padding:12px 16px;
+  background:var(--surface); border:1px solid var(--border); border-radius:var(--rs);
+  margin-top:8px; font-size:13px; font-weight:600; box-shadow:var(--shadow); }
+.cfg-list-item .ico{ font-size:18px; }
+#debugLine{ font-size:10px; color:var(--t3); margin-top:10px; word-break:break-all; line-height:1.6; }
 
 .toast{
-  position:absolute; left:50%; bottom:18px; transform:translate(-50%, 0);
-  background: var(--acid); color:#04140F; font-family:'Syne',sans-serif; font-weight:800; font-size:12px;
-  letter-spacing:1px; padding:10px 22px; border-radius:999px;
-  box-shadow: 0 8px 24px rgba(0,255,178,.25);
-  opacity:0; transition: opacity .25s, transform .25s;
-  pointer-events:none; white-space:nowrap; z-index:5;
+  position:fixed; left:50%; bottom:96px; transform:translate(-50%,16px);
+  background:var(--t1); color:#fff; font-weight:700; font-size:13px;
+  padding:12px 22px; border-radius:999px; box-shadow:0 8px 24px rgba(0,0,0,.18);
+  opacity:0; transition:opacity .25s, transform .25s; pointer-events:none;
+  white-space:nowrap; z-index:50;
 }
-.toast.show{ opacity:1; transform:translate(-50%,-46px); }
+.toast.show{ opacity:1; transform:translate(-50%,0); }
 
-/* ── PAINEL INFERIOR ──────────────────────────────────── */
-.panel{ background: var(--c1); border-top:1px solid var(--bd); }
-
-.last-read{
-  display:grid; grid-template-columns: 1.6fr 1fr; gap:1px;
-  background: var(--bd); border-bottom:1px solid var(--bd);
+/* ── NAV INFERIOR ─────────────────────────────────────── */
+.bottom-nav{
+  position:fixed; left:0; right:0; bottom:0; max-width:520px; margin:0 auto;
+  background:var(--surface); border-top:1px solid var(--border);
+  display:grid; grid-template-columns:repeat(4,1fr);
+  padding:8px 0 calc(8px + env(safe-area-inset-bottom));
+  box-shadow: 0 -4px 16px rgba(17,24,39,.05);
 }
-.last-read > div{ background: var(--c2); padding:14px 16px; }
-.lr-label{ font-family:'Syne',sans-serif; font-size:9px; color:var(--t3); letter-spacing:2px; margin-bottom:6px; font-weight:700; }
-.lr-code{ font-family:'JetBrains Mono',monospace; font-size:20px; font-weight:700; letter-spacing:1px; word-break:break-all; color:var(--t1); }
-.lr-desc{ font-size:12px; color:var(--t2); margin-top:4px; }
-.lr-loc{ font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--acid); margin-top:4px; }
-.lr-right{ display:flex; flex-direction:column; gap:10px; justify-content:center; }
-.lr-right .row{ display:flex; justify-content:space-between; align-items:baseline; }
-.lr-right .row .l{ font-family:'Syne',sans-serif; font-size:9px; color:var(--t3); letter-spacing:1.5px; font-weight:700; }
-.lr-right .row .v{ font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; color:var(--t1); }
-.lr-right .row.qtd .v{ color:var(--acid); }
-
-/* ── ESTADO ENTRADA / DEVOLUCAO ───────────────────────── */
-.modebar{ display:flex; gap:1px; background:var(--bd); }
-.modebar > div{
-  flex:1; padding:12px 16px; display:flex; align-items:center; gap:10px;
-  background: var(--c2); opacity:.4; transition:.2s;
+.bottom-nav button{
+  border:none; background:none; font-family:inherit; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  color:var(--t3); font-size:10px; font-weight:600; padding:4px 0;
 }
-.modebar > div.active{ opacity:1; }
-.modebar .ico{
-  width:38px; height:38px; border-radius:var(--rs); flex:0 0 auto;
-  display:flex; align-items:center; justify-content:center; font-size:18px;
-}
-.modebar .entrada .ico{ background: rgba(0,255,178,.10); color:var(--acid); border:1px solid var(--bd2); }
-.modebar .devolucao .ico{ background: rgba(255,59,92,.10); color:var(--red); border:1px solid rgba(255,59,92,.2); }
-.modebar .label{ font-family:'Syne',sans-serif; font-size:13px; font-weight:800; letter-spacing:.5px; color:var(--t1); }
-.modebar .sub{ font-size:9px; color:var(--t3); letter-spacing:1px; margin-top:2px; }
-
-/* ── BUSCA SKU ─────────────────────────────────────────  */
-.lookup{ padding:12px 16px; border-top:1px solid var(--bd); }
-.lookup .box{
-  display:flex; align-items:center; gap:8px;
-  background: var(--c2); border:1px solid var(--bd2);
-  border-radius:var(--rs); padding:10px 12px;
-}
-.lookup input{
-  flex:1; background:none; border:none; outline:none; color:var(--t1);
-  font-family:'JetBrains Mono',monospace; font-size:13px;
-}
-.lookup input::placeholder{ color:var(--t3); font-family:'Inter',sans-serif; }
-
-/* ── INDICADORES ──────────────────────────────────────── */
-.stats{
-  display:grid; grid-template-columns: repeat(4,1fr);
-  border-top:1px solid var(--bd);
-}
-.stats > div{
-  padding:12px 6px; text-align:center; border-right:1px solid var(--bd);
-}
-.stats > div:last-child{ border-right:none; }
-.stats .v{ font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; color:var(--acid); }
-.stats .l{ font-family:'Syne',sans-serif; font-size:8px; color:var(--t3); letter-spacing:1.5px; margin-top:4px; font-weight:700; }
-
-/* ── FOOTER ────────────────────────────────────────────── */
-.footer{
-  display:flex; align-items:center; justify-content:space-between;
-  padding:10px 16px; font-size:10px; color:var(--t3);
-  border-top:1px solid var(--bd); letter-spacing:.5px;
-}
-.footer span.on{ color:var(--acid); font-weight:700; }
-.footer button{
-  background:rgba(0,255,178,.07); border:1px solid var(--bd2); color:var(--acid); font-family:'Syne',sans-serif;
-  border-radius:var(--rs); padding:6px 12px;
-  font-size:10px; font-weight:800; letter-spacing:.5px; display:flex; align-items:center; gap:5px; cursor:pointer;
-}
-
-@media (min-width:760px){
-  .scan-frame{ width:min(40vw,380px); height:min(40vw,380px); }
-}
+.bottom-nav button .ico{ font-size:19px; }
+.bottom-nav button.active{ color:var(--primary); }
 </style>
 </head>
 <body>
 <div class="app">
 
-  <!-- TOPO -->
-  <div class="topbar">
-    <div class="brand">
-      <div class="logo-mark">
-        <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
-          <path d="M14 2L26 8V20L14 26L2 20V8L14 2Z" stroke="var(--acid)" stroke-width="1.5" fill="none"/>
-          <path d="M14 8L20 11V17L14 20L8 17V11L14 8Z" fill="var(--acid)" opacity=".3"/>
-          <circle cx="14" cy="14" r="2.5" fill="var(--acid)"/>
-        </svg>
-      </div>
-      <div>
-        <h1>ROTATIVO <span>BIPAGEM</span></h1>
-        <div class="sub mono" id="dataHoraTopo">— carregando —</div>
-      </div>
-    </div>
-    <div class="topbar-right">
-      <div class="pill"><span class="dot" id="dotOnline"></span> <span id="lblConexao" class="mono">ONLINE</span></div>
-      <div class="mode-toggle">
-        <button class="active entrada" id="btnModoEntrada" onclick="setModo('entrada')">&#8592; ENTRADA</button>
-        <button id="btnModoDevolucao" onclick="setModo('devolucao')">&#8594; DEVOLUCAO</button>
-      </div>
+  <!-- HEADER -->
+  <div class="header">
+    <div class="icon-btn">&#9776;</div>
+    <h1 id="pageTitle">Inventário</h1>
+    <div class="icon-btn">
+      &#128276;
+      <span class="badge" id="badgePend">0</span>
     </div>
   </div>
 
-  <!-- CAMERA -->
-  <div class="scanner">
-    <video id="video" autoplay playsinline muted></video>
-    <canvas id="canvas"></canvas>
-    <div class="scan-flash" id="flash"></div>
+  <!-- ============ PAGINA: INICIO ============ -->
+  <div class="page active" id="page-inicio">
 
-    <div class="hint-top" id="hintTop">CAMERA ATIVA — INICIANDO...</div>
-
-    <div class="cam-controls">
-      <button id="btnTorch" onclick="toggleTorch()" title="Lanterna">
-        <span class="ico">&#128294;</span> FLASH
-      </button>
-      <button onclick="virarCamera()" title="Virar camera">
-        <span class="ico">&#128260;</span> VIRAR
-      </button>
-    </div>
-
-    <div class="scan-overlay">
-      <div class="scan-frame">
-        <div class="scan-line"></div>
-        <div class="target"></div>
-        <i></i>
+    <div class="scan-card">
+      <div class="scan-head"><span class="dot"></span> <span id="scanStatusTxt">PRONTO PARA BIPAR</span></div>
+      <div class="scan-video-wrap">
+        <video id="video" autoplay playsinline muted></video>
+        <canvas id="canvas"></canvas>
+        <div class="scan-flash" id="flash"></div>
+        <div class="hint-top" id="hintTop">iniciando...</div>
+        <div class="cam-controls">
+          <button id="btnTorch" onclick="toggleTorch()">&#128294;<span>FLASH</span></button>
+          <button onclick="virarCamera()">&#128260;<span>VIRAR</span></button>
+        </div>
+        <div class="scan-overlay">
+          <div class="scan-frame"><div class="scan-line"></div><i></i></div>
+        </div>
       </div>
+      <div class="scan-foot">Aponte o código de barras ou QR Code para a câmera</div>
     </div>
 
-    <div class="hint-bottom"><span class="dot"></span> APONTE PARA O CODIGO</div>
-    <div class="toast" id="toast">ITEM REGISTRADO COM SUCESSO</div>
+    <div class="mode-toggle">
+      <button class="active entrada" id="btnModoEntrada" onclick="setModo('entrada')">&#8592; Entrada</button>
+      <button id="btnModoDevolucao" onclick="setModo('devolucao')">&#8594; Devolução</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card c-blue"><div class="v" id="statTotal">0</div><div class="l">BIPADOS</div></div>
+      <div class="stat-card c-green"><div class="v" id="statEntradas">0</div><div class="l">ENTRADAS</div></div>
+      <div class="stat-card c-amber"><div class="v" id="statDevolucoes">0</div><div class="l">DEVOLUÇÕES</div></div>
+      <div class="stat-card c-grey"><div class="v" id="statSkus">0</div><div class="l">SKUS BASE</div></div>
+    </div>
+
+    <div class="section-title">
+      <span>Último item lido</span>
+      <span style="color:var(--t3);font-size:11px;font-weight:600" id="lrHora">—</span>
+    </div>
+    <div class="last-item">
+      <div class="icon">&#128230;</div>
+      <div class="body">
+        <div class="code mono" id="lrCodigo">—</div>
+        <div class="desc" id="lrDesc">Aguardando leitura...</div>
+        <div class="meta">
+          <span>Qtd: <b id="lrQtd">0</b></span>
+          <span id="lrLocWrap" style="display:none">Local: <b id="lrLoc"></b></span>
+        </div>
+      </div>
+      <div class="badge" id="lrBadge" style="display:none">Registrado</div>
+    </div>
+
   </div>
 
-  <!-- PAINEL INFERIOR -->
-  <div class="panel">
+  <!-- ============ PAGINA: CONSULTA ============ -->
+  <div class="page" id="page-consulta">
+    <div class="search-box">
+      <span class="ico">&#128269;</span>
+      <input id="inputBusca" placeholder="Buscar por SKU, descrição ou código..." autocomplete="off"
+             onkeydown="if(event.key==='Enter'){ handleBuscaEnter(this); }">
+    </div>
+    <div id="searchResults"></div>
+  </div>
 
-    <!-- Ultima leitura -->
-    <div class="last-read">
-      <div>
-        <div class="lr-label">ULTIMA LEITURA</div>
-        <div class="lr-code" id="lrCodigo">—</div>
-        <div class="lr-desc" id="lrDesc">Aguardando leitura...</div>
-        <div class="lr-loc" id="lrLoc"></div>
-      </div>
-      <div class="lr-right">
-        <div class="row"><span class="l">HORA</span><span class="v" id="lrHora" style="font-size:13px">—</span></div>
-        <div class="row qtd"><span class="l">QTD</span><span class="v" id="lrQtd">0</span></div>
-      </div>
+  <!-- ============ PAGINA: RELATORIOS ============ -->
+  <div class="page" id="page-relatorios">
+    <div class="report-grid">
+      <div class="report-btn"><div class="ico">&#128196;</div><div class="label">PDF</div><div class="tag">em breve</div></div>
+      <div class="report-btn"><div class="ico">&#128202;</div><div class="label">Excel</div><div class="tag">em breve</div></div>
+      <div class="report-btn"><div class="ico">&#128203;</div><div class="label">CSV</div><div class="tag">em breve</div></div>
+      <div class="report-btn"><div class="ico">&#9888;&#65039;</div><div class="label">Divergências</div><div class="tag">em breve</div></div>
+    </div>
+    <div class="sr-empty">Relatórios completos ficam disponíveis no sistema principal (RotativoApp Pro).<br>Aqui o foco é a bipagem rápida.</div>
+  </div>
+
+  <!-- ============ PAGINA: CONFIGURACOES ============ -->
+  <div class="page" id="page-config">
+    <div class="cfg-card">
+      <label>URL do Apps Script (/exec)</label>
+      <input id="execUrlInput" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off"/>
+      <button class="btn" onclick="salvarConfig()">Salvar e atualizar base</button>
+      <div id="debugLine">—</div>
     </div>
 
-    <!-- Estado do modo -->
-    <div class="modebar">
-      <div class="entrada active" id="modeboxEntrada">
-        <div class="ico">&#8592;</div>
-        <div>
-          <div class="label">ENTRADA</div>
-          <div class="sub">CADA LEITURA SOMA +1</div>
-        </div>
-      </div>
-      <div class="devolucao" id="modeboxDevolucao">
-        <div class="ico">&#8594;</div>
-        <div>
-          <div class="label">DEVOLUCAO</div>
-          <div class="sub">CADA LEITURA SUBTRAI -1</div>
-        </div>
-      </div>
-    </div>
+    <div class="cfg-list-item"><span class="ico">&#128100;</span> Usuários <span style="margin-left:auto;color:var(--t3);font-size:11px">em breve</span></div>
+    <div class="cfg-list-item"><span class="ico">&#128272;</span> Permissões <span style="margin-left:auto;color:var(--t3);font-size:11px">em breve</span></div>
+    <div class="cfg-list-item"><span class="ico">&#128190;</span> Backup <span style="margin-left:auto;color:var(--t3);font-size:11px">em breve</span></div>
+    <div class="cfg-list-item"><span class="ico">&#128260;</span> Sincronização <span style="margin-left:auto;color:var(--t3);font-size:11px">em breve</span></div>
+    <div class="cfg-list-item"><span class="ico">&#128203;</span> Auditoria <span style="margin-left:auto;color:var(--t3);font-size:11px">em breve</span></div>
+  </div>
 
-    <!-- Consulta SKU -->
-    <div class="lookup">
-      <div class="box">
-        <span>&#128269;</span>
-        <input id="inputBusca" placeholder="Consultar SKU / bipar aqui..." autocomplete="off"
-               onkeydown="if(event.key==='Enter'){ processarCodigo(this.value); this.value=''; }">
-      </div>
-    </div>
+  <div class="toast" id="toast">ITEM REGISTRADO COM SUCESSO</div>
 
-    <!-- Indicadores -->
-    <div class="stats">
-      <div><div class="v" id="statTotal">0</div><div class="l">TOTAL HOJE</div></div>
-      <div><div class="v" id="statEntradas">0</div><div class="l">ENTRADAS</div></div>
-      <div><div class="v" id="statDevolucoes">0</div><div class="l">DEVOLUCOES</div></div>
-      <div><div class="v mono" id="statUltima">—</div><div class="l">ULT. LEITURA</div></div>
-    </div>
-
-    <!-- Footer -->
-    <div class="footer">
-      <span>&#128266; BIP <span class="on">ATIVADO</span> &middot; &#128241; VIBRACAO <span class="on">ATIVADA</span></span>
-      <button onclick="abrirConfig()">&#9881; CONFIGURACOES</button>
-    </div>
+  <!-- NAV INFERIOR -->
+  <div class="bottom-nav">
+    <button class="active" id="navInicio" onclick="switchTab('inicio')"><span class="ico">&#127968;</span>Início</button>
+    <button id="navConsulta" onclick="switchTab('consulta')"><span class="ico">&#128269;</span>Consulta</button>
+    <button id="navRelatorios" onclick="switchTab('relatorios')"><span class="ico">&#128202;</span>Relatórios</button>
+    <button id="navConfig" onclick="switchTab('config')"><span class="ico">&#9881;</span>Config.</button>
   </div>
 
 </div>
 
 <script>
 /* ============================================================
-   CONFIGURAÇÃO — integração com o Apps Script / Planilha
+   CONFIGURACAO — integracao com o Apps Script / Planilha
    ============================================================
-   Coloque aqui a URL do seu Web App do Apps Script (/exec).
-   O doGet do Apps Script deve aceitar:
-     ?action=consultarSku&sku=XXXX
-   e responder JSON (ContentService, MimeType.JSON) como:
-     { "ok": true, "sku": "XXXX", "desc": "...", "qtd": 12,
-       "loc": "CT101C03B", "status": "ATIVO" }
-   Se EXEC_URL ficar vazio, o app funciona 100% offline/local
-   (sem consultar a planilha) — útil pra testar a câmera primeiro.
+   Use a tela "Config." para colar a URL do seu Web App (/exec).
+   O app busca o historico de rotativos ja salvos (acao ja
+   existente "getHistory") e monta uma base local de SKU ->
+   {desc, loc, qtd}. Sem URL configurada, funciona offline.
 ============================================================ */
 var EXEC_URL = localStorage.getItem('bip_exec_url') || '';
-
-// "Memoria" local de SKUs ja vistos em rotativos anteriores (vinda do
-// historico que ja existe na planilha, via ?action=getHistory).
-// skuMap[SKU] = { desc, loc, qtd }
 var skuMap = {};
 
 /* ============================================================
    ESTADO
 ============================================================ */
-var modo = 'entrada'; // 'entrada' | 'devolucao'
-var stats = { total: 0, entradas: 0, devolucoes: 0, ultimaTs: null };
-var itens = {}; // sku -> { desc, qtd, loc, ultima }
+var modo = 'entrada';
+var stats = { total: 0, entradas: 0, devolucoes: 0 };
+var itens = {};
 var ultimoCodigo = null, ultimoTs = 0;
 var stream = null, torchOn = false, facing = 'environment';
-var zxingReader = null;
-var usandoBarcodeDetector = false;
-var rafId = null;
+var zxingReader = null, rafId = null;
 
 /* ============================================================
-   RELÓGIO
+   ABAS
 ============================================================ */
-function atualizarRelogio(){
-  var d = new Date();
-  var dias = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'];
-  var txt = dias[d.getDay()] + ' ' + String(d.getDate()).padStart(2,'0') + '/' +
-            String(d.getMonth()+1).padStart(2,'0') + '  ' +
-            d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  document.getElementById('dataHoraTopo').textContent = txt;
-}
-atualizarRelogio();
-setInterval(atualizarRelogio, 1000);
-
-/* ============================================================
-   MODO ENTRADA / DEVOLUÇÃO
-============================================================ */
-function setModo(novo){
-  modo = novo;
-  document.getElementById('btnModoEntrada').classList.toggle('active', modo==='entrada');
-  document.getElementById('btnModoDevolucao').classList.toggle('active', modo==='devolucao');
-  document.getElementById('modeboxEntrada').classList.toggle('active', modo==='entrada');
-  document.getElementById('modeboxDevolucao').classList.toggle('active', modo==='devolucao');
-  mostrarToast(modo==='entrada' ? 'MODO: ENTRADA' : 'MODO: DEVOLUÇÃO');
+var TITULOS = { inicio:'Inventário', consulta:'Consulta', relatorios:'Relatórios', config:'Configurações' };
+function switchTab(nome){
+  ['inicio','consulta','relatorios','config'].forEach(function(t){
+    document.getElementById('page-'+t).classList.toggle('active', t===nome);
+    document.getElementById('nav'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active', t===nome);
+  });
+  document.getElementById('pageTitle').textContent = TITULOS[nome];
 }
 
 /* ============================================================
-   FEEDBACK — bip, vibração, flash, toast
+   FEEDBACK — bip, vibracao, flash, toast
 ============================================================ */
 function beep(){
   try{
@@ -448,8 +427,7 @@ function beep(){
     osc.type='sine'; osc.frequency.value = 1500;
     osc.connect(gain); gain.connect(ctx.destination);
     gain.gain.setValueAtTime(0.18, ctx.currentTime);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.09);
+    osc.start(); osc.stop(ctx.currentTime + 0.09);
   }catch(e){}
 }
 function vibrar(){ try{ if(navigator.vibrate) navigator.vibrate(60); }catch(e){} }
@@ -462,16 +440,27 @@ function mostrarToast(txt){
   var t = document.getElementById('toast');
   t.textContent = txt;
   t.classList.add('show');
-  setTimeout(function(){ t.classList.remove('show'); }, 1300);
+  setTimeout(function(){ t.classList.remove('show'); }, 1500);
 }
 
 /* ============================================================
-   CÂMERA — BarcodeDetector (prioridade) -> ZXing contínuo
+   MODO ENTRADA / DEVOLUCAO
+============================================================ */
+function setModo(novo){
+  modo = novo;
+  document.getElementById('btnModoEntrada').classList.toggle('active', modo==='entrada');
+  document.getElementById('btnModoDevolucao').classList.toggle('active', modo==='devolucao');
+  mostrarToast(modo==='entrada' ? 'Modo: Entrada' : 'Modo: Devolução');
+}
+
+/* ============================================================
+   CAMERA — BarcodeDetector (prioridade) -> ZXing continuo
 ============================================================ */
 function iniciarCamera(){
   pararCamera();
   var hint = document.getElementById('hintTop');
-  hint.textContent = '🟡 ABRINDO CÂMERA...';
+  var head = document.getElementById('scanStatusTxt');
+  hint.textContent = 'abrindo câmera...';
 
   navigator.mediaDevices.getUserMedia({ video:{ facingMode: facing } })
     .then(function(s){
@@ -479,39 +468,31 @@ function iniciarCamera(){
       var video = document.getElementById('video');
       video.srcObject = s;
       video.play();
-      hint.textContent = '🟢 CÂMERA ATIVA — APONTE PARA O CÓDIGO';
+      hint.textContent = 'câmera ativa';
+      head.textContent = 'PRONTO PARA BIPAR';
 
       if (window.BarcodeDetector) {
-        usandoBarcodeDetector = true;
         loopBarcodeDetector(video);
       } else {
-        usandoBarcodeDetector = false;
         loopZXing();
       }
     })
     .catch(function(err){
-      hint.textContent = '🔴 CÂMERA INDISPONÍVEL: ' + err.name;
+      hint.textContent = 'câmera indisponível';
+      head.textContent = 'ERRO: ' + err.name;
     });
 }
-
 function pararCamera(){
   if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
   if (zxingReader) { try{ zxingReader.reset(); }catch(e){} zxingReader = null; }
   if (stream) { stream.getTracks().forEach(function(t){ t.stop(); }); stream = null; }
 }
-
-// ── Caminho 1: BarcodeDetector nativo (QR + códigos de barra) ──
 function loopBarcodeDetector(video){
-  var canvas = document.getElementById('canvas');
   var detector;
   try{
     detector = new BarcodeDetector({ formats:
       ['qr_code','code_128','ean_13','ean_8','upc_a','upc_e'] });
-  }catch(e){
-    usandoBarcodeDetector = false;
-    loopZXing();
-    return;
-  }
+  }catch(e){ loopZXing(); return; }
   function tick(){
     if (!stream) return;
     if (video.readyState >= 2) {
@@ -523,40 +504,29 @@ function loopBarcodeDetector(video){
   }
   tick();
 }
-
-// ── Caminho 2: ZXing — leitura contínua direto da câmera ──
 function loopZXing(){
-  if (!window.ZXing) {
-    document.getElementById('hintTop').textContent = '🔴 NENHUM LEITOR DISPONÍVEL';
-    return;
-  }
+  if (!window.ZXing) { document.getElementById('hintTop').textContent = 'leitor indisponível'; return; }
   var hints = new Map();
-  var formatos = [
+  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
     ZXing.BarcodeFormat.QR_CODE, ZXing.BarcodeFormat.CODE_128,
     ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8,
     ZXing.BarcodeFormat.UPC_A, ZXing.BarcodeFormat.UPC_E
-  ];
-  hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formatos);
+  ]);
   hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
   zxingReader = new ZXing.BrowserMultiFormatReader(hints);
-  zxingReader.decodeFromStream(stream, 'video', function(result, err){
+  zxingReader.decodeFromStream(stream, 'video', function(result){
     if (result) processarCodigo(result.getText());
   }).catch(function(){
-    document.getElementById('hintTop').textContent = '🔴 ERRO AO INICIAR LEITOR';
+    document.getElementById('hintTop').textContent = 'erro no leitor';
   });
 }
-
-function virarCamera(){
-  facing = (facing === 'environment') ? 'user' : 'environment';
-  iniciarCamera();
-}
-
+function virarCamera(){ facing = (facing==='environment')?'user':'environment'; iniciarCamera(); }
 function toggleTorch(){
   if (!stream) return;
   var track = stream.getVideoTracks()[0];
   if (!track) return;
   var caps = track.getCapabilities ? track.getCapabilities() : {};
-  if (!caps.torch) { mostrarToast('LANTERNA INDISPONÍVEL'); return; }
+  if (!caps.torch) { mostrarToast('Lanterna indisponível'); return; }
   torchOn = !torchOn;
   track.applyConstraints({ advanced:[{ torch: torchOn }] }).catch(function(){});
   document.getElementById('btnTorch').classList.toggle('active', torchOn);
@@ -574,7 +544,7 @@ function extrairSku(raw){
       var kv = p.split(':');
       if (kv.length >= 2) {
         var k = kv[0].trim().toUpperCase();
-        if (k==='SKU' || k==='MAT' || k==='MATERIAL' || k==='ID') sku = kv.slice(1).join(':').trim();
+        if (k==='SKU'||k==='MAT'||k==='MATERIAL'||k==='ID') sku = kv.slice(1).join(':').trim();
       }
     });
     if (sku) return sku;
@@ -597,68 +567,66 @@ function extrairCampo(raw, chaves){
 
 function processarCodigo(raw){
   var agora = Date.now();
-  if (raw === ultimoCodigo && (agora - ultimoTs) < 1500) return; // anti-duplicado
+  atualizarDebug('lido: ' + JSON.stringify(String(raw).substring(0,60)));
+  if (raw === ultimoCodigo && (agora - ultimoTs) < 1500) return;
   ultimoCodigo = raw; ultimoTs = agora;
 
-  var sku  = extrairSku(raw);
+  var sku  = extrairSku(raw) || raw;
   var desc = extrairCampo(raw, ['DESC']);
   var loc  = extrairCampo(raw, ['LOCAL','LOC']);
-  if (!sku) sku = raw;
 
   registrarLeitura(sku, desc, loc);
-
-  // Consulta a planilha (se EXEC_URL configurado) pra completar/atualizar os dados
   consultarSKU(sku).then(function(info){
-    if (info && info.ok) {
-      registrarLeitura(sku, info.desc || desc, info.loc || loc, info.qtd);
-    }
+    if (info && info.ok) registrarLeitura(sku, info.desc || desc, info.loc || loc, info.qtd);
   });
 }
 
 function registrarLeitura(sku, desc, loc, qtdSistema){
-  if (!itens[sku]) itens[sku] = { desc:'', loc:'', qtd:0, qtdSistema:null };
+  if (!itens[sku]) itens[sku] = { desc:'', loc:'', qtd:0 };
   var it = itens[sku];
   if (desc) it.desc = desc;
   if (loc)  it.loc  = loc;
-  if (typeof qtdSistema === 'number') it.qtdSistema = qtdSistema;
   it.qtd += (modo === 'entrada') ? 1 : -1;
 
   stats.total++;
   if (modo === 'entrada') stats.entradas++; else stats.devolucoes++;
-  stats.ultimaTs = new Date();
 
-  // Última leitura
   document.getElementById('lrCodigo').textContent = sku;
   document.getElementById('lrDesc').textContent = it.desc || 'SKU não cadastrado';
-  document.getElementById('lrLoc').textContent = it.loc ? '📍 ' + it.loc : '';
-  document.getElementById('lrHora').textContent = stats.ultimaTs.toLocaleTimeString('pt-BR');
   document.getElementById('lrQtd').textContent = it.qtd;
+  var locWrap = document.getElementById('lrLocWrap');
+  if (it.loc) { locWrap.style.display='inline'; document.getElementById('lrLoc').textContent = it.loc; }
+  else { locWrap.style.display='none'; }
+  document.getElementById('lrHora').textContent = new Date().toLocaleTimeString('pt-BR');
 
-  // Indicadores
+  var badge = document.getElementById('lrBadge');
+  badge.style.display = 'inline-block';
+  if (it.desc) { badge.className='badge'; badge.textContent='Registrado'; }
+  else { badge.className='badge aviso'; badge.textContent='Não cadastrado'; }
+
   document.getElementById('statTotal').textContent = stats.total;
   document.getElementById('statEntradas').textContent = stats.entradas;
   document.getElementById('statDevolucoes').textContent = stats.devolucoes;
-  document.getElementById('statUltima').textContent = '0s';
 
   beep(); vibrar(); flashFrame();
   mostrarToast('ITEM REGISTRADO COM SUCESSO');
 }
 
-// Atualiza "Última leitura: Xs atrás"
-setInterval(function(){
-  if (!stats.ultimaTs) return;
-  var s = Math.round((Date.now() - stats.ultimaTs.getTime())/1000);
-  document.getElementById('statUltima').textContent = s < 60 ? (s+'s') : (Math.round(s/60)+'min');
-}, 1000);
-
 /* ============================================================
-   CONSULTA À PLANILHA (via Apps Script Web App)
+   HISTORICO / BASE LOCAL DE SKUS (via acao "getHistory")
 ============================================================ */
-// Carrega o historico de rotativos (acao ja existente: getHistory) e
-// monta o skuMap. Chamado uma vez ao conectar, e via "Atualizar".
+function atualizarDebug(msg){
+  var el = document.getElementById('debugLine');
+  if (!el) return;
+  var url = EXEC_URL ? EXEC_URL : '(nenhuma)';
+  el.innerHTML = 'URL: ' + url + ' &middot; SKUs na base: ' + Object.keys(skuMap).length +
+    (msg ? ' &middot; ' + msg : '');
+}
+
 function carregarHistorico(){
-  if (!EXEC_URL) return Promise.resolve();
+  if (!EXEC_URL) { atualizarDebug(); return Promise.resolve(); }
   var url = EXEC_URL + (EXEC_URL.indexOf('?')>-1?'&':'?') + 'action=getHistory&limit=10';
+  atualizarDebug('buscando histórico...');
   return fetch(url).then(function(r){ return r.json(); }).then(function(resp){
     var lista = resp && (resp.data || resp.history || resp.result || resp) || [];
     if (!Array.isArray(lista)) lista = [];
@@ -667,9 +635,7 @@ function carregarHistorico(){
       var itensRot = rotativo.items || rotativo.itens || [];
       itensRot.forEach(function(it){
         var sku = String(it.mat || it.sku || it.material || it.id || '').trim().toUpperCase();
-        if (!sku) return;
-        // mais recentes (primeiros na lista) tem prioridade; nao sobrescrever se ja existe
-        if (novoMap[sku]) return;
+        if (!sku || novoMap[sku]) return;
         novoMap[sku] = {
           desc: it.desc || it.descricao || '',
           loc:  it.loc  || it.localizacao || '',
@@ -678,55 +644,88 @@ function carregarHistorico(){
       });
     });
     skuMap = novoMap;
-    mostrarToast('BASE ATUALIZADA: ' + Object.keys(skuMap).length + ' SKUS');
-  }).catch(function(){
-    mostrarToast('FALHA AO BUSCAR HISTORICO');
+    document.getElementById('statSkus').textContent = Object.keys(skuMap).length;
+    mostrarToast('Base atualizada: ' + Object.keys(skuMap).length + ' SKUs');
+    atualizarDebug('histórico OK');
+  }).catch(function(err){
+    mostrarToast('Falha ao buscar histórico');
+    atualizarDebug('ERRO histórico: ' + (err && err.message ? err.message : err));
   });
 }
 
-// Consulta local (sem rede) -- usa o skuMap montado a partir do historico.
-// Se o SKU nunca apareceu em nenhum rotativo, retorna null (e o app so
-// usa o que vier do proprio QR Code, sem travar nem mostrar erro).
 function consultarSKU(sku){
   var info = skuMap[String(sku).trim().toUpperCase()];
   if (!info) return Promise.resolve(null);
   return Promise.resolve({ ok:true, desc: info.desc, loc: info.loc, qtd: info.qtd });
 }
 
-// Caixa de busca manual (Enter ou leitor BT/USB digitando aqui)
+/* ============================================================
+   BUSCA (aba Consulta)
+============================================================ */
+function handleBuscaEnter(input){
+  var raw = String(input.value || '').trim();
+  atualizarDebug('busca ENTER: "' + raw + '"');
+  if (!raw) return;
+  var codigoUpper = extrairSku(raw).trim().toUpperCase();
+  if (raw.indexOf('|') > -1 || skuMap[codigoUpper]) {
+    processarCodigo(raw);
+    input.value = '';
+    document.getElementById('searchResults').innerHTML = '';
+  } else {
+    buscarPorDescricao(raw);
+  }
+}
+function buscarPorDescricao(termo){
+  var box = document.getElementById('searchResults');
+  var termoLower = termo.toLowerCase();
+
+  if (Object.keys(skuMap).length === 0) {
+    box.innerHTML = '<div class="sr-empty">Base vazia.<br>Configure a URL na aba Config. para carregar os itens.</div>';
+    atualizarDebug('busca "' + termo + '": base vazia');
+    return;
+  }
+  var resultados = Object.keys(skuMap)
+    .map(function(sku){ return Object.assign({ sku: sku }, skuMap[sku]); })
+    .filter(function(it){ return (it.desc||'').toLowerCase().indexOf(termoLower) > -1 || it.sku.toLowerCase().indexOf(termoLower) > -1; });
+
+  atualizarDebug('busca "' + termo + '": ' + resultados.length + '/' + Object.keys(skuMap).length);
+
+  if (!resultados.length) {
+    box.innerHTML = '<div class="sr-empty">Nenhum item encontrado para "' + termo + '"</div>';
+    return;
+  }
+  var html = '<div class="sr-head">' + resultados.length + ' RESULTADO(S) PARA "' + termo.toUpperCase() + '"</div>';
+  resultados.slice(0,30).forEach(function(it){
+    html += '<div class="sr-item">'
+      + '<div class="sku mono">' + it.sku + '</div>'
+      + '<div class="desc">' + (it.desc || '(sem descrição)') + '</div>'
+      + (it.loc ? '<div class="loc">📍 ' + it.loc + (it.qtd!=null?' · Qtd '+it.qtd:'') + '</div>' : '')
+      + '</div>';
+  });
+  box.innerHTML = html;
+}
 document.getElementById('inputBusca').addEventListener('input', function(){
-  // sem ação contínua — a confirmação é pelo Enter (onkeydown no input)
+  if (!this.value.trim()) document.getElementById('searchResults').innerHTML = '';
 });
 
 /* ============================================================
-   CONFIGURAÇÃO (URL do Apps Script)
+   CONFIGURACAO
 ============================================================ */
-function abrirConfig(){
-  var atual = EXEC_URL || '';
-  var nova = prompt('URL do Web App do Apps Script (/exec) para consultar a planilha:\n(deixe vazio para modo offline/local)', atual);
-  if (nova === null) return;
-  EXEC_URL = nova.trim();
+function salvarConfig(){
+  var v = document.getElementById('execUrlInput').value.trim();
+  EXEC_URL = v;
   localStorage.setItem('bip_exec_url', EXEC_URL);
-  document.getElementById('lblConexao').textContent = EXEC_URL ? 'ONLINE' : 'OFFLINE';
-  document.getElementById('dotOnline').classList.toggle('off', !EXEC_URL);
-  if (EXEC_URL) {
-    mostrarToast('CONECTANDO...');
-    carregarHistorico();
-  } else {
-    skuMap = {};
-    mostrarToast('MODO OFFLINE');
-  }
+  if (EXEC_URL) carregarHistorico(); else { skuMap={}; document.getElementById('statSkus').textContent='0'; atualizarDebug(); }
 }
 
 /* ============================================================
-   INÍCIO
+   INICIO
 ============================================================ */
-document.getElementById('lblConexao').textContent = EXEC_URL ? 'ONLINE' : 'OFFLINE';
-document.getElementById('dotOnline').classList.toggle('off', !EXEC_URL);
+document.getElementById('execUrlInput').value = EXEC_URL;
+atualizarDebug();
 if (EXEC_URL) carregarHistorico();
 window.addEventListener('load', iniciarCamera);
 window.addEventListener('beforeunload', pararCamera);
-
 </script>
 </body>
 </html>
