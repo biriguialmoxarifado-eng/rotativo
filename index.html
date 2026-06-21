@@ -628,49 +628,84 @@ function carregarRotativos() {
     return;
   }
   box.innerHTML = '<div class="empty-st"><div class="eico">⟳</div><p>Carregando inventários...</p></div>';
+
+  var resultados = { legado: null, tokens: null };
+  function tentarRenderizar() {
+    if (resultados.legado === null || resultados.tokens === null) return;
+    renderRotativos(resultados.legado, resultados.tokens);
+  }
+
+  // 1) Rotativos legados (sistema antigo)
   var cbName = '_cb_' + Date.now();
   var sc = document.createElement('script');
   var tm = setTimeout(function() {
-    if (window[cbName]) {
-      delete window[cbName];
-      box.innerHTML = '<div class="empty-st"><div class="eico">⏱</div><p>Tempo esgotado. Verifique a URL e tente novamente.</p></div>';
-    }
+    if (window[cbName]) { delete window[cbName]; resultados.legado = []; tentarRenderizar(); }
   }, 12000);
   window[cbName] = function(resp) {
     clearTimeout(tm);
     delete window[cbName];
     if (sc.parentNode) sc.parentNode.removeChild(sc);
-    renderRotativos(resp);
+    var lista = [];
+    if (resp && Array.isArray(resp.data)) lista = resp.data;
+    else if (resp && Array.isArray(resp.history)) lista = resp.history;
+    else if (resp && Array.isArray(resp.result)) lista = resp.result;
+    else if (Array.isArray(resp)) lista = resp;
+    resultados.legado = lista;
+    tentarRenderizar();
   };
-  sc.onerror = function() {
-    clearTimeout(tm);
-    delete window[cbName];
-    box.innerHTML = '<div class="empty-st"><div class="eico">❌</div><p>Erro de conexão. Verifique a URL e reimplante o Apps Script.</p></div>';
-  };
+  sc.onerror = function() { clearTimeout(tm); delete window[cbName]; resultados.legado = []; tentarRenderizar(); };
   sc.src = EXEC_URL + (EXEC_URL.indexOf('?') > -1 ? '&' : '?') + 'action=getHistory&limit=100&callback=' + cbName;
   document.head.appendChild(sc);
+
+  // 2) Tokens abertos da Central de Aprovação (sistema novo)
+  var cbName2 = '_cb_' + Date.now() + '_tk';
+  var sc2 = document.createElement('script');
+  var tm2 = setTimeout(function() {
+    if (window[cbName2]) { delete window[cbName2]; resultados.tokens = []; tentarRenderizar(); }
+  }, 12000);
+  window[cbName2] = function(resp) {
+    clearTimeout(tm2);
+    delete window[cbName2];
+    if (sc2.parentNode) sc2.parentNode.removeChild(sc2);
+    var abertos = [];
+    if (resp && resp.ok && Array.isArray(resp.inventarios)) {
+      abertos = resp.inventarios.filter(function (d) {
+        return d['Status'] === 'EM_CONTAGEM' || d['Status'] === 'DEVOLVIDO_CORRECAO';
+      });
+    }
+    resultados.tokens = abertos;
+    tentarRenderizar();
+  };
+  sc2.onerror = function() { clearTimeout(tm2); delete window[cbName2]; resultados.tokens = []; tentarRenderizar(); };
+  sc2.src = EXEC_URL + (EXEC_URL.indexOf('?') > -1 ? '&' : '?') + 'action=dashboardToken&callback=' + cbName2;
+  document.head.appendChild(sc2);
 }
 
-function renderRotativos(resp) {
+function renderRotativos(respLegado, tokensAbertos) {
   var box = document.getElementById('listaRotativos');
-  // Aceitar diferentes formatos de resposta
-  var lista = [];
-  if (resp && Array.isArray(resp.data)) lista = resp.data;
-  else if (resp && Array.isArray(resp.history)) lista = resp.history;
-  else if (resp && Array.isArray(resp.result)) lista = resp.result;
-  else if (Array.isArray(resp)) lista = resp;
 
-  // Filtrar apenas os válidos (com id e itens ou total > 0)
-  lista = lista.filter(function(r) {
+  var lista = (respLegado || []).filter(function(r) {
     return r && r.id && (Number(r.total) > 0 || (r.items && r.items.length > 0));
   });
 
-  if (!lista.length) {
-    box.innerHTML = '<div class="empty-st"><div class="eico">📭</div><p>Nenhum rotativo encontrado na planilha.<br>Verifique se há dados e se o Apps Script está reimplantado.</p></div>';
+  var tokens = (tokensAbertos || []).map(function(d) {
+    return {
+      id: d['Token'],
+      titulo: d['Titulo'] || d['Token'],
+      dataInv: d['Data Criacao'] || '',
+      total: Number(d['Total Itens']) || Number(d['Itens Lancados']) || 0,
+      divergencias: Number(d['Total Divergencias']) || 0,
+      acuracia: d['Acuracidade %'] !== undefined ? Number(d['Acuracidade %']) : 100,
+      _isToken: true,
+      _raw: d
+    };
+  });
+
+  if (!lista.length && !tokens.length) {
+    box.innerHTML = '<div class="empty-st"><div class="eico">📭</div><p>Nenhum rotativo ou token encontrado.<br>Verifique se há dados e se o Apps Script está reimplantado.</p></div>';
     return;
   }
 
-  // Ordenar mais recentes primeiro
   lista.sort(function(a, b) {
     var da = a.dataInv || a.date || '';
     var db = b.dataInv || b.date || '';
@@ -678,35 +713,117 @@ function renderRotativos(resp) {
   });
 
   box.innerHTML = '';
-  lista.forEach(function(rot) {
-    var divs = Number(rot.divergencias || rot.diverg || 0);
-    var total = Number(rot.total || (rot.items && rot.items.length) || 0);
-    var acc   = rot.acuracia ? Math.round(rot.acuracia) : (divs === 0 && total > 0 ? 100 : 0);
-    var data  = rot.dataInv || rot.date || '—';
-    // Formatar data
-    if (data.match(/^\d{4}-\d{2}-\d{2}/)) {
-      var p = data.slice(0,10).split('-');
-      data = p[2] + '/' + p[1] + '/' + p[0];
-    }
-    var el = document.createElement('div');
-    el.className = 'rot-item';
-    var badgeCls = divs > 0 ? 'rb-div' : 'rb-ok';
-    var badgeTxt = divs > 0 ? ('⚠ ' + divs + ' div') : '✓ Ok';
-    el.innerHTML =
-      '<div class="rot-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--g2)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="11" y2="17"/></svg></div>'
-      + '<div class="rot-body">'
-        + '<div class="rot-id">' + String(rot.id).slice(-12) + '</div>'
-        + '<div class="rot-titulo">' + (rot.titulo || rot.title || 'Sem título') + '</div>'
-        + '<div class="rot-meta">'
-          + '<span class="rot-date">📅 ' + data + '</span>'
-          + '<span class="rot-total">📦 ' + total + ' itens</span>'
-          + '<span class="rot-badge ' + badgeCls + '">' + badgeTxt + ' · ' + acc + '%</span>'
-        + '</div>'
+
+  if (tokens.length) {
+    var secTk = document.createElement('div');
+    secTk.style.cssText = 'font-size:11px;font-weight:700;color:#276749;letter-spacing:.5px;margin:4px 4px 6px';
+    secTk.textContent = '🔑 TOKENS ABERTOS (CENTRAL DE APROVAÇÃO)';
+    box.appendChild(secTk);
+    tokens.forEach(function(rot) { box.appendChild(_criarLinhaRotativo(rot)); });
+    var secLg = document.createElement('div');
+    secLg.style.cssText = 'font-size:11px;font-weight:700;color:#4A5568;letter-spacing:.5px;margin:14px 4px 6px';
+    secLg.textContent = '📋 ROTATIVOS (SISTEMA CLÁSSICO)';
+    box.appendChild(secLg);
+  }
+
+  if (!lista.length) {
+    var vazio = document.createElement('div');
+    vazio.style.cssText = 'text-align:center;padding:18px;color:#A0AEC0;font-size:12px';
+    vazio.textContent = 'Nenhum rotativo clássico encontrado.';
+    box.appendChild(vazio);
+  } else {
+    lista.forEach(function(rot) { box.appendChild(_criarLinhaRotativo(rot)); });
+  }
+}
+
+function _criarLinhaRotativo(rot) {
+  var divs = Number(rot.divergencias || rot.diverg || 0);
+  var total = Number(rot.total || (rot.items && rot.items.length) || 0);
+  var acc   = rot.acuracia ? Math.round(rot.acuracia) : (divs === 0 && total > 0 ? 100 : 0);
+  var data  = rot.dataInv || rot.date || '—';
+  if (String(data).match(/^\d{4}-\d{2}-\d{2}/)) {
+    var p = String(data).slice(0,10).split('-');
+    data = p[2] + '/' + p[1] + '/' + p[0];
+  }
+  var el = document.createElement('div');
+  el.className = 'rot-item';
+  var badgeCls = divs > 0 ? 'rb-div' : 'rb-ok';
+  var badgeTxt = divs > 0 ? ('⚠ ' + divs + ' div') : '✓ Ok';
+  var iconHtml = rot._isToken
+    ? '<div class="rot-ico" style="background:#FFFBEA"><span style="font-size:16px">🔑</span></div>'
+    : '<div class="rot-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--g2)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="11" y2="17"/></svg></div>';
+  el.innerHTML = iconHtml
+    + '<div class="rot-body">'
+      + '<div class="rot-id">' + String(rot.id).slice(-12) + '</div>'
+      + '<div class="rot-titulo">' + (rot.titulo || rot.title || 'Sem título') + '</div>'
+      + '<div class="rot-meta">'
+        + '<span class="rot-date">📅 ' + data + '</span>'
+        + '<span class="rot-total">📦 ' + total + ' itens</span>'
+        + '<span class="rot-badge ' + badgeCls + '">' + badgeTxt + ' · ' + acc + '%</span>'
       + '</div>'
-      + '<div class="rot-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></div>';
-    el.onclick = function() { abrirRotativo(rot); };
-    box.appendChild(el);
-  });
+    + '</div>'
+    + '<div class="rot-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></div>';
+  el.onclick = function() { rot._isToken ? abrirToken(rot._raw) : abrirRotativo(rot); };
+  return el;
+}
+
+// ── ABRIR TOKEN (Central de Aprovação) ──────────────────────────────
+function abrirToken(tk) {
+  rotativo = {
+    id:      tk['Token'],
+    titulo:  tk['Titulo'] || tk['Token'],
+    data:    tk['Data Criacao'] || '',
+    op:      tk['Responsavel'] || '',
+    emp:     tk['Almoxarifado'] || '',
+    itens:   [],
+    tipoToken: true,
+    _orig:   tk
+  };
+  somenteDiv = false;
+
+  document.getElementById('hdrNum').textContent = '🔑 ' + tk['Token'];
+  document.getElementById('hdrDate').textContent = (tk['Almoxarifado'] || '') + ' · carregando itens...';
+  document.getElementById('hdrBadge').style.display = '';
+  document.getElementById('scanRotTitulo').textContent = rotativo.titulo;
+
+  atualizarSaveBar();
+  renderStats();
+  renderLista();
+  iniciarPolling();
+  atualizarBotoesDeposito();
+  irPag('conferencia');
+  setTimeout(function(){ document.getElementById('inputManual').focus(); }, 500);
+
+  // Pré-carregar itens já lançados nesse token (se houver)
+  if (!EXEC_URL) return;
+  var cbName = '_cb_' + Date.now() + '_cmp';
+  var sc = document.createElement('script');
+  var tm = setTimeout(function() { if (window[cbName]) delete window[cbName]; }, 12000);
+  window[cbName] = function(resp) {
+    clearTimeout(tm);
+    delete window[cbName];
+    if (sc.parentNode) sc.parentNode.removeChild(sc);
+    if (resp && resp.ok && Array.isArray(resp.itens)) {
+      rotativo.itens = resp.itens.map(function(it) {
+        return {
+          mat:  it['Codigo Material'] || '',
+          desc: it['Descricao'] || '',
+          loc:  '',
+          sis:  Number(it['Quantidade SAP']) || 0,
+          cnt:  Number(it['Quantidade Contada']),
+          rUnit: Number(it['Valor Unitario']) || 0,
+          val:  Number(it['Valor Unitario']) || 0,
+          um:   'UN', centro: '', deposito: ''
+        };
+      });
+    }
+    document.getElementById('hdrDate').textContent = (tk['Almoxarifado'] || '') + ' · ' + rotativo.itens.length + ' itens já lançados';
+    renderStats();
+    renderLista();
+  };
+  sc.onerror = function() { clearTimeout(tm); delete window[cbName]; };
+  sc.src = EXEC_URL + (EXEC_URL.indexOf('?') > -1 ? '&' : '?') + 'action=comparativoToken&token=' + encodeURIComponent(tk['Token']) + '&callback=' + cbName;
+  document.head.appendChild(sc);
 }
 
 // ── ABRIR ROTATIVO ────────────────────────────────────────────────
@@ -880,9 +997,15 @@ function bip(raw) {
   setTimeout(function(){ fl.classList.remove('on'); }, 180);
 
   if (!item) {
-    toast('SKU não encontrado: ' + sku, 'er');
-    mostrarUltima(sku, '—', 'novo');
-    return;
+    if (rotativo.tipoToken) {
+      // Token: itens não vêm pré-carregados — cria na hora
+      item = { mat: sku, desc: '', loc: '', sis: 0, cnt: null, rUnit: 0, val: 0, um: 'UN', centro: '', deposito: '' };
+      rotativo.itens.push(item);
+    } else {
+      toast('SKU não encontrado: ' + sku, 'er');
+      mostrarUltima(sku, '—', 'novo');
+      return;
+    }
   }
 
   // Abrir popup para confirmar quantidade
@@ -945,7 +1068,11 @@ function salvarItemPopup() {
   if (!ppItem || !rotativo) return;
   var cnt = parseInt(document.getElementById('ppCntVal').textContent);
   ppItem.cnt = cnt;
-  registrarBipServidor(ppItem, cnt);
+  if (rotativo.tipoToken) {
+    registrarItemTokenServidor(ppItem, cnt);
+  } else {
+    registrarBipServidor(ppItem, cnt);
+  }
   var desvio = cnt - ppItem.sis;
   var st = desvio === 0 ? 'ok' : (desvio < 0 ? 'falta' : 'sobra');
   var msg = st === 'ok' ? '✓ ' + ppItem.mat + ' — Estoque OK' : (desvio < 0 ? '↓ Falta ' + Math.abs(desvio) + ' un' : '↑ Sobra ' + desvio + ' un');
@@ -954,6 +1081,25 @@ function salvarItemPopup() {
   fecharPopup();
   renderStats();
   renderLista(ppItem);
+}
+
+// Envia o item direto pro Token (sistema novo) assim que confirmado
+function registrarItemTokenServidor(item, cnt) {
+  if (!EXEC_URL || !rotativo) return;
+  fetch(EXEC_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({
+      action: 'lancarItemToken',
+      token: rotativo.id,
+      codigoMaterial: item.mat,
+      descricao: item.desc || '',
+      quantidadeSap: item.sis || 0,
+      quantidadeContada: cnt,
+      valorUnitario: item.rUnit || 0,
+      lancadoPor: SESSAO || 'Coletor'
+    })
+  }).catch(function(err) { console.warn('Erro ao lançar item no token:', err); });
 }
 
 function fecharPopup() {
@@ -970,6 +1116,33 @@ function salvarConferencia() {
   var btn = document.getElementById('saveBtn');
   btn.disabled = true;
   btn.textContent = '⟳ Salvando...';
+
+  if (rotativo.tipoToken) {
+    fetch(EXEC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'enviarParaConferencia', token: rotativo.id, usuario: SESSAO || 'Coletor' })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(resp) {
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Salvar';
+      if (resp && resp.ok) {
+        toast('✓ Token enviado para conferência do Almoxarife!', 'ok', 3000);
+        fetch(EXEC_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({ action:'limparSessao', rotId: String(rotativo.id) }) }).catch(function(){});
+        pararPolling();
+      } else {
+        toast(resp && resp.erro ? resp.erro : 'Erro ao enviar para conferência', 'er', 4000);
+      }
+    })
+    .catch(function(err) {
+      btn.disabled = false;
+      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Salvar';
+      toast('Aviso: verifique na Central de Aprovação se foi enviado', 'wa', 4000);
+      console.warn('Erro ao enviar token:', err);
+    });
+    return;
+  }
 
   var total = rotativo.itens.length;
   var ok    = conferidos.filter(function(i){ return i.cnt === i.sis; }).length;
@@ -1229,4 +1402,4 @@ function registrarBipServidor(item, cnt) {
 })();
 </script>
 </body>
-</html>S
+</html>
