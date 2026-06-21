@@ -629,14 +629,15 @@ function carregarRotativos() {
   }
   box.innerHTML = '<div class="empty-st"><div class="eico">⟳</div><p>Carregando inventários...</p></div>';
 
-  var resultados = { legado: null, tokens: null };
+  var resultados = { legado: null, tokens: null, erroTokens: null };
   function tentarRenderizar() {
-    if (resultados.legado === null || resultados.tokens === null) return;
-    renderRotativos(resultados.legado, resultados.tokens);
+    // Renderiza assim que tiver pelo menos uma resposta — não espera as duas
+    if (resultados.legado === null && resultados.tokens === null) return;
+    renderRotativos(resultados.legado || [], resultados.tokens || [], resultados.erroTokens);
   }
 
   // 1) Rotativos legados (sistema antigo)
-  var cbName = '_cb_' + Date.now();
+  var cbName = '_cb_' + Date.now() + '_lg';
   var sc = document.createElement('script');
   var tm = setTimeout(function() {
     if (window[cbName]) { delete window[cbName]; resultados.legado = []; tentarRenderizar(); }
@@ -661,7 +662,12 @@ function carregarRotativos() {
   var cbName2 = '_cb_' + Date.now() + '_tk';
   var sc2 = document.createElement('script');
   var tm2 = setTimeout(function() {
-    if (window[cbName2]) { delete window[cbName2]; resultados.tokens = []; tentarRenderizar(); }
+    if (window[cbName2]) {
+      delete window[cbName2];
+      resultados.tokens = [];
+      resultados.erroTokens = 'Tempo esgotado ao buscar tokens (verifique se o 08_Api_Router.gs está implantado com as rotas dashboardToken/comparativoToken)';
+      tentarRenderizar();
+    }
   }, 12000);
   window[cbName2] = function(resp) {
     clearTimeout(tm2);
@@ -672,16 +678,24 @@ function carregarRotativos() {
       abertos = resp.inventarios.filter(function (d) {
         return d['Status'] === 'EM_CONTAGEM' || d['Status'] === 'DEVOLVIDO_CORRECAO';
       });
+    } else {
+      resultados.erroTokens = 'Resposta inesperada ao buscar tokens: ' + JSON.stringify(resp).slice(0, 120);
     }
     resultados.tokens = abertos;
     tentarRenderizar();
   };
-  sc2.onerror = function() { clearTimeout(tm2); delete window[cbName2]; resultados.tokens = []; tentarRenderizar(); };
+  sc2.onerror = function() {
+    clearTimeout(tm2);
+    delete window[cbName2];
+    resultados.tokens = [];
+    resultados.erroTokens = 'Falha de conexão ao buscar tokens (script não carregou)';
+    tentarRenderizar();
+  };
   sc2.src = EXEC_URL + (EXEC_URL.indexOf('?') > -1 ? '&' : '?') + 'action=dashboardToken&callback=' + cbName2;
   document.head.appendChild(sc2);
 }
 
-function renderRotativos(respLegado, tokensAbertos) {
+function renderRotativos(respLegado, tokensAbertos, erroTokens) {
   var box = document.getElementById('listaRotativos');
 
   var lista = (respLegado || []).filter(function(r) {
@@ -701,8 +715,12 @@ function renderRotativos(respLegado, tokensAbertos) {
     };
   });
 
+  var avisoErro = '';
+  if (erroTokens) avisoErro = erroTokens;
+
   if (!lista.length && !tokens.length) {
-    box.innerHTML = '<div class="empty-st"><div class="eico">📭</div><p>Nenhum rotativo ou token encontrado.<br>Verifique se há dados e se o Apps Script está reimplantado.</p></div>';
+    box.innerHTML = (erroTokens ? '<div style="background:#FFF5F5;border:1px solid #FEB2B2;color:#C53030;border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12px">⚠️ Tokens não carregados: ' + erroTokens + '</div>' : '')
+      + '<div class="empty-st"><div class="eico">📭</div><p>Nenhum rotativo ou token encontrado.<br>Verifique se há dados e se o Apps Script está reimplantado.</p></div>';
     return;
   }
 
@@ -713,6 +731,12 @@ function renderRotativos(respLegado, tokensAbertos) {
   });
 
   box.innerHTML = '';
+  if (erroTokens) {
+    var avisoEl = document.createElement('div');
+    avisoEl.style.cssText = 'background:#FFF5F5;border:1px solid #FEB2B2;color:#C53030;border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12px';
+    avisoEl.textContent = '⚠️ Tokens não carregados: ' + erroTokens;
+    box.appendChild(avisoEl);
+  }
 
   if (tokens.length) {
     var secTk = document.createElement('div');
