@@ -676,7 +676,9 @@ function carregarRotativos() {
     var abertos = [];
     if (resp && resp.ok && Array.isArray(resp.inventarios)) {
       abertos = resp.inventarios.filter(function (d) {
-        return d['Status'] === 'EM_CONTAGEM' || d['Status'] === 'DEVOLVIDO_CORRECAO';
+        if (!d || !d['Token']) return false;
+        var st = String(d['Status'] || '').trim().toUpperCase();
+        return st !== 'FINALIZADO';
       });
     } else {
       resultados.erroTokens = 'Resposta inesperada ao buscar tokens: ' + JSON.stringify(resp).slice(0, 120);
