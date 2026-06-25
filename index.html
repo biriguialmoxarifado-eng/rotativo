@@ -2,1430 +2,682 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
-<title>Inventário Rotativo</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ALMOXA PRO — Coletor Inteligente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --g1:#1B4D2E;--g2:#276749;--g3:#38A169;--g4:#C6F6D5;--g5:#F0FFF4;
-  --bg:#F4F6F8;--sf:#FFFFFF;--bd:#E2E8F0;--bd2:#EDF2F7;
-  --t1:#1A202C;--t2:#4A5568;--t3:#718096;--t4:#A0AEC0;
-  --blue:#2B6CB0;--red:#C53030;--amber:#B7791F;
-  --sh:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);
-  --sh2:0 4px 16px rgba(0,0,0,.1);
-  --r:16px;--rs:10px;
+  --g900:#10371D; --g800:#164A29; --g700:#1B5E3F; --g600:#1E6B45; --g500:#2E9E6A;
+  --g400:#34C77B; --g050:#E8F3ED;
+  --bg:#EEF3F0; --card:#FFFFFF; --ink:#16261E; --ink2:#33473D; --muted:#6E817857; --muted2:#6E8178;
+  --line:#E3EAE6;
+  --ok:#1FA463; --okbg:#E6F6EE; --pend:#E0A21A; --pendbg:#FCF3DC; --div:#E0413E; --divbg:#FBE7E7;
+  --blue:#1A8FE3; --bluebg:#E5F1FB; --crit:#E0413E;
+  --r:14px; --r2:10px;
+  --sh:0 2px 10px rgba(16,55,29,.06), 0 10px 30px rgba(16,55,29,.05);
 }
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
-html,body{height:100%;-webkit-text-size-adjust:100%}
-body{font-family:-apple-system,'Inter',BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--t1);-webkit-font-smoothing:antialiased;overscroll-behavior:none}
-.app{max-width:430px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Inter',system-ui,sans-serif;background:#0c160f;color:var(--ink);
+  display:flex;justify-content:center;padding:0;min-height:100vh;
+}
+.display{font-family:'Syne','Inter',sans-serif;font-weight:800;letter-spacing:-.01em}
 
-/* HEADER */
-.hdr{background:linear-gradient(170deg,#1A4D2E 0%,#245C35 55%,#2A6B3E 100%);padding-top:env(safe-area-inset-top,0);flex-shrink:0;position:relative;overflow:hidden}
-.hdr::before{content:'';position:absolute;right:-50px;top:-50px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.04);pointer-events:none}
-.hdr-top{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 0}
-.hdr-menu{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.13);border:none;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.hdr-logo{display:flex;align-items:center;gap:7px;color:#fff;font-size:18px;font-weight:800}
-.hdr-sync{display:flex;align-items:center;gap:5px;border:1.5px solid rgba(255,255,255,.4);border-radius:999px;padding:5px 12px;background:transparent;color:#fff;font-size:11px;font-weight:700;cursor:pointer}
-.hdr-body{padding:14px 18px 20px;position:relative;z-index:1}
-.hdr-label{color:rgba(255,255,255,.7);font-size:13px;font-weight:600}
-.hdr-num{color:#fff;font-size:32px;font-weight:800;letter-spacing:-1px;margin:2px 0 8px;line-height:1.1}
-.hdr-row{display:flex;align-items:center;justify-content:space-between}
-.hdr-date{display:flex;align-items:center;gap:5px;color:rgba(255,255,255,.65);font-size:12px}
-.hdr-badge{display:inline-flex;align-items:center;gap:6px;border:1.5px solid rgba(255,255,255,.4);border-radius:999px;padding:5px 12px;font-size:11px;font-weight:700;color:#fff}
-.hdr-dot{width:8px;height:8px;border-radius:50%;background:#4ADE80}
+/* phone frame */
+.phone{width:100%;max-width:430px;min-height:100vh;background:var(--bg);position:relative;overflow:hidden;box-shadow:0 0 60px rgba(0,0,0,.5)}
+@media(min-width:480px){ .phone{margin:18px 0;min-height:calc(100vh - 36px);border-radius:30px} }
 
-/* SCROLL */
-.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(80px + env(safe-area-inset-bottom,0))}
+/* status bar */
+.sbar{height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font-size:12px;font-weight:600;color:#fff;background:var(--g700)}
+.sbar .r{display:flex;gap:5px;align-items:center;font-size:11px}
 
-/* TOKEN */
-.token-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;min-height:60vh;gap:18px}
-.token-ico{width:72px;height:72px;border-radius:20px;background:var(--g5);border:2px solid var(--g4);display:flex;align-items:center;justify-content:center}
-.token-title{font-size:20px;font-weight:800;text-align:center}
-.token-sub{font-size:13px;color:var(--t3);text-align:center;line-height:1.5}
-.token-inp{width:100%;max-width:300px;border:2px solid var(--bd);border-radius:var(--rs);padding:13px 16px;font-size:16px;text-align:center;letter-spacing:3px;outline:none;font-family:'JetBrains Mono','SF Mono',monospace;transition:.2s}
-.token-inp:focus{border-color:var(--g2)}
-.token-btn{width:100%;max-width:300px;background:var(--g2);color:#fff;border:none;border-radius:var(--rs);padding:14px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer}
-.token-lnk{font-size:12px;color:var(--t3);cursor:pointer;text-decoration:underline}
+/* header */
+.hdr{background:linear-gradient(160deg,var(--g700),var(--g600));color:#fff;padding:14px 16px 16px}
+.hdr.tall{padding-bottom:20px}
+.hdr-row{display:flex;align-items:center;gap:12px}
+.hdr-row .ic{width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:16px;border:none;color:#fff;cursor:pointer;flex-shrink:0}
+.hdr h1{font-size:17px;margin:0;line-height:1.15}
+.hdr .sub{font-size:11.5px;opacity:.82;margin-top:1px}
+.hdr .spacer{flex:1}
 
-/* SELEÇÃO */
-.sel-banner{background:linear-gradient(135deg,var(--g1),var(--g2));margin:14px 14px 0;border-radius:var(--r);padding:18px;color:#fff;position:relative;overflow:hidden}
-.sel-banner::after{content:'📋';position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:56px;opacity:.12}
-.sel-banner h2{font-size:18px;font-weight:800;margin-bottom:4px}
-.sel-banner p{font-size:12px;opacity:.75}
-.sel-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);box-shadow:var(--sh);margin:10px 14px 0;overflow:hidden}
-.sel-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px}
-.sel-head h3{font-size:14px;font-weight:800}
-.sel-refresh{background:none;border:1px solid var(--bd);border-radius:var(--rs);padding:6px 12px;font-size:11px;font-weight:700;color:var(--g2);cursor:pointer;display:flex;align-items:center;gap:4px}
+/* screen scroller */
+.screens{position:relative}
+.screen{display:none;padding-bottom:78px;min-height:60vh}
+.screen.active{display:block;animation:fade .22s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.pad{padding:14px 16px}
 
-.rot-item{display:flex;align-items:center;gap:12px;padding:13px 16px;border-top:1px solid var(--bd2);cursor:pointer;transition:.12s}
-.rot-item:first-child{border-top:none}
-.rot-item:active{background:#f8fafb}
-.rot-ico{width:44px;height:44px;border-radius:12px;background:var(--g5);border:1px solid var(--g4);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.rot-body{flex:1;min-width:0}
-.rot-id{font-size:10px;color:var(--t4);font-family:monospace;margin-bottom:1px}
-.rot-titulo{font-size:14px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rot-meta{display:flex;align-items:center;gap:6px;margin-top:4px;flex-wrap:wrap}
-.rot-date,.rot-total{font-size:11px;color:var(--t3)}
-.rot-badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:999px}
-.rb-ok{background:var(--g4);color:var(--g1)}.rb-div{background:#FEB2B2;color:var(--red)}
-.rb-new{background:#BEE3F8;color:var(--blue)}
-.rot-arrow{color:var(--t4);flex-shrink:0}
-.empty-st{text-align:center;padding:36px 24px;color:var(--t3)}
-.empty-st .eico{font-size:40px;margin-bottom:12px}
-.empty-st p{font-size:13px;line-height:1.5}
+/* cards & bits */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
+.sec-title{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--ink);margin:6px 2px 10px;text-transform:uppercase}
+.muted{color:var(--muted2)}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px}
+.pill.ok{background:var(--okbg);color:var(--ok)} .pill.pend{background:var(--pendbg);color:var(--pend)}
+.pill.div{background:var(--divbg);color:var(--div)} .pill.blue{background:var(--bluebg);color:var(--blue)}
+.pill.crit{background:var(--divbg);color:var(--crit)}
 
-/* CARDS */
-.card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);box-shadow:var(--sh);margin:12px 14px 0;overflow:hidden}
-.card-body{padding:16px}
+/* greeting */
+.greet{background:linear-gradient(160deg,var(--g700),var(--g600));color:#fff;padding:0 16px 18px;margin-top:-2px}
+.greet .hi{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700}
+.badge-on{font-size:10px;font-weight:700;background:rgba(255,255,255,.18);padding:3px 9px;border-radius:20px;display:inline-flex;gap:5px;align-items:center}
+.greet .sy{font-size:11px;opacity:.8;margin-top:8px;line-height:1.7}
 
-/* PROGRESSO */
-.prog-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
-.prog-lbl{font-size:11px;font-weight:800;color:var(--t3);text-transform:uppercase;letter-spacing:.8px}
-.prog-pct{font-size:36px;font-weight:800;color:var(--g2);line-height:1}
-.prog-sub{font-size:11px;color:var(--t3);margin-top:2px}
-.prog-track{height:10px;background:#E8F0EB;border-radius:999px;overflow:hidden;margin-bottom:2px}
-.prog-fill{height:100%;background:linear-gradient(90deg,var(--g2),var(--g3));border-radius:999px;transition:width .5s ease}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--bd2)}
-.stat{padding:13px 4px 11px;text-align:center;border-right:1px solid var(--bd2)}
-.stat:last-child{border-right:none}
-.stat-ico{width:32px;height:32px;border-radius:999px;margin:0 auto 7px;display:flex;align-items:center;justify-content:center}
-.si-t{background:#E6F7F4}.si-g{background:var(--g4)}.si-o{background:#FEEBC8}.si-gr{background:#EDF2F7}
-.stat-lbl{font-size:9px;font-weight:700;color:var(--t4);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;line-height:1.3}
-.stat-val{font-size:19px;font-weight:800;line-height:1}
-.sv-dk{color:var(--t1)}.sv-gn{color:var(--g2)}.sv-or{color:#C05621}.sv-gr{color:var(--t2)}
+/* overview grid */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.ov{padding:13px 14px;border-radius:var(--r)}
+.ov .n{font-size:24px;font-weight:800;font-family:'Syne',sans-serif;line-height:1}
+.ov .l{font-size:11px;color:var(--muted2);margin-top:3px}
+.ov .t{font-size:11px;font-weight:600;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.ov.green{background:linear-gradient(150deg,#fff,#F2F9F5);border:1px solid #DCEDE4}
+.ov.green .n{color:var(--g600)}
+.ov.blue{background:linear-gradient(150deg,#fff,#EFF6FD);border:1px solid #DBEAF7} .ov.blue .n{color:var(--blue)}
+.ov.amber{background:linear-gradient(150deg,#fff,#FDF8EC);border:1px solid #F1E6C9} .ov.amber .n{color:var(--pend)}
+.ov.red{background:linear-gradient(150deg,#fff,#FCEFEF);border:1px solid #F3D8D8} .ov.red .n{color:var(--div)}
 
-/* CONFERÊNCIA */
-.conf-title{font-size:15px;font-weight:800;margin-bottom:2px}
-.conf-sub{font-size:12px;color:var(--t3);margin-bottom:14px}
-.conf-cols{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bd2);border-radius:var(--rs);overflow:hidden;margin-bottom:12px;position:relative}
-.conf-col{background:var(--sf);padding:16px 12px 14px;text-align:center;cursor:pointer}
-.conf-col:active{background:var(--bg)}
-.conf-ico{width:52px;height:52px;border-radius:999px;margin:0 auto 9px;display:flex;align-items:center;justify-content:center}
-.ci-g{background:var(--g5);border:2px solid #B7E4C7}
-.ci-b{background:#EBF8FF;border:2px solid #BEE3F8}
-.conf-col-title{font-size:11px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;margin-bottom:4px}
-.ct-g{color:var(--g2)}.ct-b{color:var(--blue)}
-.conf-col-desc{font-size:11px;color:var(--t3);line-height:1.4;margin-bottom:11px}
-.conf-btn{width:100%;border:none;border-radius:8px;padding:10px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
-.cb-g{background:var(--g2);color:#fff}.cb-b{background:var(--blue);color:#fff}
-.conf-or{width:30px;height:30px;border-radius:999px;background:var(--sf);border:2px solid var(--bd);font-size:11px;font-weight:700;color:var(--t3);display:flex;align-items:center;justify-content:center;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2}
-.manual-row{display:flex;gap:8px}
-.manual-inp{flex:1;border:1.5px solid var(--bd);border-radius:var(--rs);padding:11px 13px;font-family:monospace;font-size:13px;outline:none;background:var(--bg);transition:.2s}
-.manual-inp:focus{border-color:var(--g2);background:#fff}
-.manual-go{background:var(--g2);color:#fff;border:none;border-radius:var(--rs);padding:11px 18px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer}
+/* quick actions */
+.qa{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
+.qa button{background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;font-family:inherit}
+.qa .qi{width:34px;height:34px;border-radius:9px;background:var(--g050);color:var(--g600);display:flex;align-items:center;justify-content:center;font-size:16px}
+.qa .ql{font-size:10.5px;font-weight:600;color:var(--ink2);text-align:center;line-height:1.25}
 
-/* SALVAR */
-.save-bar{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);box-shadow:var(--sh);margin:12px 14px 0;padding:14px 16px;display:flex;align-items:center;gap:10px}
-.save-info{flex:1;min-width:0}
-.save-info-title{font-size:13px;font-weight:800;margin-bottom:2px}
-.save-info-sub{font-size:11px;color:var(--t3)}
-.save-btn{background:var(--g2);color:#fff;border:none;border-radius:var(--rs);padding:11px 20px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;flex-shrink:0}
-.save-btn:active{background:var(--g1)}
-.save-btn:disabled{background:var(--t4);cursor:not-allowed}
+/* list rows */
+.row{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:none}
+.prog{height:6px;border-radius:6px;background:#EAEFEC;overflow:hidden;margin-top:8px}
+.prog>i{display:block;height:100%;border-radius:6px}
 
-/* LISTA */
-.list-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px}
-.list-title{font-size:14px;font-weight:800}
-.list-ver{font-size:12px;color:var(--g2);font-weight:700;cursor:pointer;display:flex;align-items:center;gap:2px}
-.item-row{display:flex;align-items:center;gap:11px;padding:11px 16px;border-top:1px solid var(--bd2);cursor:pointer;transition:.1s}
-.item-row:first-child{border-top:none}
-.item-row:active{background:var(--bg)}
-.item-chk{width:32px;height:32px;border-radius:999px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.ck-ok{background:var(--g2)}.ck-falta{background:var(--red)}.ck-sobra{background:#D97706}.ck-pend{background:var(--bd2)}.ck-bloq{background:#9F7AEA;opacity:.7}
-.item-body{flex:1;min-width:0}
-.item-sku{font-size:13px;font-weight:700;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.item-desc{font-size:11px;color:var(--t3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.item-loc{font-size:10px;color:var(--blue);font-weight:600;margin-top:2px}
-.item-right{text-align:right;flex-shrink:0}
-.item-qty{font-size:19px;font-weight:800;line-height:1}
-.iq-ok{color:var(--g2)}.iq-falta{color:var(--red)}.iq-sobra{color:#D97706}.iq-pend{color:var(--t4)}
-.item-lbl{font-size:9px;color:var(--t4);text-transform:uppercase;letter-spacing:.4px;margin-top:1px}
-.item-dev{font-size:10px;font-weight:700;margin-top:2px}
-.item-arr{color:var(--t4);flex-shrink:0}
-.dep-btn{background:var(--sf);border:1px solid var(--bd);border-radius:999px;padding:5px 12px;font-size:11px;font-weight:700;color:var(--t3);cursor:pointer;white-space:nowrap;flex-shrink:0}
-.dep-btn.active{background:var(--g2);border-color:var(--g2);color:#fff}
+/* tabs */
+.tabs{display:flex;gap:6px;background:#E7EEEA;border-radius:11px;padding:4px;margin-bottom:14px}
+.tabs button{flex:1;border:none;background:transparent;padding:8px 6px;font-size:12px;font-weight:600;color:var(--muted2);border-radius:8px;cursor:pointer;font-family:inherit}
+.tabs button.on{background:#fff;color:var(--g600);box-shadow:0 1px 4px rgba(0,0,0,.08)}
 
-/* SCANNER */
-.scan-ov{display:none;position:fixed;inset:0;z-index:100;background:#000;flex-direction:column}
-.scan-ov.open{display:flex}
-.scan-hdr{background:var(--g1);padding:calc(14px + env(safe-area-inset-top,0)) 16px 14px;display:flex;align-items:center;gap:12px}
-.scan-close{width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.scan-title{flex:1;font-size:15px;font-weight:800;color:#fff}
-.scan-rot{font-size:11px;color:rgba(255,255,255,.5);max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.scan-vid-wrap{flex:1;position:relative;overflow:hidden}
-.scan-vid-wrap video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.scan-flash{position:absolute;inset:0;background:#4ADE80;opacity:0;transition:.15s;pointer-events:none}
-.scan-flash.on{opacity:.35}
-.scan-frame{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
-.sf{position:relative;width:60%;aspect-ratio:1}
-.sf::before,.sf::after,.sf i::before,.sf i::after{content:'';position:absolute;width:26px;height:26px;border:3px solid rgba(255,255,255,.9)}
-.sf::before{top:0;left:0;border-right:none;border-bottom:none;border-top-left-radius:4px}
-.sf::after{top:0;right:0;border-left:none;border-bottom:none;border-top-right-radius:4px}
-.sf i::before{bottom:0;left:0;border-right:none;border-top:none;border-bottom-left-radius:4px}
-.sf i::after{bottom:0;right:0;border-left:none;border-top:none;border-bottom-right-radius:4px}
-.sf-line{position:absolute;left:4px;right:4px;height:2px;background:#4ADE80;box-shadow:0 0 10px #4ADE80;animation:scan 2s ease-in-out infinite}
-@keyframes scan{0%,100%{top:4px}50%{top:calc(100% - 6px)}}
-.scan-tip{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.55);color:#fff;font-size:11px;font-weight:600;padding:6px 14px;border-radius:999px;white-space:nowrap}
-.scan-last{margin:0 12px 8px;background:rgba(255,255,255,.08);border-radius:12px;padding:10px 14px;display:none}
-.scan-last.show{display:block}
-.sl-lbl{font-size:9px;color:rgba(255,255,255,.4);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
-.sl-sku{font-size:16px;font-weight:800;color:#fff;font-family:monospace;word-break:break-all}
-.sl-desc{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px}
-.sl-tags{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
-.sl-tag{font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px}
-.st-ok{background:var(--g4);color:var(--g1)}.st-falta{background:#FEB2B2;color:#C53030}
-.st-sobra{background:#FEFCBF;color:#744210}.st-novo{background:#BEE3F8;color:#2B6CB0}
-.scan-ctrl{background:var(--g1);padding:0 12px 8px;display:flex;gap:8px}
-.scan-ctrl-btn{flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.75);border-radius:8px;padding:8px 4px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px}
-.scan-bottom{background:var(--g1);padding:8px 12px calc(8px + env(safe-area-inset-bottom,0));display:flex;gap:8px}
-.scan-inp{flex:1;border:1px solid rgba(255,255,255,.2);border-radius:8px;background:rgba(255,255,255,.1);color:#fff;padding:11px 12px;font-family:monospace;font-size:13px;outline:none}
-.scan-inp::placeholder{color:rgba(255,255,255,.35)}
-.scan-go{background:var(--g3);border:none;color:#fff;border-radius:8px;padding:11px 18px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer}
+/* buttons */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer}
+.btn-primary{background:var(--g600);color:#fff}
+.btn-ghost{background:#fff;border:1px solid var(--line);color:var(--ink2)}
+.btn-soft{background:var(--g050);color:var(--g600)}
+.btn-sm{padding:9px 12px;font-size:12px;border-radius:9px;width:auto}
 
-/* POPUP */
-.popup-bg{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.45)}
-.popup-bg.open{display:block}
-.popup-sheet{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--sf);border-radius:20px 20px 0 0;padding:0 0 calc(20px + env(safe-area-inset-bottom,0));max-height:80dvh;overflow-y:auto;z-index:201;display:none}
-.pp-handle{width:36px;height:4px;background:var(--bd);border-radius:999px;margin:12px auto 0}
-.pp-body{padding:16px 20px}
-.pp-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
-.pp-sku{font-size:18px;font-weight:800;font-family:monospace;word-break:break-all}
-.pp-desc{font-size:12px;color:var(--t2);margin-top:2px}
-.pp-close{width:28px;height:28px;border-radius:999px;background:var(--bg);border:none;font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:var(--t3)}
-.pp-loc{font-size:12px;color:var(--blue);font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:4px}
-.pp-status{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:999px;font-size:12px;font-weight:700;margin-bottom:14px}
-.ps-ok{background:var(--g4);color:var(--g1)}.ps-falta{background:#FEB2B2;color:var(--red)}
-.ps-sobra{background:#FEFCBF;color:#744210}.ps-pend{background:#FEEBC8;color:#C05621}
-.pp-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.pg{background:var(--bg);border-radius:10px;padding:10px 12px}
-.pg-lbl{font-size:9px;color:var(--t4);text-transform:uppercase;letter-spacing:.8px;font-weight:700;margin-bottom:4px}
-.pg-val{font-size:20px;font-weight:800;line-height:1}
-.pv-def{color:var(--t1)}.pv-blue{color:var(--blue)}.pv-gn{color:var(--g2)}.pv-red{color:var(--red)}.pv-am{color:var(--amber)}
-/* Contador no popup */
-.pp-counter{display:flex;align-items:center;gap:12px;background:var(--g5);border:1px solid var(--g4);border-radius:var(--rs);padding:10px 14px;margin-bottom:14px}
-.pp-counter label{font-size:11px;font-weight:700;color:var(--t2);flex:1}
-.pp-counter-row{display:flex;align-items:center;gap:8px}
-.pp-cnt-btn{width:34px;height:34px;border-radius:999px;border:2px solid var(--g2);background:var(--sf);color:var(--g2);font-size:20px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
-.pp-cnt-val{font-size:22px;font-weight:800;min-width:40px;text-align:center;font-family:monospace}
-.pp-save-btn{width:100%;background:var(--g2);color:#fff;border:none;border-radius:var(--rs);padding:12px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;margin-top:12px}
+/* search */
+.search{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:11px 13px;color:var(--muted2);font-size:13px;margin-bottom:13px}
+.search input{border:none;outline:none;flex:1;font-family:inherit;font-size:13px;background:transparent}
 
-/* TOAST */
-.toast{position:fixed;left:50%;bottom:84px;transform:translate(-50%,16px);background:var(--t1);color:#fff;font-size:13px;font-weight:700;padding:11px 20px;border-radius:999px;box-shadow:var(--sh2);opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;white-space:nowrap;z-index:300}
-.toast.show{opacity:1;transform:translate(-50%,0)}
-.toast.tok{background:var(--g2)}.toast.ter{background:var(--red)}.toast.twa{background:var(--amber)}
+/* stat trio */
+.trio{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line);border-radius:var(--r);overflow:hidden;border:1px solid var(--line)}
+.trio>div{background:#fff;padding:13px 8px;text-align:center}
+.trio .n{font-size:23px;font-weight:800;font-family:'Syne',sans-serif;line-height:1}
+.trio .l{font-size:10.5px;color:var(--muted2);margin-top:4px}
 
-/* CONFIG */
-.cfg-wrap{padding:16px;display:flex;flex-direction:column;gap:12px}
-.cfg-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:18px}
-.cfg-lbl{font-size:12px;font-weight:700;color:var(--t2);margin-bottom:6px;display:block}
-.cfg-inp{width:100%;border:1.5px solid var(--bd);border-radius:var(--rs);padding:11px 12px;font-family:monospace;font-size:12px;outline:none;color:var(--t1);background:var(--bg)}
-.cfg-inp:focus{border-color:var(--g2);background:#fff}
-.cfg-btn{width:100%;background:var(--g2);color:#fff;border:none;border-radius:var(--rs);padding:12px;font-family:inherit;font-weight:700;font-size:14px;margin-top:10px;cursor:pointer}
-.cfg-note{font-size:11px;color:var(--t3);margin-top:8px;line-height:1.7;word-break:break-all}
-.cfg-tok-row{display:flex;gap:8px;margin-bottom:8px}
-.cfg-tok-add{background:var(--g2);color:#fff;border:none;border-radius:var(--rs);padding:0 16px;font-weight:700;cursor:pointer;font-size:14px}
+/* item card */
+.item{display:flex;align-items:center;gap:12px;padding:13px 14px}
+.thumb{width:42px;height:42px;border-radius:10px;background:var(--g050);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.icirc{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;font-weight:800}
+.icirc.ok{background:var(--ok);color:#fff} .icirc.pend{background:#fff;border:2px solid var(--pend);color:var(--pend)}
+.icirc.div{background:var(--div);color:#fff}
 
-/* BOTTOM NAV */
-.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--sf);border-top:1px solid var(--bd);display:grid;grid-template-columns:repeat(5,1fr);align-items:center;padding:6px 0 calc(6px + env(safe-area-inset-bottom,0));box-shadow:0 -2px 12px rgba(0,0,0,.07);z-index:50}
-.nb{border:none;background:none;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--t4);font-size:9px;font-weight:700;padding:4px 2px;letter-spacing:.3px;transition:.15s;text-transform:uppercase}
-.nb svg{stroke:currentColor;transition:.15s}
-.nb.active{color:var(--g2)}
-.nb.nb-fab{position:relative;top:-14px}
-.nb-fab-disc{width:54px;height:54px;border-radius:999px;background:var(--g2);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 18px rgba(39,103,73,.45),0 0 0 4px rgba(39,103,73,.12);margin-bottom:2px}
-.nb-fab-disc svg{stroke:#fff!important}
-.nb-badge-wrap{position:relative;display:inline-block}
-.nb-dot{position:absolute;top:-3px;right:-9px;background:var(--red);color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:999px;min-width:18px;text-align:center;line-height:1.5}
+/* keypad */
+.counter{display:flex;align-items:center;justify-content:space-between;padding:6px 4px}
+.counter .stepper{width:54px;height:54px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:24px;color:var(--g600);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.counter .big{text-align:center}
+.counter .big b{font-size:40px;font-family:'Syne',sans-serif;font-weight:800;line-height:1;display:block}
+.counter .big span{font-size:11px;color:var(--muted2);letter-spacing:.08em}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:14px}
+.keys button{background:#fff;border:1px solid var(--line);border-radius:11px;padding:15px 0;font-size:20px;font-weight:700;font-family:inherit;color:var(--ink);cursor:pointer}
+
+/* stepper rows */
+.steprow{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:11px}
+.steprow .v{text-align:center}.steprow .v b{font-size:20px;font-family:'Syne',sans-serif}.steprow .v span{font-size:10px;color:var(--muted2);display:block;letter-spacing:.08em}
+.stepbtn{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:20px;color:var(--g600);cursor:pointer}
+.chips{display:flex;gap:8px;margin:6px 0 14px}
+.chips button{flex:1;border:1px solid var(--line);background:#fff;border-radius:9px;padding:10px 4px;font-size:12px;font-weight:700;color:var(--muted2);cursor:pointer;font-family:inherit}
+.chips button.on{background:var(--g600);color:#fff;border-color:var(--g600)}
+.calcbox{background:var(--g050);border:1px solid #CFE7DA;border-radius:12px;padding:14px;text-align:center;margin-bottom:14px}
+.calcbox .t{font-size:11px;color:var(--g600);font-weight:600}
+.calcbox .b{font-size:30px;font-family:'Syne',sans-serif;font-weight:800;color:var(--g600);margin-top:3px}
+
+/* form */
+.field{margin-bottom:14px}
+.field label{font-size:11px;font-weight:700;color:var(--ink2);letter-spacing:.02em;display:block;margin-bottom:6px}
+.field input,.field select{width:100%;border:1px solid var(--line);border-radius:10px;padding:12px 13px;font-size:14px;font-family:inherit;background:#fff;outline:none}
+.opt{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:11px;padding:12px 14px;margin-bottom:9px;cursor:pointer;font-size:14px;font-weight:600}
+.opt .dot{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.opt.sel{border-color:var(--ok);background:var(--okbg)} .opt.sel .dot{border-color:var(--ok);background:var(--ok);color:#fff;font-size:12px}
+
+/* result lines */
+.resline{display:flex;align-items:center;gap:11px;padding:11px 14px;border-bottom:1px solid var(--line)}
+.resline:last-child{border-bottom:none}
+.resline .lbl{flex:1;font-size:13px;font-weight:600}
+.resline .val{font-size:15px;font-weight:800;font-family:'Syne',sans-serif}
+.tag{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
+
+/* bottom nav */
+.nav{position:absolute;bottom:0;left:0;right:0;max-width:430px;margin:0 auto;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:center;padding:8px 6px 10px;z-index:40}
+.nav button{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--muted2);cursor:pointer;font-family:inherit;font-weight:600;flex:1}
+.nav button.on{color:var(--g600)}
+.nav .scan{width:46px;height:46px;border-radius:50%;background:var(--g600);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;margin-top:-22px;box-shadow:0 6px 16px rgba(30,107,69,.4)}
+.nav .ico{font-size:18px}
+
+/* helpers */
+.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mt12{margin-top:12px}
+.flexb{display:flex;align-items:center;justify-content:space-between}
+.divider{height:1px;background:var(--line);margin:2px 0}
+.note{font-size:11px;color:var(--muted2);line-height:1.6}
+.code{font-family:ui-monospace,monospace;font-size:11px;color:var(--muted2)}
+.banner{background:#fff;border:1px dashed #CFE7DA;border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center}
+.kpi-bars{display:flex;align-items:flex-end;gap:22px;height:120px;padding:10px 20px 0;justify-content:center}
+.kpi-bars .bar{width:56px;border-radius:7px 7px 0 0;display:flex;align-items:flex-start;justify-content:center;color:#fff;font-weight:800;font-size:13px;padding-top:6px;font-family:'Syne',sans-serif}
+.kpi-bars .lab{font-size:10px;color:var(--muted2);text-align:center;margin-top:6px}
 </style>
 </head>
 <body>
-<div class="app">
-
-<!-- HEADER -->
-<div class="hdr">
-  <div class="hdr-top">
-    <button class="hdr-menu" onclick="voltarInicio()">
-      <svg width="18" height="14" viewBox="0 0 18 14" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><line x1="0" y1="1" x2="18" y2="1"/><line x1="0" y1="7" x2="18" y2="7"/><line x1="0" y1="13" x2="18" y2="13"/></svg>
-    </button>
-    <div class="hdr-logo">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3C8 3 5 7 5 11c0 5 7 11 7 11s7-6 7-11c0-4-3-8-7-8z" fill="#4ADE80"/><path d="M12 3c1 2 3 4 3 7s-1.5 5-3 7c-1.5-2-3-4-3-7s2-5 3-7z" fill="rgba(255,255,255,.3)"/></svg>
-      <span>Rotativo</span>
-    </div>
-    <button class="hdr-sync" onclick="recarregar()">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-      SYNC
-    </button>
+<div class="phone">
+  <div class="sbar">
+    <span id="clock">9:41</span>
+    <span class="r">ALMOXA PRO &nbsp;·&nbsp; ▮▮▮ ▾ ▮</span>
   </div>
-  <div class="hdr-body">
-    <div class="hdr-label" id="hdrLabel">Inventário</div>
-    <div class="hdr-num" id="hdrNum">#&#8212;</div>
-    <div class="hdr-row">
-      <div class="hdr-date">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.6)" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-        <span id="hdrDate">Selecione um rotativo</span>
-      </div>
-      <div class="hdr-badge" id="hdrBadge" style="display:none"><span class="hdr-dot"></span>ATIVO</div>
-    </div>
+
+  <div class="screens" id="screens"><!-- screens injected --></div>
+
+  <div class="nav" id="nav">
+    <button data-go="dashboard" class="on"><span class="ico">⌂</span>Início</button>
+    <button data-go="inventarios"><span class="ico">🔍</span>Pesquisar</button>
+    <button data-go="contagem" class="mid"><span class="scan">▥</span></button>
+    <button data-go="pendencias"><span class="ico">⚑</span>Pendências</button>
+    <button data-go="mais"><span class="ico">☰</span>Mais</button>
   </div>
 </div>
-
-<!-- CONTEÚDO -->
-<div class="content">
-
-  <!-- TOKEN -->
-  <div id="pgToken" style="display:none">
-    <div class="token-wrap">
-      <div class="token-ico">
-        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--g2)" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-      </div>
-      <div class="token-title">Acesso ao Sistema</div>
-      <div class="token-sub">Digite o código de acesso fornecido pelo supervisor</div>
-      <input class="token-inp" id="tokenInp" type="text" placeholder="CÓDIGO"
-             oninput="this.value=this.value.toUpperCase()"
-             onkeydown="if(event.key==='Enter')validarToken()">
-      <button class="token-btn" onclick="validarToken()">Entrar</button>
-      <span class="token-lnk" onclick="irPag('config')">Configurar URL do sistema</span>
-    </div>
-  </div>
-
-  <!-- SELEÇÃO -->
-  <div id="pgSelecao" style="display:none">
-    <div class="sel-banner"><h2>Selecione um Inventário</h2><p>Escolha o rotativo para iniciar a conferência dos itens</p></div>
-    <div class="sel-card">
-      <div class="sel-head">
-        <h3>Rotativos disponíveis</h3>
-        <button class="sel-refresh" onclick="carregarRotativos()">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-          Atualizar
-        </button>
-      </div>
-      <div id="listaRotativos"><div class="empty-st"><div class="eico">&#8987;</div><p>Carregando...</p></div></div>
-    </div>
-  </div>
-
-  <!-- CONFERÊNCIA -->
-  <div id="pgConferencia" style="display:none">
-
-    <!-- Progresso -->
-    <div class="card">
-      <div class="card-body">
-        <div class="prog-top">
-          <div><div class="prog-lbl">Progresso Geral</div></div>
-          <div style="text-align:right"><div class="prog-pct" id="progPct">0%</div><div class="prog-sub">Concluído</div></div>
-        </div>
-        <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
-      </div>
-      <div class="stats">
-        <div class="stat"><div class="stat-ico si-t"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2C7A7B" stroke-width="2" stroke-linecap="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div><div class="stat-lbl">Total SKUs</div><div class="stat-val sv-dk" id="stTotal">0</div></div>
-        <div class="stat"><div class="stat-ico si-g"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--g2)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div><div class="stat-lbl">Conferidos</div><div class="stat-val sv-gn" id="stOk">0</div></div>
-        <div class="stat"><div class="stat-ico si-o"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#C05621" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="stat-lbl">Pendentes</div><div class="stat-val sv-or" id="stPend">0</div></div>
-        <div class="stat"><div class="stat-ico si-gr"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></div><div class="stat-lbl">Divergências</div><div class="stat-val sv-gr" id="stDiv">0</div></div>
-      </div>
-    </div>
-
-    <!-- Conferência -->
-    <div class="card">
-      <div class="card-body">
-        <div class="conf-title">Conferência de Itens</div>
-        <div class="conf-sub">Escolha como deseja informar o código do item</div>
-        <div class="conf-cols">
-          <div class="conf-col" onclick="abrirScanner()">
-            <div class="conf-ico ci-g"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--g2)" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
-            <div class="conf-col-title ct-g">Leitura de Etiqueta</div>
-            <div class="conf-col-desc">Aponte a câmera para o código de barras</div>
-            <button class="conf-btn cb-g" onclick="event.stopPropagation();abrirScanner()">ABRIR CÂMERA</button>
-          </div>
-          <div class="conf-col" onclick="focarManual()">
-            <div class="conf-ico ci-b"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M9 8h.01M12 8h.01M15 8h.01M18 8h.01M6 12h.01M9 12h.01M12 12h.01M15 12h.01M18 12h.01M6 16h4"/></svg></div>
-            <div class="conf-col-title ct-b">Entrada Manual</div>
-            <div class="conf-col-desc">Digite o código do item manualmente</div>
-            <button class="conf-btn cb-b" onclick="event.stopPropagation();focarManual()">DIGITAR CÓDIGO</button>
-          </div>
-          <div class="conf-or">OU</div>
-        </div>
-        <div class="manual-row">
-          <input class="manual-inp" id="inputManual" placeholder="SKU / código de barras..." autocomplete="off"
-                 onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){bip(v);this.value='';this.focus();}}">
-          <button class="manual-go" onclick="var v=document.getElementById('inputManual');var s=v.value.trim();if(s){bip(s);v.value='';v.focus();}">Bipar</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Salvar -->
-    <div class="save-bar">
-      <div class="save-info">
-        <div class="save-info-title" id="saveTitle">Salvar Conferência</div>
-        <div class="save-info-sub" id="saveSub">Registra os dados no sistema</div>
-      </div>
-      <button class="save-btn" id="saveBtn" onclick="salvarConferencia()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        Salvar
-      </button>
-    </div>
-
-    <!-- Lista -->
-    <div class="card" style="padding-bottom:0">
-      <div class="list-hdr">
-        <div class="list-title">Itens do Inventário</div>
-        <div class="list-ver" id="btnVerTodos" onclick="toggleFiltro()">Ver todos ›</div>
-      </div>
-      
-    <!-- Filtro por depósito -->
-    <div style="padding:6px 16px 10px;display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch">
-      <button class="dep-btn active" id="depAll" onclick="filtrarDeposito(null)">Todos</button>
-      <div id="depBtns" style="display:flex;gap:6px"></div>
-    </div>
-      <div id="listaItens" style="padding-bottom:4px"></div>
-    </div>
-
-  </div><!-- /pgConferencia -->
-
-  <!-- CONFIG -->
-  <div id="pgConfig" style="display:none">
-    <div class="cfg-wrap">
-      <div class="cfg-card">
-        <label class="cfg-lbl">URL do Apps Script (Web App /exec)</label>
-        <input class="cfg-inp" id="cfgUrl" placeholder="https://script.google.com/macros/s/.../exec"/>
-        <button class="cfg-btn" onclick="salvarUrl()">✓ Salvar URL</button>
-        <div class="cfg-note" id="cfgNote">URL salva neste dispositivo.</div>
-      </div>
-      <div class="cfg-card">
-        <label class="cfg-lbl">Tokens de acesso</label>
-        <div class="cfg-tok-row">
-          <input class="cfg-inp" id="cfgTokNovo" placeholder="Novo token (ex: ROT2024)" style="flex:1"/>
-          <button class="cfg-tok-add" onclick="adicionarToken()">+</button>
-        </div>
-        <div id="cfgTokLista"></div>
-        <div class="cfg-note">Sem tokens = qualquer código de acesso é aceito.</div>
-      </div>
-      <div class="cfg-card">
-        <label class="cfg-lbl">Sobre</label>
-        <div class="cfg-note">Rotativo App Coletor v2.1<br>Confere itens via câmera ou digitação e salva diretamente no Apps Script.</div>
-      </div>
-    </div>
-  </div>
-
-</div><!-- /content -->
-
-<!-- SCANNER -->
-<div class="scan-ov" id="scanOv">
-  <div class="scan-hdr">
-    <button class="scan-close" onclick="fecharScanner()">✕</button>
-    <div class="scan-title">Escanear Item</div>
-    <div class="scan-rot" id="scanRotTitulo"></div>
-  </div>
-  <div class="scan-vid-wrap">
-    <video id="video" autoplay playsinline muted></video>
-    <div class="scan-flash" id="flash"></div>
-    <div class="scan-frame"><div class="sf"><div class="sf-line"></div><i></i></div></div>
-    <div class="scan-tip">Aponte para o código de barras ou QR Code</div>
-  </div>
-  <div class="scan-last" id="scanLast">
-    <div class="sl-lbl">Última leitura</div>
-    <div class="sl-sku" id="slSku">—</div>
-    <div class="sl-desc" id="slDesc"></div>
-    <div class="sl-tags" id="slTags"></div>
-  </div>
-  <div class="scan-ctrl">
-    <button class="scan-ctrl-btn" onclick="virarCamera()">↻ Virar câmera</button>
-    <button class="scan-ctrl-btn" onclick="toggleTorch()" id="btnTorch">⚡ Flash</button>
-  </div>
-  <div class="scan-bottom">
-    <input class="scan-inp" id="scanInp" placeholder="SKU / código de barras..." autocomplete="off"
-           onkeydown="if(event.key==='Enter'){var v=this.value.trim();if(v){bip(v);this.value=''}}">
-    <button class="scan-go" onclick="var v=document.getElementById('scanInp');var s=v.value.trim();if(s){bip(s);v.value=''}">OK</button>
-  </div>
-</div>
-
-<!-- POPUP ITEM -->
-<div class="popup-bg" id="popupBg" onclick="fecharPopup()"></div>
-<div class="popup-sheet" id="popupSheet">
-  <div class="pp-handle"></div>
-  <div class="pp-body">
-    <div class="pp-top">
-      <div><div class="pp-sku" id="ppSku">—</div><div class="pp-desc" id="ppDesc">—</div></div>
-      <button class="pp-close" onclick="fecharPopup()">✕</button>
-    </div>
-    <div class="pp-loc" id="ppLoc"></div>
-    <div class="pp-status" id="ppStatus"></div>
-    <!-- Contador manual no popup -->
-    <div class="pp-counter">
-      <label>Quantidade contada:</label>
-      <div class="pp-counter-row">
-        <button class="pp-cnt-btn" onclick="ajustarCnt(-1)">−</button>
-        <div class="pp-cnt-val" id="ppCntVal">0</div>
-        <button class="pp-cnt-btn" onclick="ajustarCnt(1)">+</button>
-      </div>
-    </div>
-    <div class="pp-grid">
-      <div class="pg"><div class="pg-lbl">Sistema (ERP)</div><div class="pg-val pv-blue" id="ppSistema">—</div></div>
-      <div class="pg"><div class="pg-lbl">Contado</div><div class="pg-val pv-gn" id="ppContado">—</div></div>
-      <div class="pg"><div class="pg-lbl">Desvio (un)</div><div class="pg-val pv-def" id="ppDesvio">—</div></div>
-      <div class="pg"><div class="pg-lbl">Desvio R$</div><div class="pg-val pv-def" id="ppDesvR">—</div></div>
-      <div class="pg"><div class="pg-lbl">Valor Unit.</div><div class="pg-val pv-blue" id="ppVUnit">—</div></div>
-      <div class="pg"><div class="pg-lbl">Val. Total ERP</div><div class="pg-val pv-blue" id="ppValTotal">—</div></div>
-    </div>
-    <button class="pp-save-btn" onclick="salvarItemPopup()">✓ Confirmar Contagem</button>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<!-- BOTTOM NAV -->
-<div class="bnav">
-  <button class="nb active" id="nb0" onclick="irPag('selecao')">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    INÍCIO
-  </button>
-  <button class="nb" id="nb1" onclick="irPag('pesquisa')">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    PESQUISAR
-  </button>
-  <button class="nb nb-fab" onclick="abrirScanner()">
-    <div class="nb-fab-disc">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/><path d="M21 16h-3v3"/><path d="M21 21v-1"/><path d="M14 3v5"/><path d="M14 3h3"/><path d="M14 11h3v2"/></svg>
-    </div>
-    ESCANEAR
-  </button>
-  <button class="nb" id="nb3" onclick="irPag('pendencias')">
-    <div class="nb-badge-wrap">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/></svg>
-      <span class="nb-dot" id="pendBadge" style="display:none">0</span>
-    </div>
-    PENDÊNCIAS
-  </button>
-  <button class="nb" id="nb4" onclick="irPag('config')">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    CONFIG.
-  </button>
-</div>
-
-</div><!-- /app -->
-
 <script>
-// ── ESTADO ────────────────────────────────────────────────────────
-var EXEC_URL = localStorage.getItem('inv_exec_url') || '';
-var TOKENS   = JSON.parse(localStorage.getItem('inv_tokens') || '[]');
-var SESSAO   = sessionStorage.getItem('inv_sessao') || '';
-var rotativo = null;        // rotativo aberto atualmente
-var ppItem   = null;        // item aberto no popup
-var somenteDiv = false;
-var stream     = null;
-var facingMode = 'environment';
-var torchOn    = false;
-var scanInterv = null;
-var toastTimer = null;
+/* ====== DADOS (vazios — tudo vem do backend) ====== */
+var INVS=[];
+var ITENS=[];
+var RES=[];
 
-// ── TOAST ─────────────────────────────────────────────────────────
-function toast(msg, tipo, ms) {
-  var el = document.getElementById('toast');
-  clearTimeout(toastTimer);
-  el.textContent = msg;
-  el.className = 'toast' + (tipo ? ' t' + tipo : '');
-  el.classList.add('show');
-  toastTimer = setTimeout(function(){ el.classList.remove('show'); }, ms || 2500);
-}
+/* ====== HELPERS ====== */
+function el(h){var d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;}
+function bar(pct,st){var c=st==='fim'||pct>=100?'var(--ok)':pct<25?'var(--div)':'var(--pend)';return '<div class="prog"><i style="width:'+pct+'%;background:'+c+'"></i></div>';}
+function back(t){return '<button class="ic" data-back>‹</button>';}
 
-// ── NAVEGAÇÃO ─────────────────────────────────────────────────────
-function irPag(nome) {
-  ['pgToken','pgSelecao','pgConferencia','pgConfig'].forEach(function(id){
-    var el = document.getElementById(id);
-    if (el) el.style.display = 'none';
-  });
-  ['nb0','nb1','nb3','nb4'].forEach(function(id){
-    var el = document.getElementById(id);
-    if (el) el.classList.remove('active');
-  });
-  if (nome === 'token') {
-    document.getElementById('pgToken').style.display = 'block';
-  } else if (nome === 'selecao' || nome === 'pesquisa') {
-    document.getElementById('pgSelecao').style.display = 'block';
-    document.getElementById(nome === 'selecao' ? 'nb0' : 'nb1').classList.add('active');
-    carregarRotativos();
-  } else if (nome === 'conferencia') {
-    document.getElementById('pgConferencia').style.display = 'block';
-    document.getElementById('nb0').classList.add('active');
-  } else if (nome === 'pendencias') {
-    somenteDiv = !somenteDiv;
-    renderLista();
-    document.getElementById(rotativo ? 'pgConferencia' : 'pgSelecao').style.display = 'block';
-    document.getElementById('nb3').classList.add('active');
-  } else if (nome === 'config') {
-    document.getElementById('pgConfig').style.display = 'block';
-    document.getElementById('nb4').classList.add('active');
-    renderTokLista();
-  }
-}
+/* ====== TELAS ====== */
+var SCREENS={};
 
-// ── TOKEN ─────────────────────────────────────────────────────────
-function validarToken() {
-  var v = (document.getElementById('tokenInp').value || '').trim().toUpperCase();
-  if (!v) { toast('Digite o código de acesso', 'er'); return; }
-  TOKENS = JSON.parse(localStorage.getItem('inv_tokens') || '[]');
-  if (TOKENS.length === 0 || TOKENS.indexOf(v) >= 0) {
-    SESSAO = v;
-    sessionStorage.setItem('inv_sessao', SESSAO);
-    irPag('selecao');
-  } else {
-    toast('Código inválido', 'er');
-    document.getElementById('tokenInp').value = '';
-    document.getElementById('tokenInp').focus();
-  }
-}
+/* DASHBOARD */
+SCREENS.dashboard=`
+<section class="screen active" data-screen="dashboard">
+  <div class="hdr"><div class="hdr-row"><div class="ic">☰</div><h1 class="display">Dashboard</h1><div class="spacer"></div><div class="ic">☁</div></div></div>
+  <div class="greet">
+    <div class="hi">Olá, Almoxarife! <span class="badge-on">● Online</span></div>
+    <div class="sy">⟳ Última sincronização<br>📅 hoje, 16:32</div>
+  </div>
+  <div class="pad">
+    <div class="sec-title">Visão geral</div>
+    <div class="grid2 mb12">
+      <div class="ov green"><div class="t"><span>Reservas</span>📋</div><div class="n">0</div><div class="l">Abertas</div></div>
+      <div class="ov blue"><div class="t"><span>Inventários</span>📦</div><div class="n">0</div><div class="l">Em andamento</div></div>
+      <div class="ov amber"><div class="t"><span>Pendências</span>⚠</div><div class="n">0</div><div class="l">Itens</div></div>
+      <div class="ov red"><div class="t"><span>Ocorrências</span>❗</div><div class="n">0</div><div class="l">Abertas</div></div>
+    </div>
+    <div class="sec-title">Atalhos rápidos</div>
+    <div class="qa mb12">
+      <button data-go="inventarios"><div class="qi">📋</div><div class="ql">Iniciar Inventário</div></button>
+      <button data-go="reservas"><div class="qi">📥</div><div class="ql">Reservas</div></button>
+      <button data-go="contagem"><div class="qi">▥</div><div class="ql">Código de Barras</div></button>
+      <button data-go="ocorrencias"><div class="qi">❗</div><div class="ql">Ocorrências</div></button>
+      <button data-go="mapa"><div class="qi">📍</div><div class="ql">Mapa do Estoque</div></button>
+      <button data-go="sync"><div class="qi">⟳</div><div class="ql">Sincronizar</div></button>
+    </div>
+    <div class="sec-title">Resumo da contagem (—)</div>
+    <div class="card mb12" style="padding:6px 0">
+      <div class="resline"><div class="lbl muted">Total no sistema</div><div class="val" style="color:var(--ink)">—</div></div>
+      <div class="resline"><div class="lbl" style="color:var(--ok)">Conferidos</div><div class="val" style="color:var(--ok)">—</div></div>
+      <div class="resline"><div class="lbl" style="color:var(--pend)">Pendentes</div><div class="val" style="color:var(--pend)">—</div></div>
+      <div class="resline"><div class="lbl" style="color:var(--div)">Divergências</div><div class="val" style="color:var(--div)">—</div></div>
+      <div class="resline"><div class="lbl" style="color:var(--g600)">Acuracidade</div><div class="val" style="color:var(--g600)">—</div></div>
+    </div>
+    <div class="sec-title">Ocorrências abertas</div>
+    <div class="card">
+      <div class="row"><div class="note">Nenhuma ocorrência aberta no momento.</div></div>
+    </div>
+  </div>
+</section>`;
 
-function adicionarToken() {
-  var v = (document.getElementById('cfgTokNovo').value || '').trim().toUpperCase();
-  if (!v) return;
-  TOKENS = JSON.parse(localStorage.getItem('inv_tokens') || '[]');
-  if (TOKENS.indexOf(v) < 0) TOKENS.push(v);
-  localStorage.setItem('inv_tokens', JSON.stringify(TOKENS));
-  document.getElementById('cfgTokNovo').value = '';
-  renderTokLista();
-  toast('Token adicionado: ' + v, 'ok');
-}
+/* INVENTÁRIOS */
+SCREENS.inventarios=`
+<section class="screen" data-screen="inventarios">
+  <div class="hdr"><div class="hdr-row">${back()}<h1 class="display">Inventários</h1><div class="spacer"></div><div class="ic">ⓧ</div></div></div>
+  <div class="pad">
+    <div class="tabs" data-tabs><button class="on">Todos</button><button>Em andamento</button><button>Finalizados</button></div>
+    <div class="search">🔍<input placeholder="Buscar inventário..."></div>
+    <div class="card" id="invList"></div>
+    <button class="btn btn-primary mt12" data-go="contagem">＋ Novo inventário</button>
+  </div>
+</section>`;
 
-function removerToken(t) {
-  TOKENS = TOKENS.filter(function(x){ return x !== t; });
-  localStorage.setItem('inv_tokens', JSON.stringify(TOKENS));
-  renderTokLista();
-}
+/* CONTAGEM INTELIGENTE */
+SCREENS.contagem=`
+<section class="screen" data-screen="contagem">
+  <div class="hdr"><div class="hdr-row">${back()}<div><h1 class="display">Contagem Inteligente</h1><div class="sub">—</div></div><div class="spacer"></div><div class="ic">⋮</div></div></div>
+  <div class="pad">
+    <div class="trio mb12">
+      <div><div class="n" style="color:var(--ink)" id="ctTotal">—</div><div class="l">Total no sistema</div></div>
+      <div><div class="n" style="color:var(--ok)" id="ctConf">—</div><div class="l">Conferido</div></div>
+      <div><div class="n" style="color:var(--div)" id="ctFalta">—</div><div class="l">Faltando</div></div>
+    </div>
+    <div class="tabs" data-tabs="cont"><button class="on" data-pane="manual">Manual</button><button data-pane="agrup" data-go="agrupar">Agrupamento</button></div>
+    <div class="card item mb12"><div class="thumb">▥</div><div><b style="font-size:14px" id="ctItem">Leia um código de barras</b><div class="note" id="ctCod">Selecione um item para contar</div></div></div>
+    <div class="card pad" style="padding:14px">
+      <div class="note mb8" style="font-weight:700;color:var(--ink2)">Contagem manual</div>
+      <div class="counter">
+        <button class="stepper" data-cnt="-">−</button>
+        <div class="big"><b id="cntVal">0</b><span>PARES</span></div>
+        <button class="stepper" data-cnt="+">＋</button>
+      </div>
+      <div class="keys" data-keys>
+        <button>1</button><button>2</button><button>3</button>
+        <button>4</button><button>5</button><button>6</button>
+        <button>7</button><button>8</button><button>9</button>
+        <button data-k="C">C</button><button>0</button><button data-k="del">⌫</button>
+      </div>
+    </div>
+    <button class="btn btn-primary mt12"><span id="addLbl">Adicionar</span></button>
+    <div class="sec-title mt12">Últimos itens conferidos</div>
+    <div class="card" id="lastItems"></div>
+  </div>
+</section>`;
 
-function renderTokLista() {
-  TOKENS = JSON.parse(localStorage.getItem('inv_tokens') || '[]');
-  var el = document.getElementById('cfgTokLista');
-  if (!TOKENS.length) {
-    el.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:6px 0">Nenhum token — acesso livre</div>';
-    return;
-  }
-  var rows = '';
-  TOKENS.forEach(function(t) {
-    rows += '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bd2)">'
-      + '<span style="font-family:monospace;font-size:13px;font-weight:700">' + t + '</span>'
-      + '<button data-t="' + t + '" class="trm" style="background:none;border:1px solid var(--red);border-radius:6px;color:var(--red);font-size:11px;padding:3px 8px;cursor:pointer">Remover</button>'
-      + '</div>';
-  });
-  el.innerHTML = rows;
-  el.querySelectorAll('.trm').forEach(function(b) {
-    b.onclick = function() { removerToken(this.getAttribute('data-t')); };
-  });
-}
+/* AGRUPAR POR EMBALAGEM */
+SCREENS.agrupar=`
+<section class="screen" data-screen="agrupar">
+  <div class="hdr"><div class="hdr-row">${back()}<div><h1 class="display">Agrupar por Embalagem</h1><div class="sub">Item selecionado</div></div><div class="spacer"></div><div class="ic">⋮</div></div></div>
+  <div class="pad">
+    <div class="trio mb12">
+      <div><div class="n" style="color:var(--ink)" id="agItens">0</div><div class="l">Itens/embalagem</div></div>
+      <div><div class="n" style="color:var(--ink)" id="agQtd">0</div><div class="l">Embalagens</div></div>
+      <div><div class="n" style="color:var(--g600)" id="agTot">0</div><div class="l">Total (PARES)</div></div>
+    </div>
+    <div class="card pad" style="padding:15px">
+      <div class="note mb8" style="font-weight:700;color:var(--ink2)">Tipo de embalagem</div>
+      <div class="chips" data-chips><button class="on">SACO</button><button>CAIXA</button><button>PACOTE</button><button>OUTRO</button></div>
+      <div class="note mb8" style="font-weight:700;color:var(--ink2)">Itens por embalagem (pares)</div>
+      <div class="steprow"><button class="stepbtn" data-ag="i-">−</button><div class="v"><b id="agItens2">0</b><span>PARES</span></div><button class="stepbtn" data-ag="i+">＋</button></div>
+      <div class="note mb8" style="font-weight:700;color:var(--ink2)">Quantidade de embalagens</div>
+      <div class="steprow"><button class="stepbtn" data-ag="q-">−</button><div class="v"><b id="agQtd2">0</b><span>SACOS</span></div><button class="stepbtn" data-ag="q+">＋</button></div>
+      <div class="calcbox"><div class="t">Total calculado automaticamente</div><div class="b"><span id="agTot2">0</span> PARES</div></div>
+      <label class="opt"><span class="dot"></span> Adicionar observação (opcional)</label>
+    </div>
+    <button class="btn btn-primary mt12">Adicionar ao total</button>
+    <div class="banner mt12"><div style="font-size:26px">🛍️</div><div class="note"><b>Como funciona:</b> você informa quantos itens por embalagem e quantas embalagens. O sistema calcula e soma automaticamente.</div></div>
+  </div>
+</section>`;
 
-// ── URL / CONFIG ──────────────────────────────────────────────────
-function salvarUrl() {
-  var v = (document.getElementById('cfgUrl').value || '').trim();
-  EXEC_URL = v;
-  localStorage.setItem('inv_exec_url', v);
-  document.getElementById('cfgNote').textContent = v ? 'URL salva.' : 'Sem URL configurada';
-  toast('URL salva!', 'ok');
-  if (v) irPag('selecao');
-}
+/* RESERVAS */
+SCREENS.reservas=`
+<section class="screen" data-screen="reservas">
+  <div class="hdr"><div class="hdr-row">${back()}<h1 class="display">Reservas</h1><div class="spacer"></div><div class="ic">ⓧ</div></div></div>
+  <div class="pad">
+    <div class="tabs" data-tabs><button class="on">Abertas</button><button>Em separação</button><button>Conferência</button><button>Finalizadas</button></div>
+    <div class="search">🔍<input placeholder="Buscar reserva..."></div>
+    <div class="card" id="resList"></div>
+    <button class="btn btn-primary mt12" data-go="reservaDet">＋ Nova reserva</button>
+  </div>
+</section>`;
 
-// ── CARREGAR ROTATIVOS (JSONP) ────────────────────────────────────
-function carregarRotativos() {
-  var box = document.getElementById('listaRotativos');
-  if (!box) return;
-  if (!EXEC_URL) {
-    box.innerHTML = '<div class="empty-st"><div class="eico">⚙️</div><p>Configure a URL do Apps Script em <b>Config.</b> para carregar os inventários.</p></div>';
-    return;
-  }
-  box.innerHTML = '<div class="empty-st"><div class="eico">⟳</div><p>Carregando inventários...</p></div>';
+/* RESERVA DETALHE */
+SCREENS.reservaDet=`
+<section class="screen" data-screen="reservaDet">
+  <div class="hdr"><div class="hdr-row">${back()}<div><h1 class="display">Reserva —</h1><div class="sub">TRÊS LAGOAS</div></div><div class="spacer"></div><div class="ic">⋮</div></div></div>
+  <div class="pad">
+    <span class="pill blue mb12" style="display:inline-flex">Separação</span>
+    <div class="trio mb12" style="margin-top:10px">
+      <div><div class="n">—</div><div class="l">Total itens</div></div>
+      <div><div class="n" style="color:var(--ok)">—</div><div class="l">Separados</div></div>
+      <div><div class="n" style="color:var(--pend)">—</div><div class="l">Pendentes</div></div>
+    </div>
+    <div class="card pad mb12" style="padding:14px"><div class="flexb mb8"><b style="font-size:13px">Progresso geral</b><b style="color:var(--g600)">—</b></div>${bar(0)}</div>
+    <div class="card mb12">
+      <div class="row" data-go="reservaItens">📄 Ver itens da reserva <div class="spacer" style="flex:1"></div>›</div>
+      <div class="row">▥ Código de barras / Itens<div style="flex:1"></div>›</div>
+      <div class="row">📝 Observações da reserva<div style="flex:1"></div>›</div>
+      <div class="row" data-go="separacao">🖨 Imprimir etiquetas<div style="flex:1"></div>›</div>
+      <div class="row">🕘 Histórico de movimentações<div style="flex:1"></div>›</div>
+    </div>
+    <button class="btn btn-primary" data-go="reservaItens">Continuar separação</button>
+  </div>
+</section>`;
 
-  var resultados = { legado: null, tokens: null, erroTokens: null };
-  function tentarRenderizar() {
-    // Renderiza assim que tiver pelo menos uma resposta — não espera as duas
-    if (resultados.legado === null && resultados.tokens === null) return;
-    renderRotativos(resultados.legado || [], resultados.tokens || [], resultados.erroTokens);
-  }
+/* ITENS DA RESERVA */
+SCREENS.reservaItens=`
+<section class="screen" data-screen="reservaItens">
+  <div class="hdr"><div class="hdr-row">${back()}<div><h1 class="display">Itens da Reserva</h1><div class="sub">—</div></div><div class="spacer"></div><div class="ic">▥</div></div></div>
+  <div class="pad">
+    <div class="search">🔍<input placeholder="Buscar item..."></div>
+    <div class="card mb12" id="resItens"></div>
+    <button class="btn btn-primary" data-go="separacao">▥ Ler código de barras</button>
+  </div>
+</section>`;
 
-  // 1) Rotativos legados (sistema antigo)
-  var cbName = '_cb_' + Date.now() + '_lg';
-  var sc = document.createElement('script');
-  var tm = setTimeout(function() {
-    if (window[cbName]) { delete window[cbName]; resultados.legado = []; tentarRenderizar(); }
-  }, 12000);
-  window[cbName] = function(resp) {
-    clearTimeout(tm);
-    delete window[cbName];
-    if (sc.parentNode) sc.parentNode.removeChild(sc);
-    var lista = [];
-    if (resp && Array.isArray(resp.data)) lista = resp.data;
-    else if (resp && Array.isArray(resp.history)) lista = resp.history;
-    else if (resp && Array.isArray(resp.result)) lista = resp.result;
-    else if (Array.isArray(resp)) lista = resp;
-    resultados.legado = lista;
-    tentarRenderizar();
-  };
-  sc.onerror = function() { clearTimeout(tm); delete window[cbName]; resultados.legado = []; tentarRenderizar(); };
-  sc.src = EXEC_URL + (EXEC_URL.indexOf('?') > -1 ? '&' : '?') + 'action=getHistory&limit=100&callback=' + cbName;
-  document.head.appendChild(sc);
+/* SEPARAÇÃO POR CAIXA */
+SCREENS.separacao=`
+<section class="screen" data-screen="separacao">
+  <div class="hdr"><div class="hdr-row">${back()}<div><h1 class="display">Separação por Caixa</h1><div class="sub">—</div></div><div class="spacer"></div><div class="ic">⋮</div></div></div>
+  <div class="pad">
+    <div class="field"><label>Caixa / Volume</label><select><option>CAIXA 001</option><option>CAIXA 002</option></select></div>
+    <div class="card pad mb12" style="padding:14px">
+      <div class="flexb mb8"><b style="font-size:13px">Capacidade: —</b><span class="pill ok">✓</span></div>
+      <div class="note mb8">Itens na caixa: —</div>${bar(0)}
+    </div>
+    <div class="card mb12" id="caixaItens">
+      <div class="row"><div class="note">Leia os itens para adicionar a esta caixa.</div></div>
+    </div>
+    <button class="btn btn-primary">Fechar caixa</button>
+  </div>
+</section>`;
 
-  // 2) Tokens abertos da Central de Aprovação (sistema novo)
-  var cbName2 = '_cb_' + Date.now() + '_tk';
-  var sc2 = document.createElement('script');
-  var tm2 = setTimeout(function() {
-    if (window[cbName2]) {
-      delete window[cbName2];
-      resultados.tokens = [];
-      resultados.erroTokens = 'Tempo esgotado ao buscar tokens (verifique se o 08_Api_Router.gs está implantado com as rotas dashboardToken/comparativoToken)';
-      tentarRenderizar();
-    }
-  }, 12000);
-  window[cbName2] = function(resp) {
-    clearTimeout(tm2);
-    delete window[cbName2];
-    if (sc2.parentNode) sc2.parentNode.removeChild(sc2);
-    var abertos = [];
-    if (resp && resp.ok && Array.isArray(resp.inventarios)) {
-      abertos = resp.inventarios.filter(function (d) {
-        if (!d || !d['Token']) return false;
-        var st = String(d['Status'] || '').trim().toUpperCase();
-        return st !== 'FINALIZADO';
-      });
-    } else {
-      resultados.erroTokens = 'Resposta inesperada ao buscar tokens: ' + JSON.stringify(resp).slice(0, 120);
-    }
-    resultados.tokens = abertos;
-    tentarRenderizar();
-  };
-  sc2.onerror = function() {
-    clearTimeout(tm2);
-    delete window[cbName2];
-    resultados.tokens = [];
-    resultados.erroTokens = 'Falha de conexão ao buscar tokens (script não carregou)';
-    tentarRenderizar();
-  };
-  sc2.src = EXEC_URL + (EXEC_URL.indexOf('?') > -1 ? '&' : '?') + 'action=dashboardToken&callback=' + cbName2;
-  document.head.appendChild(sc2);
-}
+/* PENDÊNCIAS */
+SCREENS.pendencias=`
+<section class="screen" data-screen="pendencias">
+  <div class="hdr"><div class="hdr-row">${back()}<h1 class="display">Pendências</h1></div></div>
+  <div class="pad">
+    <div class="card">
+      <div class="row"><div style="flex:1"><b style="font-size:13px">— — TRÊS LAGOAS</b><div class="note">72 itens pendentes</div></div><span class="pill pend">72</span></div>
+      <div class="row"><div style="flex:1"><b style="font-size:13px">OS 12347 — CAMPO GRANDE</b><div class="note">15 itens pendentes</div></div><span class="pill pend">15</span></div>
+      <div class="row"><div style="flex:1"><b style="font-size:13px">OS 12348 — DOURADOS</b><div class="note">12 itens pendentes</div></div><span class="pill pend">12</span></div>
+    </div>
+  </div>
+</section>`;
 
-function renderRotativos(respLegado, tokensAbertos, erroTokens) {
-  var box = document.getElementById('listaRotativos');
+/* OCORRÊNCIAS */
+SCREENS.ocorrencias=`
+<section class="screen" data-screen="ocorrencias">
+  <div class="hdr"><div class="hdr-row">${back()}<h1 class="display">Ocorrências</h1><div class="spacer"></div><div class="ic">＋</div></div></div>
+  <div class="pad">
+    <div class="card mb12" id="ocorrList">
+      <div class="row"><div class="note">Nenhuma ocorrência registrada ainda.</div></div>
+    </div>
+    <button class="btn btn-primary">＋ Registrar ocorrência</button>
+  </div>
+</section>`;
 
-  var lista = (respLegado || []).filter(function(r) {
-    return r && r.id && (Number(r.total) > 0 || (r.items && r.items.length > 0));
-  });
+/* INVENTÁRIO COMPLETO — menu */
+SCREENS.completo=`
+<section class="screen" data-screen="completo">
+  <div class="hdr"><div class="hdr-row">${back()}<div><h1 class="display">Inventário</h1><div class="sub">—</div></div><div class="spacer"></div><div class="ic">⋮</div></div></div>
+  <div class="pad">
+    <div class="card pad mb12" style="padding:14px"><div class="flexb mb8"><b style="font-size:13px">Progresso geral</b><b style="color:var(--g600)">—</b></div>${bar(0)}
+      <div class="trio mt12"><div><div class="n" style="color:var(--ok)">—</div><div class="l">Contados</div></div><div><div class="n" style="color:var(--pend)">—</div><div class="l">Pendentes</div></div><div><div class="n" style="color:var(--div)">—</div><div class="l">Divergências</div></div></div>
+    </div>
+    <div class="sec-title">Etapas do inventário</div>
+    <div class="card mb12">
+      <div class="row" data-go="cBaixa"><span class="thumb">📦</span><div style="flex:1"><b style="font-size:13px">Baixa de Estoque</b></div>›</div>
+      <div class="row" data-go="cEmb"><span class="thumb">📦</span><div style="flex:1"><b style="font-size:13px">Embalagem do Produto</b></div>›</div>
+      <div class="row" data-go="cFat"><span class="thumb">🧾</span><div style="flex:1"><b style="font-size:13px">Quantidade Faturada</b></div>›</div>
+      <div class="row" data-go="cRes"><span class="thumb">📊</span><div style="flex:1"><b style="font-size:13px">Resultados do Inventário</b></div>›</div>
+      <div class="row" data-go="cSeg"><span class="thumb">🛡</span><div style="flex:1"><b style="font-size:13px">Cuidados de Segurança</b></div>›</div>
+    </div>
+    <button class="btn btn-primary" data-go="contagem">Continuar inventário</button>
+  </div>
+</section>`;
 
-  var tokens = (tokensAbertos || []).map(function(d) {
-    return {
-      id: d['Token'],
-      titulo: d['Titulo'] || d['Token'],
-      dataInv: d['Data Criacao'] || '',
-      total: Number(d['Total Itens']) || Number(d['Itens Lancados']) || 0,
-      divergencias: Number(d['Total Divergencias']) || 0,
-      acuracia: d['Acuracidade %'] !== undefined ? Number(d['Acuracidade %']) : 100,
-      _isToken: true,
-      _raw: d
-    };
-  });
+/* Etapas Sim/Não genéricas */
+function etapa(id,titulo,pergunta,extra){return `
+<section class="screen" data-screen="${id}">
+  <div class="hdr"><div class="hdr-row">${back()}<div><h1 class="display">${titulo}</h1><div class="sub">—</div></div></div></div>
+  <div class="pad">
+    <div class="note mb12">${pergunta}</div>
+    ${extra||''}
+    <label class="opt sel"><span class="dot">✓</span> Sim</label>
+    <label class="opt"><span class="dot"></span> Não</label>
+    <div class="field mt12"><label>Observação (opcional)</label><input placeholder="Informe detalhes se necessário..."></div>
+    <button class="btn btn-primary" data-go="completo">Salvar e continuar</button>
+  </div>
+</section>`;}
+SCREENS.cBaixa=etapa('cBaixa','Baixa de Estoque','Avaliar se a baixa de estoque foi realizada quando existe transferência. Houve transferência antes da baixa?');
+SCREENS.cEmb=etapa('cEmb','Embalagem do Produto','Avaliar se as baixas condizem com a embalagem do produto.','<div class="field"><label>Embalagem cadastrada</label><input value="Caixa com 10 unidades" readonly></div>');
+SCREENS.cFat=etapa('cFat','Quantidade Faturada','Avaliar se as quantidades entradas condizem com a quantidade faturada.','<div class="field"><label>Quantidade faturada</label><input value="120" readonly></div><div class="field"><label>Quantidade recebida</label><input value="120" readonly></div>');
 
-  var avisoErro = '';
-  if (erroTokens) avisoErro = erroTokens;
+/* Resultados do Inventário */
+SCREENS.cRes=`
+<section class="screen" data-screen="cRes">
+  <div class="hdr"><div class="hdr-row">${back()}<div><h1 class="display">Resultados do Inventário</h1><div class="sub">—</div></div></div></div>
+  <div class="pad">
+    <div class="card mb12">
+      <div class="resline"><span class="tag" style="background:var(--g600)">A</span><div class="lbl">Itens Contados</div><div class="val">—</div></div>
+      <div class="resline"><span class="tag" style="background:var(--pend)">B</span><div class="lbl">Erros Contagem</div><div class="val">—</div></div>
+      <div class="resline"><span class="tag" style="background:var(--blue)">C</span><div class="lbl">Local Incorreto</div><div class="val" data-go="dLocal">—</div></div>
+      <div class="resline"><span class="tag" style="background:#8857E0">D</span><div class="lbl">Dif. Peças Entregues</div><div class="val">—</div></div>
+      <div class="resline"><span class="tag" style="background:var(--pend)">E</span><div class="lbl">Falta Nota Fiscal</div><div class="val" data-go="dFalta">—</div></div>
+      <div class="resline"><span class="tag" style="background:var(--blue)">F</span><div class="lbl">Materiais Sobrando</div><div class="val">—</div></div>
+      <div class="resline"><span class="tag" style="background:#2BA39A">G</span><div class="lbl">Materiais Faltando</div><div class="val">—</div></div>
+      <div class="resline"><span class="tag" style="background:var(--div)">H</span><div class="lbl">Materiais Avariados</div><div class="val">—</div></div>
+      <div class="resline"><span class="tag" style="background:var(--pend)">I</span><div class="lbl">Lançamento Incorreto</div><div class="val">—</div></div>
+      <div class="resline"><span class="tag" style="background:var(--g600)">J</span><div class="lbl">Itens Vencidos</div><div class="val">—</div></div>
+    </div>
+    <button class="btn btn-primary" data-go="completo">Exportar relatório</button>
+  </div>
+</section>`;
 
-  if (!lista.length && !tokens.length) {
-    box.innerHTML = (erroTokens ? '<div style="background:#FFF5F5;border:1px solid #FEB2B2;color:#C53030;border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12px">⚠️ Tokens não carregados: ' + erroTokens + '</div>' : '')
-      + '<div class="empty-st"><div class="eico">📭</div><p>Nenhum rotativo ou token encontrado.<br>Verifique se há dados e se o Apps Script está reimplantado.</p></div>';
-    return;
-  }
+SCREENS.dLocal=`
+<section class="screen" data-screen="dLocal">
+  <div class="hdr"><div class="hdr-row">${back()}<div><h1 class="display">Detalhes — Local Incorreto</h1><div class="sub">—</div></div></div></div>
+  <div class="pad">
+    <div class="note mb12">Sem registros.</div>
+    <div class="card pad" style="padding:14px"><div class="note">Sem registros.</div></div>
+  </div>
+</section>`;
 
-  lista.sort(function(a, b) {
-    var da = a.dataInv || a.date || '';
-    var db = b.dataInv || b.date || '';
-    return db.localeCompare(da);
-  });
+SCREENS.dFalta=`
+<section class="screen" data-screen="dFalta">
+  <div class="hdr"><div class="hdr-row">${back()}<div><h1 class="display">Detalhes — Falta NF</h1><div class="sub">—</div></div></div></div>
+  <div class="pad">
+    <div class="note mb12">Sem registros.</div>
+    <div class="card pad" style="padding:14px"><div class="note">Sem registros.</div></div>
+  </div>
+</section>`;
 
-  box.innerHTML = '';
-  if (erroTokens) {
-    var avisoEl = document.createElement('div');
-    avisoEl.style.cssText = 'background:#FFF5F5;border:1px solid #FEB2B2;color:#C53030;border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:12px';
-    avisoEl.textContent = '⚠️ Tokens não carregados: ' + erroTokens;
-    box.appendChild(avisoEl);
-  }
+/* Cuidados de Segurança */
+SCREENS.cSeg=`
+<section class="screen" data-screen="cSeg">
+  <div class="hdr"><div class="hdr-row">${back()}<div><h1 class="display">Cuidados de Segurança</h1><div class="sub">—</div></div></div></div>
+  <div class="pad">
+    <div class="note mb12">Para movimentação de itens que não oferecem riscos ergonômicos ou à saúde.</div>
+    <div class="card mb12">
+      ${['Utilizar postura correta','Usar calçados de segurança','Verificar área de circulação','Manter organização do local','Utilizar EPIs quando necessário','Em caso de dúvida, contatar liderança'].map(t=>'<div class="row"><span class="icirc ok">✓</span><div style="flex:1;font-size:13px;font-weight:600">'+t+'</div></div>').join('')}
+    </div>
+    <button class="btn btn-primary" data-go="completo">Confirmar e continuar</button>
+  </div>
+</section>`;
 
-  if (tokens.length) {
-    var secTk = document.createElement('div');
-    secTk.style.cssText = 'font-size:11px;font-weight:700;color:#276749;letter-spacing:.5px;margin:4px 4px 6px';
-    secTk.textContent = '🔑 TOKENS ABERTOS (CENTRAL DE APROVAÇÃO)';
-    box.appendChild(secTk);
-    tokens.forEach(function(rot) { box.appendChild(_criarLinhaRotativo(rot)); });
-    var secLg = document.createElement('div');
-    secLg.style.cssText = 'font-size:11px;font-weight:700;color:#4A5568;letter-spacing:.5px;margin:14px 4px 6px';
-    secLg.textContent = '📋 ROTATIVOS (SISTEMA CLÁSSICO)';
-    box.appendChild(secLg);
-  }
+/* MAIS / MAPA / SYNC */
+SCREENS.mais=`
+<section class="screen" data-screen="mais">
+  <div class="hdr"><div class="hdr-row">${back()}<h1 class="display">Mais</h1></div></div>
+  <div class="pad"><div class="card">
+    <div class="row" data-go="completo">📋 Inventário completo<div style="flex:1"></div>›</div>
+    <div class="row" data-go="separacao">📦 Separação por caixa<div style="flex:1"></div>›</div>
+    <div class="row" data-go="mapa">📍 Mapa do estoque<div style="flex:1"></div>›</div>
+    <div class="row" data-go="sync">⟳ Sincronização<div style="flex:1"></div>›</div>
+    <div class="row" data-go="ocorrencias">❗ Ocorrências<div style="flex:1"></div>›</div>
+  </div></div>
+</section>`;
+SCREENS.mapa=`<section class="screen" data-screen="mapa"><div class="hdr"><div class="hdr-row">${back()}<h1 class="display">Mapa do Estoque</h1></div></div><div class="pad"><div class="card pad" style="padding:24px;text-align:center"><div style="font-size:40px">📍</div><div class="note mt12">Mapa do estoque — em breve.<br>(Liga no backend depois)</div></div></div></section>`;
+SCREENS.sync=`<section class="screen" data-screen="sync"><div class="hdr"><div class="hdr-row">${back()}<h1 class="display">Sincronização</h1></div></div>
+<div class="pad">
+  <div class="card pad mb12" style="padding:16px">
+    <div class="note mb8" style="font-weight:700;color:var(--ink2)">Conexão com o sistema</div>
+    <div class="field"><label>URL do script (/exec)</label><input id="cfgUrl" placeholder="https://script.google.com/macros/s/.../exec"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-soft btn-sm" style="flex:1" data-act="salvarUrl">Salvar URL</button>
+      <button class="btn btn-ghost btn-sm" style="flex:1" data-act="testarConexao">Testar conexão</button>
+    </div>
+    <div id="cfgMsg" class="note mt12"></div>
+  </div>
+  <div class="card pad" style="padding:20px;text-align:center">
+    <div style="font-size:38px">☁</div>
+    <div class="note mt12 mb12">Última sincronização: <span id="syncWhen">—</span></div>
+    <button class="btn btn-primary" data-act="sincronizar">Sincronizar agora</button>
+    <div class="pill ok mt12" style="display:inline-flex">✓ Dados salvos offline</div>
+  </div>
+</div></section>`;
 
-  if (!lista.length) {
-    var vazio = document.createElement('div');
-    vazio.style.cssText = 'text-align:center;padding:18px;color:#A0AEC0;font-size:12px';
-    vazio.textContent = 'Nenhum rotativo clássico encontrado.';
-    box.appendChild(vazio);
-  } else {
-    lista.forEach(function(rot) { box.appendChild(_criarLinhaRotativo(rot)); });
-  }
-}
+/* ====== RENDER ====== */
+var host=document.getElementById('screens');
+Object.keys(SCREENS).forEach(function(k){ host.insertAdjacentHTML('beforeend',SCREENS[k]); });
 
-function _criarLinhaRotativo(rot) {
-  var divs = Number(rot.divergencias || rot.diverg || 0);
-  var total = Number(rot.total || (rot.items && rot.items.length) || 0);
-  var acc   = rot.acuracia ? Math.round(rot.acuracia) : (divs === 0 && total > 0 ? 100 : 0);
-  var data  = rot.dataInv || rot.date || '—';
-  if (String(data).match(/^\d{4}-\d{2}-\d{2}/)) {
-    var p = String(data).slice(0,10).split('-');
-    data = p[2] + '/' + p[1] + '/' + p[0];
-  }
-  var el = document.createElement('div');
-  el.className = 'rot-item';
-  var badgeCls = divs > 0 ? 'rb-div' : 'rb-ok';
-  var badgeTxt = divs > 0 ? ('⚠ ' + divs + ' div') : '✓ Ok';
-  var iconHtml = rot._isToken
-    ? '<div class="rot-ico" style="background:#FFFBEA"><span style="font-size:16px">🔑</span></div>'
-    : '<div class="rot-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--g2)" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="11" y2="17"/></svg></div>';
-  el.innerHTML = iconHtml
-    + '<div class="rot-body">'
-      + '<div class="rot-id">' + String(rot.id).slice(-12) + '</div>'
-      + '<div class="rot-titulo">' + (rot.titulo || rot.title || 'Sem título') + '</div>'
-      + '<div class="rot-meta">'
-        + '<span class="rot-date">📅 ' + data + '</span>'
-        + '<span class="rot-total">📦 ' + total + ' itens</span>'
-        + '<span class="rot-badge ' + badgeCls + '">' + badgeTxt + ' · ' + acc + '%</span>'
-      + '</div>'
-    + '</div>'
-    + '<div class="rot-arrow"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></div>';
-  el.onclick = function() { rot._isToken ? abrirToken(rot._raw) : abrirRotativo(rot); };
-  return el;
-}
-
-// ── ABRIR TOKEN (Central de Aprovação) ──────────────────────────────
-function abrirToken(tk) {
-  rotativo = {
-    id:      tk['Token'],
-    titulo:  tk['Titulo'] || tk['Token'],
-    data:    tk['Data Criacao'] || '',
-    op:      tk['Responsavel'] || '',
-    emp:     tk['Almoxarifado'] || '',
-    itens:   [],
-    tipoToken: true,
-    _orig:   tk
-  };
-  somenteDiv = false;
-
-  document.getElementById('hdrNum').textContent = '🔑 ' + tk['Token'];
-  document.getElementById('hdrDate').textContent = (tk['Almoxarifado'] || '') + ' · carregando itens...';
-  document.getElementById('hdrBadge').style.display = '';
-  document.getElementById('scanRotTitulo').textContent = rotativo.titulo;
-
-  atualizarSaveBar();
-  renderStats();
-  renderLista();
-  iniciarPolling();
-  atualizarBotoesDeposito();
-  irPag('conferencia');
-  setTimeout(function(){ document.getElementById('inputManual').focus(); }, 500);
-
-  // Pré-carregar itens já lançados nesse token (se houver)
-  if (!EXEC_URL) return;
-  var cbName = '_cb_' + Date.now() + '_cmp';
-  var sc = document.createElement('script');
-  var tm = setTimeout(function() { if (window[cbName]) delete window[cbName]; }, 12000);
-  window[cbName] = function(resp) {
-    clearTimeout(tm);
-    delete window[cbName];
-    if (sc.parentNode) sc.parentNode.removeChild(sc);
-    if (resp && resp.ok && Array.isArray(resp.itens)) {
-      rotativo.itens = resp.itens.map(function(it) {
-        return {
-          mat:  it['Codigo Material'] || '',
-          desc: it['Descricao'] || '',
-          loc:  '',
-          sis:  Number(it['Quantidade SAP']) || 0,
-          cnt:  Number(it['Quantidade Contada']),
-          rUnit: Number(it['Valor Unitario']) || 0,
-          val:  Number(it['Valor Unitario']) || 0,
-          um:   'UN', centro: '', deposito: ''
-        };
-      });
-    }
-    document.getElementById('hdrDate').textContent = (tk['Almoxarifado'] || '') + ' · ' + rotativo.itens.length + ' itens já lançados';
-    renderStats();
-    renderLista();
-  };
-  sc.onerror = function() { clearTimeout(tm); delete window[cbName]; };
-  sc.src = EXEC_URL + (EXEC_URL.indexOf('?') > -1 ? '&' : '?') + 'action=comparativoToken&token=' + encodeURIComponent(tk['Token']) + '&callback=' + cbName;
-  document.head.appendChild(sc);
-}
-
-// ── ABRIR ROTATIVO ────────────────────────────────────────────────
-function abrirRotativo(rot) {
-  // Normalizar itens vindos do servidor
-  var itens = (rot.items || rot.itens || []).map(function(it) {
-    return {
-      mat:  it.material  || it.mat  || '',
-      desc: it.descricao || it.desc || '',
-      loc:  it.localizacao || it.loc || '',
-      sis:  Number(it.sistema !== undefined ? it.sistema : (it.sis || 0)),
-      cnt:  null,  // começa sem contagem — operador vai preencher
-      rUnit: Number(it.rUnit || it.runit || 0),
-      val:  Number(it.valUtilizLivre || it.val || 0),
-      um:   it.um || 'UN',
-      centro: it.centro || '',
-      deposito: it.deposito || '',
-    };
-  });
-
-  rotativo = {
-    id:     rot.id,
-    titulo: rot.titulo || rot.title || '',
-    data:   rot.dataInv || rot.date || '',
-    op:     rot.op || rot.operador || '',
-    emp:    rot.emp || rot.empresa || '',
-    itens:  itens,
-    _orig:  rot  // guardar original para enviar de volta
-  };
-  somenteDiv = false;
-
-  // Atualizar header
-  document.getElementById('hdrNum').textContent = '#' + String(rot.id).slice(-8);
-  var dataFmt = rotativo.data;
-  if (dataFmt.match(/^\d{4}-\d{2}-\d{2}/)) {
-    var p = dataFmt.slice(0,10).split('-');
-    dataFmt = p[2] + '/' + p[1] + '/' + p[0];
-  }
-  document.getElementById('hdrDate').textContent = dataFmt + ' · ' + itens.length + ' SKUs';
-  document.getElementById('hdrBadge').style.display = '';
-  document.getElementById('scanRotTitulo').textContent = rotativo.titulo || rot.id;
-
-  atualizarSaveBar();
-  renderStats();
-  renderLista();
-  iniciarPolling();
-  atualizarBotoesDeposito();
-  irPag('conferencia');
-  setTimeout(function(){ document.getElementById('inputManual').focus(); }, 500);
-}
-
-function voltarInicio() {
-  pararCamera();
-  pararPolling();
-  rotativo = null; ppItem = null;
-  document.getElementById('hdrNum').textContent = '#—';
-  document.getElementById('hdrDate').textContent = 'Selecione um rotativo';
-  document.getElementById('hdrBadge').style.display = 'none';
-  irPag('selecao');
-}
-
-function recarregar() { carregarRotativos(); toast('Atualizando...', '', 1500); }
-function focarManual() { document.getElementById('inputManual').focus(); }
-
-// ── STATS ─────────────────────────────────────────────────────────
-function renderStats() {
-  if (!rotativo) return;
-  var total = rotativo.itens.length;
-  var conf  = rotativo.itens.filter(function(i){ return i.cnt !== null; }).length;
-  var ok    = rotativo.itens.filter(function(i){ return i.cnt !== null && i.cnt === i.sis; }).length;
-  var pend  = total - conf;
-  var div   = rotativo.itens.filter(function(i){ return i.cnt !== null && i.cnt !== i.sis; }).length;
-  var pct   = total > 0 ? Math.round(conf / total * 100) : 0;
-  document.getElementById('progPct').textContent = pct + '%';
-  document.getElementById('progFill').style.width = pct + '%';
-  document.getElementById('stTotal').textContent = total;
-  document.getElementById('stOk').textContent = ok;
-  document.getElementById('stPend').textContent = pend;
-  document.getElementById('stDiv').textContent = div;
-  var pb = document.getElementById('pendBadge');
-  pb.textContent = div; pb.style.display = div > 0 ? '' : 'none';
-  atualizarSaveBar();
-}
-
-function atualizarSaveBar() {
-  if (!rotativo) return;
-  var conf = rotativo.itens.filter(function(i){ return i.cnt !== null; }).length;
-  var total = rotativo.itens.length;
-  document.getElementById('saveTitle').textContent = 'Salvar Conferência';
-  document.getElementById('saveSub').textContent = conf + ' de ' + total + ' itens conferidos';
-  var btn = document.getElementById('saveBtn');
-  btn.disabled = conf === 0;
-}
-
-// ── LISTA ─────────────────────────────────────────────────────────
-function renderLista(destaque) {
-  if (!rotativo) return;
-  var box = document.getElementById('listaItens');
-  var itens = rotativo.itens.slice();
-  if (somenteDiv) itens = itens.filter(function(i){ return i.cnt !== null && i.cnt !== i.sis; });
-  if (_filtroDeposito) {
-    itens = itens.filter(function(i){
-      var loc = (i.loc||'').toUpperCase();
-      return loc.indexOf(_filtroDeposito) === 0;
-    });
-  }
-  // Conferidos recentes no topo
-  itens.sort(function(a, b){ return (b.cnt !== null ? 1 : 0) - (a.cnt !== null ? 1 : 0); });
-  box.innerHTML = '';
-  if (!itens.length) {
-    box.innerHTML = '<div style="text-align:center;padding:24px;color:var(--t3);font-size:13px">' + (somenteDiv ? 'Nenhuma divergência ✓' : 'Nenhum item') + '</div>';
-    return;
-  }
-  itens.slice(0, 100).forEach(function(it) {
-    var cnt = it.cnt;
-    var desvio = cnt !== null ? cnt - it.sis : null;
-    var bloqueado = _itensLockados[it.mat.toUpperCase()];
-    var st = bloqueado ? 'bloq' : (cnt === null ? 'pend' : (desvio === 0 ? 'ok' : (desvio < 0 ? 'falta' : 'sobra')));
-    var chkMap = { bloq: ['ck-bloq','<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>'], ok: ['ck-ok','<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>'], falta: ['ck-falta','<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>'], sobra: ['ck-sobra','<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>'], pend: ['ck-pend','<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t4)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/></svg>'] };
-    var dvFin = (desvio !== null && it.rUnit) ? desvio * it.rUnit : null;
-    var dvTxt = (desvio !== null && desvio !== 0)
-      ? '<div class="item-dev" style="color:' + (desvio < 0 ? 'var(--red)' : '#D97706') + '">'
-        + (desvio > 0 ? '+' : '') + desvio
-        + (it.rUnit ? ' · R$' + Math.abs(dvFin).toFixed(2).replace('.', ',') : '')
-        + '</div>'
-      : '';
-    var row = document.createElement('div');
-    row.className = 'item-row';
-    row.id = 'ir-' + it.mat;
-    if (destaque && destaque.mat === it.mat) row.style.background = '#f0fff4';
-    row.innerHTML =
-      '<div class="item-chk ' + chkMap[st][0] + '">' + chkMap[st][1] + '</div>'
-      + '<div class="item-body">'
-        + '<div class="item-sku">' + it.mat + '</div>'
-        + '<div class="item-desc">' + (it.desc || '—') + '</div>'
-        + (bloqueado ? '<div class="item-loc" style="color:#9F7AEA">🔒 Lido por ' + bloqueado + '</div>' : (it.loc ? '<div class="item-loc">📍 ' + it.loc + '</div>' : ''))
-      + '</div>'
-      + '<div class="item-right">'
-        + '<div class="item-qty iq-' + st + '">' + (cnt !== null ? cnt : '—') + '</div>'
-        + '<div class="item-lbl">de ' + it.sis + '</div>'
-        + dvTxt
-      + '</div>'
-      + '<div class="item-arr"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></div>';
-    row.onclick = function() { abrirPopup(it); };
-    box.appendChild(row);
-  });
-  if (destaque) {
-    setTimeout(function(){
-      var el = document.getElementById('ir-' + destaque.mat);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 120);
-  }
-}
-
-function toggleFiltro() {
-  somenteDiv = !somenteDiv;
-  document.getElementById('btnVerTodos').textContent = somenteDiv ? 'Ver todos ›' : 'Só divergências ›';
-  renderLista();
-}
-
-// ── BIP ───────────────────────────────────────────────────────────
-function bip(raw) {
-  if (!raw) return;
-  if (!rotativo) { toast('Selecione um inventário primeiro', 'wa'); return; }
-  var sku  = raw.trim().toUpperCase();
-  var item = rotativo.itens.find(function(i){ return i.mat.toUpperCase() === sku; });
-
-  // Flash verde
-  var fl = document.getElementById('flash');
-  fl.classList.add('on');
-  setTimeout(function(){ fl.classList.remove('on'); }, 180);
-
-  if (!item) {
-    if (rotativo.tipoToken) {
-      // Token: itens não vêm pré-carregados — cria na hora
-      item = { mat: sku, desc: '', loc: '', sis: 0, cnt: null, rUnit: 0, val: 0, um: 'UN', centro: '', deposito: '' };
-      rotativo.itens.push(item);
-    } else {
-      toast('SKU não encontrado: ' + sku, 'er');
-      mostrarUltima(sku, '—', 'novo');
-      return;
-    }
-  }
-
-  // Abrir popup para confirmar quantidade
-  abrirPopup(item);
-}
-
-function mostrarUltima(sku, desc, tipo) {
-  var el = document.getElementById('scanLast');
-  var tMap = { ok: 'st-ok', falta: 'st-falta', sobra: 'st-sobra', novo: 'st-novo' };
-  var lMap = { ok: '✓ OK', falta: '↓ Falta', sobra: '↑ Sobra', novo: 'Novo SKU' };
-  document.getElementById('slSku').textContent = sku;
-  document.getElementById('slDesc').textContent = desc || '—';
-  document.getElementById('slTags').innerHTML = '<span class="sl-tag ' + (tMap[tipo] || 'st-novo') + '">' + (lMap[tipo] || tipo) + '</span>';
-  el.classList.add('show');
-}
-
-// ── POPUP ITEM ────────────────────────────────────────────────────
-function abrirPopup(item) {
-  ppItem = item;
-  var cnt = item.cnt !== null ? item.cnt : item.sis; // começa com valor do sistema
-  document.getElementById('ppSku').textContent  = item.mat;
-  document.getElementById('ppDesc').textContent = item.desc || '—';
-  document.getElementById('ppLoc').textContent  = item.loc ? '📍 ' + item.loc : '';
-  document.getElementById('ppLoc').style.display = item.loc ? 'flex' : 'none';
-  document.getElementById('ppSistema').textContent = item.sis;
-  document.getElementById('ppVUnit').textContent = item.rUnit ? 'R$ ' + item.rUnit.toFixed(2).replace('.', ',') : '—';
-  document.getElementById('ppValTotal').textContent = item.val ? 'R$ ' + item.val.toFixed(2).replace('.', ',') : '—';
-  atualizarPopupCnt(cnt);
-  document.getElementById('popupBg').classList.add('open');
-  document.getElementById('popupSheet').style.display = 'block';
-}
-
-function atualizarPopupCnt(cnt) {
-  if (!ppItem) return;
-  document.getElementById('ppCntVal').textContent = cnt;
-  var desvio = cnt - ppItem.sis;
-  var dvFin  = ppItem.rUnit ? desvio * ppItem.rUnit : null;
-  document.getElementById('ppContado').textContent = cnt;
-  var dvEl = document.getElementById('ppDesvio');
-  dvEl.textContent = (desvio > 0 ? '+' : '') + desvio;
-  dvEl.className = 'pg-val ' + (desvio === 0 ? 'pv-gn' : (desvio < 0 ? 'pv-red' : 'pv-am'));
-  var drEl = document.getElementById('ppDesvR');
-  drEl.textContent = dvFin !== null ? (dvFin > 0 ? '+' : '') + 'R$ ' + Math.abs(dvFin).toFixed(2).replace('.', ',') : '—';
-  drEl.className = 'pg-val ' + (dvFin === null || dvFin === 0 ? 'pv-gn' : (dvFin < 0 ? 'pv-red' : 'pv-am'));
-  var st = desvio === 0 ? 'ok' : (desvio < 0 ? 'falta' : 'sobra');
-  var stEl = document.getElementById('ppStatus');
-  var stMap = { ok: ['ps-ok','✓ Estoque OK'], falta: ['ps-falta','↓ Abaixo do estoque'], sobra: ['ps-sobra','↑ Acima do estoque'], pend: ['ps-pend','○ Não conferido'] };
-  stEl.className = 'pp-status ' + stMap[st][0];
-  stEl.textContent = stMap[st][1];
-}
-
-function ajustarCnt(delta) {
-  if (!ppItem) return;
-  var atual = parseInt(document.getElementById('ppCntVal').textContent) || 0;
-  var novo  = Math.max(0, atual + delta);
-  atualizarPopupCnt(novo);
-}
-
-function salvarItemPopup() {
-  if (!ppItem || !rotativo) return;
-  var cnt = parseInt(document.getElementById('ppCntVal').textContent);
-  ppItem.cnt = cnt;
-  if (rotativo.tipoToken) {
-    registrarItemTokenServidor(ppItem, cnt);
-  } else {
-    registrarBipServidor(ppItem, cnt);
-  }
-  var desvio = cnt - ppItem.sis;
-  var st = desvio === 0 ? 'ok' : (desvio < 0 ? 'falta' : 'sobra');
-  var msg = st === 'ok' ? '✓ ' + ppItem.mat + ' — Estoque OK' : (desvio < 0 ? '↓ Falta ' + Math.abs(desvio) + ' un' : '↑ Sobra ' + desvio + ' un');
-  toast(msg, st === 'ok' ? 'ok' : 'wa', 2000);
-  mostrarUltima(ppItem.mat, ppItem.desc, st);
-  fecharPopup();
-  renderStats();
-  renderLista(ppItem);
-}
-
-// Envia o item direto pro Token (sistema novo) assim que confirmado
-function registrarItemTokenServidor(item, cnt) {
-  if (!EXEC_URL || !rotativo) return;
-  fetch(EXEC_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({
-      action: 'lancarItemToken',
-      token: rotativo.id,
-      codigoMaterial: item.mat,
-      descricao: item.desc || '',
-      quantidadeSap: item.sis || 0,
-      quantidadeContada: cnt,
-      valorUnitario: item.rUnit || 0,
-      lancadoPor: SESSAO || 'Coletor'
-    })
-  }).catch(function(err) { console.warn('Erro ao lançar item no token:', err); });
-}
-
-function fecharPopup() {
-  document.getElementById('popupBg').classList.remove('open');
-  document.getElementById('popupSheet').style.display = 'none';
-}
-
-// ── SALVAR CONFERÊNCIA ────────────────────────────────────────────
-function salvarConferencia() {
-  if (!rotativo || !EXEC_URL) { toast('Configure a URL antes de salvar', 'er'); return; }
-  var conferidos = rotativo.itens.filter(function(i){ return i.cnt !== null; });
-  if (!conferidos.length) { toast('Confira ao menos 1 item antes de salvar', 'wa'); return; }
-
-  var btn = document.getElementById('saveBtn');
-  btn.disabled = true;
-  btn.textContent = '⟳ Salvando...';
-
-  if (rotativo.tipoToken) {
-    fetch(EXEC_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'enviarParaConferencia', token: rotativo.id, usuario: SESSAO || 'Coletor' })
-    })
-    .then(function(r){ return r.json(); })
-    .then(function(resp) {
-      btn.disabled = false;
-      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Salvar';
-      if (resp && resp.ok) {
-        toast('✓ Token enviado para conferência do Almoxarife!', 'ok', 3000);
-        fetch(EXEC_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({ action:'limparSessao', rotId: String(rotativo.id) }) }).catch(function(){});
-        pararPolling();
-      } else {
-        toast(resp && resp.erro ? resp.erro : 'Erro ao enviar para conferência', 'er', 4000);
-      }
-    })
-    .catch(function(err) {
-      btn.disabled = false;
-      btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Salvar';
-      toast('Aviso: verifique na Central de Aprovação se foi enviado', 'wa', 4000);
-      console.warn('Erro ao enviar token:', err);
-    });
-    return;
-  }
-
-  var total = rotativo.itens.length;
-  var ok    = conferidos.filter(function(i){ return i.cnt === i.sis; }).length;
-  var div   = conferidos.filter(function(i){ return i.cnt !== i.sis; }).length;
-  var neg   = conferidos.filter(function(i){ return i.cnt < i.sis; }).length;
-  var pos   = conferidos.filter(function(i){ return i.cnt > i.sis; }).length;
-  var acc   = conferidos.length > 0 ? Math.round(ok / conferidos.length * 100) : 0;
-
-  var agora = new Date();
-  function z(n){ return String(n).padStart(2,'0'); }
-  var dateStr = agora.getFullYear() + '-' + z(agora.getMonth()+1) + '-' + z(agora.getDate());
-  var timeStr = z(agora.getHours()) + ':' + z(agora.getMinutes()) + ':' + z(agora.getSeconds());
-
-  var payload = {
-    action: 'addRotativo',
-    rotativo: {
-      id:        String(rotativo.id),
-      date:      dateStr,
-      time:      timeStr,
-      dataInv:   rotativo.data || dateStr,
-      titulo:    rotativo.titulo || '',
-      operador:  SESSAO || rotativo.op || 'Coletor',
-      empresa:   rotativo.emp || '',
-      total:     total,
-      divergencias: div,
-      ok:        ok,
-      falta:     neg,
-      excesso:   pos,
-      acuracia:  acc,
-      items: rotativo.itens.map(function(it) {
-        var cnt = it.cnt !== null ? it.cnt : it.sis;
-        var desvio = cnt - it.sis;
-        var dvR = it.rUnit ? Math.round(desvio * it.rUnit * 100) / 100 : 0;
-        return {
-          material:       it.mat,
-          descricao:      it.desc || '',
-          sistema:        it.sis,
-          contagem:       cnt,
-          localizacao:    it.loc || '',
-          centro:         it.centro || 'CF50',
-          deposito:       it.deposito || '',
-          um:             it.um || 'UN',
-          rUnit:          it.rUnit || '',
-          valUtilizLivre: it.val || '',
-          desvSku:        desvio,
-          desvRS:         dvR || '',
-          status:         desvio === 0 ? 'OK' : (desvio < 0 ? 'Abaixo do Estoque' : 'Acima do Estoque')
-        };
-      })
-    }
-  };
-
-  // Enviar via POST (fetch)
-  fetch(EXEC_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify(payload)
-  })
-  .then(function(r){ return r.json(); })
-  .then(function(resp) {
-    btn.disabled = false;
-    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Salvar';
-    if (resp && resp.ok) {
-      toast('✓ Inventário salvo no sistema!', 'ok', 3000);
-      // Limpar sessão compartilhada
-      if (rotativo) {
-        fetch(EXEC_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({ action:'limparSessao', rotId: String(rotativo.id) }) }).catch(function(){});
-      }
-      pararPolling();
-    } else {
-      toast('Salvo! (resposta: ' + JSON.stringify(resp).slice(0,60) + ')', 'ok', 3000);
-    }
-  })
-  .catch(function(err) {
-    // CORS pode bloquear a resposta mas o dado pode ter sido enviado
-    // Tentar via JSONP como fallback
-    btn.disabled = false;
-    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Salvar';
-    toast('Aviso: verifique na planilha se os dados foram salvos', 'wa', 4000);
-    console.warn('Erro ao salvar:', err);
+/* listas dinâmicas */
+function rendInvRows(list){var box=document.getElementById('invList');if(!box)return;
+  if(!list||!list.length){box.innerHTML='<div class="row"><div class="note">Nenhum inventário encontrado.</div></div>';return;}
+  box.innerHTML=list.map(function(i){var c=i.pct>=100?'ok':i.pct<25?'div':'pend';
+   return '<div class="row" data-go="contagem" data-token="'+(i.token||'')+'"><div style="flex:1"><div class="flexb"><b style="font-size:14px">'+(i.os||i.titulo||i.token)+'</b><b class="pill '+c+'">'+i.feito+'/'+i.total+'</b></div><div class="note">Obra: '+(i.obra||'')+' · '+i.pct+'%</div>'+bar(i.pct,(i.status==='FINALIZADO'||i.pct>=100)?'fim':'')+'</div></div>';}).join('');}
+function fillContagem(){
+  var t=document.getElementById('ctTotal');if(!t)return;
+  if(typeof getUrl!=='function'||!getUrl()||!window._tokenSel){ return; }
+  document.getElementById('ctItem').textContent='Carregando...';
+  apiJsonp('itensTokenApp',{token:window._tokenSel},function(r){
+    if(!r||!r.ok){ document.getElementById('ctItem').textContent='Não consegui carregar os itens.'; return; }
+    var s=r.stats||{};
+    document.getElementById('ctTotal').textContent=s.total||0;
+    document.getElementById('ctConf').textContent=s.conferido||0;
+    document.getElementById('ctFalta').textContent=s.faltando||0;
+    var pend=(r.itens||[]).filter(function(x){return x.f===0;})[0]||(r.itens||[])[0];
+    if(pend){ document.getElementById('ctItem').textContent=pend.nm; document.getElementById('ctCod').textContent='Código: '+pend.cod; }
+    else { document.getElementById('ctItem').textContent='Sem itens neste inventário'; document.getElementById('ctCod').textContent=''; }
+    ITENS=r.itens||[]; fillLast();
   });
 }
-
-// ── SCANNER ───────────────────────────────────────────────────────
-function abrirScanner() {
-  if (!rotativo) { toast('Selecione um inventário primeiro', 'wa'); return; }
-  document.getElementById('scanOv').classList.add('open');
-  iniciarCamera();
-}
-function fecharScanner() {
-  document.getElementById('scanOv').classList.remove('open');
-  pararCamera();
-}
-function pararCamera() {
-  if (stream) { stream.getTracks().forEach(function(t){ t.stop(); }); stream = null; }
-  if (scanInterv) { clearInterval(scanInterv); scanInterv = null; }
-  var v = document.getElementById('video');
-  if (v) v.srcObject = null;
-}
-function iniciarCamera() {
-  pararCamera();
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    toast('Câmera não disponível', 'er'); return;
-  }
-  navigator.mediaDevices.getUserMedia({ video: { facingMode: facingMode }, audio: false })
-    .then(function(s) {
-      stream = s;
-      var v = document.getElementById('video');
-      v.srcObject = s; v.play();
-      // Tentar detecção via BarcodeDetector nativo
-      if (window.BarcodeDetector) {
-        BarcodeDetector.getSupportedFormats().then(function(fmts) {
-          var det = new BarcodeDetector({ formats: fmts });
-          scanInterv = setInterval(function() {
-            if (!v.videoWidth) return;
-            det.detect(v).then(function(codes) {
-              if (codes.length > 0) {
-                bip(codes[0].rawValue);
-              }
-            }).catch(function(){});
-          }, 400);
-        });
-      }
-    })
-    .catch(function(e) {
-      toast('Câmera bloqueada: ' + e.message, 'er');
-    });
-}
-function virarCamera() {
-  facingMode = facingMode === 'environment' ? 'user' : 'environment';
-  if (stream) iniciarCamera();
-}
-function toggleTorch() {
-  if (!stream) return;
-  var track = stream.getVideoTracks()[0];
-  if (!track || !track.getCapabilities || !track.getCapabilities().torch) { toast('Flash não suportado', 'wa'); return; }
-  torchOn = !torchOn;
-  track.applyConstraints({ advanced: [{ torch: torchOn }] });
-  document.getElementById('btnTorch').style.background = torchOn ? 'rgba(255,220,0,.2)' : '';
-}
-
-
-
-// ── FILTRO POR DEPÓSITO ───────────────────────────────────────────
-var _filtroDeposito = null;
-
-function filtrarDeposito(dep) {
-  _filtroDeposito = dep;
-  document.querySelectorAll('.dep-btn').forEach(function(b){ b.classList.remove('active'); });
-  var alvo = dep ? document.getElementById('dep-' + dep) : document.getElementById('depAll');
-  if (alvo) alvo.classList.add('active');
-  renderLista();
-}
-
-function atualizarBotoesDeposito() {
-  if (!rotativo) return;
-  var deps = {};
-  rotativo.itens.forEach(function(it) {
-    var loc = (it.loc || '').trim();
-    if (!loc) return;
-    // Extrair prefixo (ex: CT101C03A → CT101, ou CT1)
-    var m = loc.match(/^([A-Z]{2}\d{1,3})/i);
-    var dep = m ? m[1].toUpperCase() : loc.substring(0, 5).toUpperCase();
-    deps[dep] = (deps[dep] || 0) + 1;
+function fillInv(){var box=document.getElementById('invList');if(!box)return;
+  if(typeof getUrl!=='function'||!getUrl()){ rendInvRows(INVS); return; }
+  box.innerHTML='<div class="row"><div class="note">Carregando inventários...</div></div>';
+  apiJsonp('listarInventariosApp',{},function(r){
+    if(r&&r.ok&&r.data){ rendInvRows(r.data); }
+    else{ box.innerHTML='<div class="row"><div class="note" style="color:var(--div)">Não consegui carregar. Confira a URL em Sincronização → Testar conexão.</div></div>'; }
   });
-  var box = document.getElementById('depBtns');
-  if (!box) return;
-  var sorted = Object.keys(deps).sort();
-  box.innerHTML = sorted.map(function(dep) {
-    return '<button class="dep-btn" id="dep-' + dep + '" onclick="filtrarDeposito(\'' + dep + '\')">'
-      + dep + ' <span style="opacity:.6">(' + deps[dep] + ')</span></button>';
-  }).join('');
 }
+function fillRes(){var box=document.getElementById('resList');if(!box)return;if(!RES.length){box.innerHTML='<div class="row"><div class="note">Nenhuma reserva ainda. Crie uma em “Nova reserva”.</div></div>';return;}box.innerHTML=RES.map(function(r){
+  return '<div class="row" data-go="reservaDet"><div style="flex:1"><div class="flexb"><b style="font-size:14px">'+r.os+'</b><span class="pill '+r.stc+'">'+r.st+'</span></div><div class="note">'+r.obra+' · '+r.itens+' itens · '+r.pct+'%</div>'+bar(r.pct)+'</div></div>';
+}).join('');}
+function fillLast(){var box=document.getElementById('lastItems');if(!box)return;if(!ITENS.length){box.innerHTML='<div class="row"><div class="note">Nenhum item conferido ainda.</div></div>';return;}box.innerHTML=ITENS.map(function(i){
+  var c=i.f>=i.t?'ok':i.f===0?'div':'pend';var ic=i.f>=i.t?'✓':'○';
+  return '<div class="row"><span class="icirc '+c+'">'+ic+'</span><div style="flex:1"><b style="font-size:13px">'+i.nm+'</b></div><b style="color:var(--'+c+')">'+i.f+'/'+i.t+'</b></div>';
+}).join('');}
+function fillResItens(){var box=document.getElementById('resItens');if(!box)return;if(!ITENS.length){box.innerHTML='<div class="row"><div class="note">Sem itens nesta reserva.</div></div>';return;}box.innerHTML=ITENS.map(function(i){
+  var c=i.f>=i.t?'ok':i.f===0?'div':'pend';var ic=i.f>=i.t?'✓':'○';
+  return '<div class="row"><span class="thumb">📦</span><div style="flex:1"><b style="font-size:13px">'+i.nm+'</b><div class="code">Código: '+i.cod+' · Qtd: '+i.t+'</div></div><b style="color:var(--'+c+')">'+i.f+'/'+i.t+'</b></div>';
+}).join('');}
 
-// ── MÚLTIPLOS OPERADORES ──────────────────────────────────────────
-var _itensLockados = {};  // { mat: operador }
-var _pollingInterv = null;
-
-// Iniciar polling do estado compartilhado (a cada 8s)
-function iniciarPolling() {
-  if (!EXEC_URL || !rotativo) return;
-  pararPolling();
-  _pollingInterv = setInterval(sincronizarEstado, 8000);
-  sincronizarEstado(); // imediato
+/* ====== NAVEGAÇÃO ====== */
+var stack=['dashboard'];
+function go(name){
+  var scs=document.querySelectorAll('.screen');var found=false;
+  scs.forEach(function(s){var on=s.getAttribute('data-screen')===name;s.classList.toggle('active',on);if(on)found=true;});
+  if(!found)return;
+  if(stack[stack.length-1]!==name)stack.push(name);
+  // nav highlight
+  document.querySelectorAll('#nav button').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-go')===name);});
+  // refresh dynamic
+  fillInv();fillRes();fillLast();fillResItens();
+  if(name==='contagem')fillContagem();
+  if(name==='sync'){var cu=document.getElementById('cfgUrl');if(cu&&!cu.value)cu.value=getUrl();}
+  document.querySelector('.phone').scrollTo&&window.scrollTo(0,0);
 }
+function goBack(){ if(stack.length>1){stack.pop();go(stack[stack.length-1]);stack.pop();} else go('dashboard'); }
 
-function pararPolling() {
-  if (_pollingInterv) { clearInterval(_pollingInterv); _pollingInterv = null; }
-}
-
-function sincronizarEstado() {
-  if (!rotativo || !EXEC_URL) return;
-  var cbName = '_est_' + Date.now();
-  var sc = document.createElement('script');
-  window[cbName] = function(resp) {
-    delete window[cbName];
-    if (sc.parentNode) sc.parentNode.removeChild(sc);
-    if (!resp || !resp.ok) return;
-    _itensLockados = {};
-    resp.itens.forEach(function(it) {
-      if (it.operador !== SESSAO) {  // só itens de OUTROS operadores
-        _itensLockados[it.mat.toUpperCase()] = it.operador;
-      } else {
-        // Item meu: atualizar contagem local se ainda não conferido
-        var local = rotativo.itens.find(function(i){ return i.mat.toUpperCase() === it.mat.toUpperCase(); });
-        if (local && local.cnt === null) {
-          local.cnt = it.contagem;
-        }
-      }
-    });
-    renderLista();
-  };
-  sc.onerror = function() { delete window[cbName]; };
-  sc.src = EXEC_URL + '?action=getEstadoColetor&rotId=' + encodeURIComponent(rotativo.id) + '&callback=' + cbName;
-  document.head.appendChild(sc);
-}
-
-// Enviar bipagem para o servidor (registra e verifica bloqueio)
-function registrarBipServidor(item, cnt) {
-  if (!EXEC_URL) return;
-  var cbName = '_bip_' + Date.now();
-  var sc = document.createElement('script');
-  window[cbName] = function(resp) {
-    delete window[cbName];
-    if (sc.parentNode) sc.parentNode.removeChild(sc);
-    if (resp && resp.bloqueado) {
-      // Desfazer contagem local
-      item.cnt = null;
-      renderStats(); renderLista();
-      toast('⛔ Item já lido por ' + resp.operadorQueLogou, 'er', 3500);
-    }
-  };
-  sc.onerror = function() { delete window[cbName]; };
-  // Usar GET com os dados (para JSONP)
-  sc.src = EXEC_URL
-    + '?action=bipItem'
-    + '&rotId=' + encodeURIComponent(rotativo.id)
-    + '&mat=' + encodeURIComponent(item.mat)
-    + '&operador=' + encodeURIComponent(SESSAO || 'Coletor')
-    + '&contagem=' + cnt
-    + '&localizacao=' + encodeURIComponent(item.loc || '')
-    + '&callback=' + cbName;
-  document.head.appendChild(sc);
-}
-
-// ── INIT ──────────────────────────────────────────────────────────
-(function init() {
-  document.getElementById('cfgUrl').value = EXEC_URL;
-  TOKENS = JSON.parse(localStorage.getItem('inv_tokens') || '[]');
-  if (!EXEC_URL) {
-    irPag('config');
-  } else if (TOKENS.length > 0 && !SESSAO) {
-    irPag('token');
-  } else {
-    irPag('selecao');
+document.addEventListener('click',function(e){
+  var g=e.target.closest('[data-go]'); if(g){var tk=g.getAttribute('data-token'); if(tk)window._tokenSel=tk; go(g.getAttribute('data-go'));return;}
+  var b=e.target.closest('[data-back]'); if(b){goBack();return;}
+  // tabs
+  var tb=e.target.closest('[data-tabs] button,[data-tabs] button'); 
+  var tabBtn=e.target.closest('[data-tabs] button')||e.target.closest('[data-chips] button');
+  if(tabBtn){var grp=tabBtn.parentElement;grp.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});tabBtn.classList.add('on');
+    if(tabBtn.closest('[data-chips]')){var unit=tabBtn.textContent==='CAIXA'?'CAIXAS':tabBtn.textContent==='PACOTE'?'PACOTES':tabBtn.textContent==='OUTRO'?'UNID':'SACOS';var q2=document.getElementById('agQtd2');if(q2)q2.nextElementSibling&&(q2.parentElement.querySelector('span').textContent=unit);}
   }
+});
+
+/* contador manual */
+(function(){
+  var cur=12;
+  function set(v){cur=Math.max(0,v);var cv=document.getElementById('cntVal');if(cv)cv.textContent=cur;var al=document.getElementById('addLbl');if(al)al.textContent='Adicionar ('+cur+')';}
+  document.addEventListener('click',function(e){
+    var s=e.target.closest('[data-cnt]');if(s){set(cur+(s.getAttribute('data-cnt')==='+'?1:-1));return;}
+    var k=e.target.closest('[data-keys] button');if(k){var t=k.textContent.trim();var kk=k.getAttribute('data-k');
+      if(kk==='C')set(0);else if(kk==='del')set(parseInt(String(cur).slice(0,-1)||'0',10));
+      else set(parseInt(String(cur===0?'':cur)+t,10));}
+  });
 })();
+
+/* agrupar calc */
+(function(){
+  var ipe=0,qtd=0;
+  function upd(){var tot=ipe*qtd;
+    [['agItens',ipe],['agItens2',ipe],['agQtd',qtd],['agQtd2',qtd],['agTot',tot],['agTot2',tot]].forEach(function(p){var el=document.getElementById(p[0]);if(el)el.textContent=p[1];});}
+  document.addEventListener('click',function(e){
+    var a=e.target.closest('[data-ag]');if(!a)return;var t=a.getAttribute('data-ag');
+    if(t==='i+')ipe++;if(t==='i-')ipe=Math.max(1,ipe-1);if(t==='q+')qtd++;if(t==='q-')qtd=Math.max(1,qtd-1);upd();});
+})();
+
+/* relógio */
+(function(){function t(){var d=new Date();document.getElementById('clock').textContent=(d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();}t();setInterval(t,30000);})();
+
+/* ====== CONEXÃO COM O SCRIPT (Apps Script /exec) ====== */
+function getUrl(){ try{return localStorage.getItem('almoxa_exec_url')||'';}catch(e){return '';} }
+function setUrl(u){ try{localStorage.setItem('almoxa_exec_url',u);}catch(e){} }
+
+/* chamada genérica JSONP ao Apps Script (via payload do doGet) */
+function apiJsonp(action,extra,done){
+  var url=getUrl(); if(!url){ done&&done(null); return; }
+  var cb='almoxa_'+Date.now()+Math.floor(Math.random()*9999);
+  var s=document.createElement('script');
+  var to=setTimeout(function(){ clean(); done&&done(null); },10000);
+  function clean(){ try{delete window[cb];}catch(e){} if(s&&s.parentNode)s.parentNode.removeChild(s); }
+  window[cb]=function(resp){ clearTimeout(to); clean(); done&&done(resp); };
+  s.onerror=function(){ clearTimeout(to); clean(); done&&done(null); };
+  var payload=encodeURIComponent(JSON.stringify(Object.assign({action:action},extra||{})));
+  s.src=url+(url.indexOf('?')<0?'?':'&')+'payload='+payload+'&callback='+cb;
+  document.body.appendChild(s);
+}
+
+function salvarUrl(){
+  var inp=document.getElementById('cfgUrl'),msg=document.getElementById('cfgMsg');
+  var url=(inp.value||'').trim();
+  if(!url){ msg.innerHTML='<span style="color:var(--div)">Cole a URL /exec primeiro.</span>'; return; }
+  if(url.indexOf('/exec')<0){ msg.innerHTML='<span style="color:var(--pend)">Atenção: a URL normalmente termina em /exec.</span>'; }
+  setUrl(url);
+  msg.innerHTML='<span style="color:var(--ok)">✓ URL salva. Agora toque em "Testar conexão".</span>';
+}
+
+function testarConexao(){
+  var msg=document.getElementById('cfgMsg');
+  var url=((document.getElementById('cfgUrl')||{}).value||'').trim()||getUrl();
+  if(!url){ msg.innerHTML='<span style="color:var(--div)">Cole e salve a URL /exec primeiro.</span>'; return; }
+  msg.textContent='Testando conexão...';
+  var cb='almoxaping_'+Date.now();
+  var s=document.createElement('script');
+  var to=setTimeout(function(){ cleanup(); msg.innerHTML='<span style="color:var(--div)">Sem resposta. Verifique se a implantação está como <b>"Qualquer pessoa"</b> e se a URL termina em /exec.</span>'; },9000);
+  function cleanup(){ try{delete window[cb];}catch(e){} if(s&&s.parentNode)s.parentNode.removeChild(s); }
+  window[cb]=function(resp){ clearTimeout(to); cleanup();
+    if(resp&&resp.ok){ msg.innerHTML='<span style="color:var(--ok)">✓ Conexão OK — sistema online.</span>'; setUrl(url); }
+    else{ msg.innerHTML='<span style="color:var(--pend)">Conectou, mas a resposta veio inesperada.</span>'; } };
+  s.onerror=function(){ clearTimeout(to); cleanup(); msg.innerHTML='<span style="color:var(--div)">Não carregou. Quase sempre é a implantação não estar como <b>"Qualquer pessoa"</b>.</span>'; };
+  s.src=url+(url.indexOf('?')<0?'?':'&')+'action=ping&callback='+cb;
+  document.body.appendChild(s);
+}
+
+function sincronizar(){
+  var w=document.getElementById('syncWhen');
+  if(!getUrl()){ var m=document.getElementById('cfgMsg'); if(m)m.innerHTML='<span style="color:var(--pend)">Salve e teste a URL antes de sincronizar.</span>'; return; }
+  if(w){var d=new Date();w.textContent='hoje, '+(d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();}
+}
+
+document.addEventListener('click',function(e){
+  var a=e.target.closest('[data-act]'); if(!a)return;
+  var act=a.getAttribute('data-act');
+  if(act==='salvarUrl')salvarUrl();
+  if(act==='testarConexao')testarConexao();
+  if(act==='sincronizar')sincronizar();
+});
+
+go('dashboard');
 </script>
 </body>
 </html>
