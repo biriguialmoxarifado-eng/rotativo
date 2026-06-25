@@ -568,8 +568,8 @@ function fillRes(){var box=document.getElementById('resList');if(!box)return;if(
   return '<div class="row" data-go="reservaDet"><div style="flex:1"><div class="flexb"><b style="font-size:14px">'+r.os+'</b><span class="pill '+r.stc+'">'+r.st+'</span></div><div class="note">'+r.obra+' · '+r.itens+' itens · '+r.pct+'%</div>'+bar(r.pct)+'</div></div>';
 }).join('');}
 function fillLast(){var box=document.getElementById('lastItems');if(!box)return;if(!ITENS.length){box.innerHTML='<div class="row"><div class="note">Nenhum item conferido ainda.</div></div>';return;}box.innerHTML=ITENS.map(function(i){
-  var c=i.f>=i.t?'ok':i.f===0?'div':'pend';var ic=i.f>=i.t?'✓':'○';
-  return '<div class="row"><span class="icirc '+c+'">'+ic+'</span><div style="flex:1"><b style="font-size:13px">'+i.nm+'</b></div><b style="color:var(--'+c+')">'+i.f+'/'+i.t+'</b></div>';
+  var c=i.f>=i.t&&i.t>0?'ok':i.f===0?'div':'pend';var ic=i.f>=i.t&&i.t>0?'✓':'○';
+  return '<div class="row" data-pick-cod="'+i.cod+'" style="cursor:pointer"><span class="icirc '+c+'">'+ic+'</span><div style="flex:1"><b style="font-size:13px">'+i.nm+'</b></div><b style="color:var(--'+c+')">'+i.f+'/'+i.t+'</b></div>';
 }).join('');}
 function fillResItens(){var box=document.getElementById('resItens');if(!box)return;if(!ITENS.length){box.innerHTML='<div class="row"><div class="note">Sem itens nesta reserva.</div></div>';return;}box.innerHTML=ITENS.map(function(i){
   var c=i.f>=i.t?'ok':i.f===0?'div':'pend';var ic=i.f>=i.t?'✓':'○';
@@ -688,6 +688,19 @@ document.addEventListener('click',function(e){
   if(act==='sincronizar')sincronizar();
   if(act==='rodarDiag')rodarDiagnostico();
   if(act==='adicionarContagem')adicionarContagem();
+});
+
+document.addEventListener('click',function(e){
+  var pk=e.target.closest('[data-pick-cod]'); if(!pk)return;
+  var cod=pk.getAttribute('data-pick-cod');
+  var it=(ITENS||[]).filter(function(x){return String(x.cod)===String(cod);})[0];
+  if(it){
+    window._itemAtual=it;
+    document.getElementById('ctItem').textContent=it.nm;
+    document.getElementById('ctCod').textContent='Código: '+it.cod;
+    if(window._setCnt)window._setCnt(it.f||0);
+    var sc=document.querySelector('.screen[data-screen="contagem"]')||window; try{ (sc.scrollTo?sc:window).scrollTo(0,0); }catch(_){}
+  }
 });
 
 function adicionarContagem(){
