@@ -281,7 +281,7 @@ SCREENS.contagem=`
         <button data-k="C">C</button><button>0</button><button data-k="del">⌫</button>
       </div>
     </div>
-    <button class="btn btn-primary mt12"><span id="addLbl">Adicionar</span></button>
+    <button class="btn btn-primary mt12" data-act="adicionarContagem"><span id="addLbl">Adicionar</span></button>
     <div class="sec-title mt12">Últimos itens conferidos</div>
     <div class="card" id="lastItems"></div>
   </div>
@@ -499,6 +499,7 @@ SCREENS.mais=`
     <div class="row" data-go="mapa">📍 Mapa do estoque<div style="flex:1"></div>›</div>
     <div class="row" data-go="sync">⟳ Sincronização<div style="flex:1"></div>›</div>
     <div class="row" data-go="ocorrencias">❗ Ocorrências<div style="flex:1"></div>›</div>
+    <div class="row" data-go="diag">🩺 Diagnóstico<div style="flex:1"></div>›</div>
   </div></div>
 </section>`;
 SCREENS.mapa=`<section class="screen" data-screen="mapa"><div class="hdr"><div class="hdr-row">${back()}<h1 class="display">Mapa do Estoque</h1></div></div><div class="pad"><div class="card pad" style="padding:24px;text-align:center"><div style="font-size:40px">📍</div><div class="note mt12">Mapa do estoque — em breve.<br>(Liga no backend depois)</div></div></div></section>`;
@@ -521,6 +522,15 @@ SCREENS.sync=`<section class="screen" data-screen="sync"><div class="hdr"><div c
   </div>
 </div></section>`;
 
+SCREENS.diag=`
+<section class="screen" data-screen="diag">
+  <div class="hdr"><div class="hdr-row">${back()}<h1 class="display">Diagnóstico</h1></div></div>
+  <div class="pad">
+    <button class="btn btn-primary mb12" data-act="rodarDiag">Rodar diagnóstico</button>
+    <div id="diagOut"><div class="card pad" style="padding:16px"><div class="note">Toque em “Rodar diagnóstico” para checar a comunicação com o sistema.</div></div></div>
+  </div>
+</section>`;
+
 /* ====== RENDER ====== */
 var host=document.getElementById('screens');
 Object.keys(SCREENS).forEach(function(k){ host.insertAdjacentHTML('beforeend',SCREENS[k]); });
@@ -541,8 +551,8 @@ function fillContagem(){
     document.getElementById('ctConf').textContent=s.conferido||0;
     document.getElementById('ctFalta').textContent=s.faltando||0;
     var pend=(r.itens||[]).filter(function(x){return x.f===0;})[0]||(r.itens||[])[0];
-    if(pend){ document.getElementById('ctItem').textContent=pend.nm; document.getElementById('ctCod').textContent='Código: '+pend.cod; }
-    else { document.getElementById('ctItem').textContent='Sem itens neste inventário'; document.getElementById('ctCod').textContent=''; }
+    if(pend){ window._itemAtual=pend; document.getElementById('ctItem').textContent=pend.nm; document.getElementById('ctCod').textContent='Código: '+pend.cod; }
+    else { window._itemAtual=null; document.getElementById('ctItem').textContent='Sem itens neste inventário'; document.getElementById('ctCod').textContent=''; }
     ITENS=r.itens||[]; fillLast();
   });
 }
@@ -596,8 +606,9 @@ document.addEventListener('click',function(e){
 
 /* contador manual */
 (function(){
-  var cur=12;
-  function set(v){cur=Math.max(0,v);var cv=document.getElementById('cntVal');if(cv)cv.textContent=cur;var al=document.getElementById('addLbl');if(al)al.textContent='Adicionar ('+cur+')';}
+  var cur=0;
+  function set(v){cur=Math.max(0,v);var cv=document.getElementById('cntVal');if(cv)cv.textContent=cur;var al=document.getElementById('addLbl');if(al)al.textContent='Adicionar'+(cur>0?' ('+cur+')':'');}
+  window._setCnt=set; window._getCnt=function(){return cur;};
   document.addEventListener('click',function(e){
     var s=e.target.closest('[data-cnt]');if(s){set(cur+(s.getAttribute('data-cnt')==='+'?1:-1));return;}
     var k=e.target.closest('[data-keys] button');if(k){var t=k.textContent.trim();var kk=k.getAttribute('data-k');
@@ -675,7 +686,62 @@ document.addEventListener('click',function(e){
   if(act==='salvarUrl')salvarUrl();
   if(act==='testarConexao')testarConexao();
   if(act==='sincronizar')sincronizar();
+  if(act==='rodarDiag')rodarDiagnostico();
+  if(act==='adicionarContagem')adicionarContagem();
 });
+
+function adicionarContagem(){
+  var it=window._itemAtual;
+  if(!getUrl()){ alert('Configure a conexão em Sincronização.'); return; }
+  if(!window._tokenSel){ alert('Abra um inventário primeiro.'); return; }
+  if(!it){ alert('Nenhum item selecionado para contar.'); return; }
+  var cnt=(typeof window._getCnt==='function')?window._getCnt():parseInt(document.getElementById('cntVal').textContent||'0',10);
+  var btn=document.querySelector('[data-act="adicionarContagem"] #addLbl');
+  if(btn)btn.textContent='Salvando...';
+  apiJsonp('lancarItemToken',{
+    token: window._tokenSel,
+    codigoMaterial: it.cod,
+    descricao: it.nm,
+    quantidadeContada: cnt,
+    quantidadeSap: it.t,
+    valorUnitario: it.vu||0,
+    lancadoPor:'Coletor'
+  },function(r){
+    if(r&&r.ok){
+      if(window._setCnt)window._setCnt(0);
+      fillContagem(); // recarrega contadores e próximo item
+    } else {
+      alert('Não consegui salvar. Confira a conexão (Diagnóstico).');
+      if(btn)btn.textContent='Adicionar';
+    }
+  });
+}
+
+function rodarDiagnostico(){
+  var out=document.getElementById('diagOut'); if(!out)return;
+  if(!getUrl()){ out.innerHTML='<div class="card pad" style="padding:16px"><div class="note" style="color:var(--pend)">Configure a URL em Sincronização primeiro.</div></div>'; return; }
+  out.innerHTML='<div class="card pad" style="padding:16px"><div class="note">Testando comunicação...</div></div>';
+  var t0=Date.now();
+  apiJsonp('diagnosticoApp',{},function(r){
+    var ms=Date.now()-t0;
+    if(!r||!r.ok){ out.innerHTML='<div class="card pad" style="padding:16px"><div class="note" style="color:var(--div)">Sem comunicação com o sistema. Confira a conexão em Sincronização.</div></div>'; return; }
+    var reg=r.registros||{},mods=r.modulos||{};
+    function lin(l,v,c){return '<div class="resline"><div class="lbl">'+l+'</div><div class="val" style="color:'+(c||'var(--ink)')+'">'+v+'</div></div>';}
+    var h='<div class="card mb12">'
+      +lin('Status','✓ Online','var(--ok)')
+      +lin('Tempo de resposta',ms+' ms',ms<1500?'var(--ok)':'var(--pend)')
+      +lin('Planilha',r.planilha||'—')
+      +lin('Última atualização',r.timestamp||'—')
+      +lin('Versão API',r.versaoApi||'—')
+      +'</div>';
+    h+='<div class="sec-title">Registros nas abas</div><div class="card mb12">';
+    Object.keys(reg).forEach(function(k){ h+=lin(k, reg[k].existe?reg[k].registros:'(não existe)', reg[k].existe?'var(--ink)':'var(--div)'); });
+    h+='</div><div class="sec-title">Módulos carregados</div><div class="card">';
+    Object.keys(mods).forEach(function(k){ h+=lin(k, mods[k]?'✓ OK':'✗ ausente', mods[k]?'var(--ok)':'var(--div)'); });
+    h+='</div>';
+    out.innerHTML=h;
+  });
+}
 
 go('dashboard');
 </script>
