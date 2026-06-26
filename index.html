@@ -201,7 +201,7 @@ function bar(pct,st){var c=st==='fim'||pct>=100?'var(--ok)':pct<25?'var(--div)':
 function back(t){return '<button class="ic" data-back>‹</button>';}
 
 /* ====== TELAS ====== */
-var APP_VERSION='v19 · 25/06 (reservas+diag)';
+var APP_VERSION='v20 · 25/06 (url nova)';
 var SCREENS={};
 
 /* DASHBOARD */
@@ -659,7 +659,7 @@ document.addEventListener('click',function(e){
 (function(){function t(){var d=new Date();document.getElementById('clock').textContent=(d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();}t();setInterval(t,30000);})();
 
 /* ====== CONEXÃO COM O SCRIPT (Apps Script /exec) ====== */
-var URL_PADRAO='https://script.google.com/macros/s/AKfycbxnpzGiUV-1igFtkrNWenzPPXD7dOI-55YmCqdlC6AI6VZR2wyHbte1gTnU_1B8czHq/exec';
+var URL_PADRAO='https://script.google.com/macros/s/AKfycbwyw4bWeKk1VJTTct9F7PXp74AkoHdfxkCs-EnBcZ3LNehotzZdLtM3EsgJkGU9AvXldA/exec';
 function getUrl(){ try{return localStorage.getItem('almoxa_exec_url')||URL_PADRAO;}catch(e){return URL_PADRAO;} }
 function setUrl(u){ try{localStorage.setItem('almoxa_exec_url',u);}catch(e){} }
 
@@ -716,7 +716,7 @@ function _pingTry(url,msg,tentativas){
   }
   var to=setTimeout(function(){ cleanup(); falhou('timeout'); },20000);
   window[cb]=function(resp){ clearTimeout(to); cleanup();
-    if(resp&&resp.ok){ msg.innerHTML='<span style="color:var(--ok)">✓ Conexão OK — sistema online.</span>'; setUrl(url); }
+    if(resp&&resp.ok){ msg.innerHTML='<span style="color:var(--ok)">✓ Conexão OK — API '+(resp.versaoApi||'?')+' · sistema online.</span>'; setUrl(url); }
     else{ msg.innerHTML='<span style="color:var(--pend)">Conectou, mas a resposta veio inesperada. Republicar a versão costuma resolver.</span>'; } };
   s.onerror=function(){ clearTimeout(to); cleanup(); falhou('erro'); };
   s.src=url+(url.indexOf('?')<0?'?':'&')+'action=ping&callback='+cb;
