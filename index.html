@@ -201,6 +201,7 @@ function bar(pct,st){var c=st==='fim'||pct>=100?'var(--ok)':pct<25?'var(--div)':
 function back(t){return '<button class="ic" data-back>‹</button>';}
 
 /* ====== TELAS ====== */
+var APP_VERSION='v19 · 25/06 (reservas+diag)';
 var SCREENS={};
 
 /* DASHBOARD */
@@ -320,7 +321,31 @@ SCREENS.reservas=`
     <div class="tabs" data-tabs><button class="on">Abertas</button><button>Em separação</button><button>Conferência</button><button>Finalizadas</button></div>
     <div class="search">🔍<input placeholder="Buscar reserva..."></div>
     <div class="card" id="resList"></div>
-    <button class="btn btn-primary mt12" data-go="reservaDet">＋ Nova reserva</button>
+    <button class="btn btn-primary mt12" data-go="novaReserva">＋ Nova reserva</button>
+  </div>
+</section>`;
+
+/* NOVA RESERVA — busca item do inventário, puxa local e valor */
+SCREENS.novaReserva=`
+<section class="screen" data-screen="novaReserva">
+  <div class="hdr"><div class="hdr-row">${back()}<h1 class="display">Nova Reserva</h1></div></div>
+  <div class="pad">
+    <div style="margin-bottom:10px"><div class="note" style="margin-bottom:6px">Nome da reserva (ex: Três Lagoas)</div>
+      <input id="resNome" placeholder="Digite o nome da reserva" style="width:100%;padding:14px;border:1px solid var(--line,#d9e2dc);border-radius:12px;font-size:16px"></div>
+    <div id="resCount" class="note" style="margin-bottom:10px"></div>
+    <div class="search">🔍<input id="resBuscaInp" placeholder="Digite o item (ex: camisa)..." oninput="buscarItensReserva(this.value)"></div>
+    <div id="resBuscaOut" class="card mb12"><div class="row"><div class="note">Digite ao menos 2 letras para buscar um item já inventariado.</div></div></div>
+    <div id="resSelCard" style="display:none">
+      <div class="sec-title">Item selecionado</div>
+      <div class="card pad mb12" style="padding:16px">
+        <b id="resSelNm" style="font-size:14px"></b>
+        <div class="note" id="resSelInfo" style="margin-top:4px"></div>
+        <div style="margin-top:14px"><div class="note" style="margin-bottom:6px">Quantidade a reservar</div>
+          <input id="resQtd" type="number" inputmode="numeric" placeholder="0" style="width:100%;padding:14px;border:1px solid var(--line,#d9e2dc);border-radius:12px;font-size:18px;text-align:center"></div>
+        <button class="btn btn-primary mt12" data-act="salvarReserva">Adicionar item à reserva</button>
+      </div>
+    </div>
+    <button class="btn mt12" data-go="reservas" style="background:var(--g100,#e7f3ec);color:var(--g600,#1f7a4d)">Concluir reserva</button>
   </div>
 </section>`;
 
@@ -513,12 +538,14 @@ SCREENS.sync=`<section class="screen" data-screen="sync"><div class="hdr"><div c
       <button class="btn btn-ghost btn-sm" style="flex:1" data-act="testarConexao">Testar conexão</button>
     </div>
     <div id="cfgMsg" class="note mt12"></div>
+    <button class="btn btn-ghost btn-sm mt12" style="width:100%" data-act="restaurarUrl">↺ Restaurar URL padrão</button>
   </div>
   <div class="card pad" style="padding:20px;text-align:center">
     <div style="font-size:38px">☁</div>
     <div class="note mt12 mb12">Última sincronização: <span id="syncWhen">—</span></div>
     <button class="btn btn-primary" data-act="sincronizar">Sincronizar agora</button>
     <div class="pill ok mt12" style="display:inline-flex">✓ Dados salvos offline</div>
+    <div class="note mt12" style="text-align:center;color:var(--t3,#9aa)">Versão do app: <b id="appVer"></b></div>
   </div>
 </div></section>`;
 
@@ -588,7 +615,8 @@ function go(name){
   // refresh dynamic
   fillInv();fillRes();fillLast();fillResItens();
   if(name==='contagem')fillContagem();
-  if(name==='sync'){var cu=document.getElementById('cfgUrl');if(cu&&!cu.value)cu.value=getUrl();}
+  if(name==='reservas')loadReservas();
+  if(name==='sync'){var cu=document.getElementById('cfgUrl');if(cu&&!cu.value)cu.value=getUrl();var av=document.getElementById('appVer');if(av)av.textContent=APP_VERSION;}
   document.querySelector('.phone').scrollTo&&window.scrollTo(0,0);
 }
 function goBack(){ if(stack.length>1){stack.pop();go(stack[stack.length-1]);stack.pop();} else go('dashboard'); }
@@ -631,7 +659,8 @@ document.addEventListener('click',function(e){
 (function(){function t(){var d=new Date();document.getElementById('clock').textContent=(d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();}t();setInterval(t,30000);})();
 
 /* ====== CONEXÃO COM O SCRIPT (Apps Script /exec) ====== */
-function getUrl(){ try{return localStorage.getItem('almoxa_exec_url')||'';}catch(e){return '';} }
+var URL_PADRAO='https://script.google.com/macros/s/AKfycbxnpzGiUV-1igFtkrNWenzPPXD7dOI-55YmCqdlC6AI6VZR2wyHbte1gTnU_1B8czHq/exec';
+function getUrl(){ try{return localStorage.getItem('almoxa_exec_url')||URL_PADRAO;}catch(e){return URL_PADRAO;} }
 function setUrl(u){ try{localStorage.setItem('almoxa_exec_url',u);}catch(e){} }
 
 /* chamada genérica JSONP ao Apps Script (via payload do doGet) */
@@ -639,7 +668,7 @@ function apiJsonp(action,extra,done){
   var url=getUrl(); if(!url){ done&&done(null); return; }
   var cb='almoxa_'+Date.now()+Math.floor(Math.random()*9999);
   var s=document.createElement('script');
-  var to=setTimeout(function(){ clean(); done&&done(null); },10000);
+  var to=setTimeout(function(){ clean(); done&&done(null); },20000);
   function clean(){ try{delete window[cb];}catch(e){} if(s&&s.parentNode)s.parentNode.removeChild(s); }
   window[cb]=function(resp){ clearTimeout(to); clean(); done&&done(resp); };
   s.onerror=function(){ clearTimeout(to); clean(); done&&done(null); };
@@ -648,28 +677,48 @@ function apiJsonp(action,extra,done){
   document.body.appendChild(s);
 }
 
+/* limpa a URL: tira espaços, corrige /dev->/exec, corta lixo depois de /exec */
+function normUrl(u){
+  u=String(u||'').replace(/[\u200B-\u200D\uFEFF]/g,'').trim().replace(/\s+/g,'');
+  u=u.replace(/\/dev(\?|#|$)/,'/exec$1');
+  var i=u.indexOf('/exec'); if(i>=0) u=u.slice(0,i+5);
+  return u;
+}
+
 function salvarUrl(){
   var inp=document.getElementById('cfgUrl'),msg=document.getElementById('cfgMsg');
-  var url=(inp.value||'').trim();
+  var url=normUrl(inp.value);
   if(!url){ msg.innerHTML='<span style="color:var(--div)">Cole a URL /exec primeiro.</span>'; return; }
-  if(url.indexOf('/exec')<0){ msg.innerHTML='<span style="color:var(--pend)">Atenção: a URL normalmente termina em /exec.</span>'; }
-  setUrl(url);
-  msg.innerHTML='<span style="color:var(--ok)">✓ URL salva. Agora toque em "Testar conexão".</span>';
+  if(url.indexOf('/exec')<0){ msg.innerHTML='<span style="color:var(--pend)">Atenção: a URL precisa terminar em <b>/exec</b> (não use a /dev).</span>'; return; }
+  setUrl(url); inp.value=url;
+  msg.innerHTML='<span style="color:var(--ok)">✓ URL salva e limpa. Agora toque em "Testar conexão".</span>';
 }
 
 function testarConexao(){
   var msg=document.getElementById('cfgMsg');
-  var url=((document.getElementById('cfgUrl')||{}).value||'').trim()||getUrl();
+  var inp=document.getElementById('cfgUrl');
+  var url=normUrl((inp&&inp.value)||getUrl());
   if(!url){ msg.innerHTML='<span style="color:var(--div)">Cole e salve a URL /exec primeiro.</span>'; return; }
-  msg.textContent='Testando conexão...';
-  var cb='almoxaping_'+Date.now();
+  if(url.indexOf('/exec')<0){ msg.innerHTML='<span style="color:var(--pend)">A URL precisa terminar em <b>/exec</b>. Pegue a URL nova em Implantar → Gerenciar implantações.</span>'; return; }
+  setUrl(url); if(inp)inp.value=url;
+  msg.innerHTML='Testando conexão... <span style="color:var(--t3,#888)">(a 1ª vez pode demorar uns segundos)</span>';
+  _pingTry(url,msg,2);
+}
+/* tenta o ping; se falhar (cold start), tenta de novo antes de desistir */
+function _pingTry(url,msg,tentativas){
+  var cb='almoxaping_'+Date.now()+Math.floor(Math.random()*999);
   var s=document.createElement('script');
-  var to=setTimeout(function(){ cleanup(); msg.innerHTML='<span style="color:var(--div)">Sem resposta. Verifique se a implantação está como <b>"Qualquer pessoa"</b> e se a URL termina em /exec.</span>'; },9000);
   function cleanup(){ try{delete window[cb];}catch(e){} if(s&&s.parentNode)s.parentNode.removeChild(s); }
+  function falhou(motivo){
+    if(tentativas>0){ msg.innerHTML='Ainda testando... <span style="color:var(--t3,#888)">tentando de novo</span>'; setTimeout(function(){ _pingTry(url,msg,tentativas-1); },900); }
+    else if(motivo==='timeout'){ msg.innerHTML='<span style="color:var(--div)">Sem resposta após várias tentativas. Confira se a URL é a da implantação <b>atual</b> (cada implantação nova gera uma URL nova) e se está como <b>"Qualquer pessoa"</b>.</span>'; }
+    else{ msg.innerHTML='<span style="color:var(--div)">Não carregou. A URL no celular pode ser de uma implantação <b>antiga</b>. Copie a URL <b>nova</b> em Implantar → Gerenciar implantações e cole aqui.</span>'; }
+  }
+  var to=setTimeout(function(){ cleanup(); falhou('timeout'); },20000);
   window[cb]=function(resp){ clearTimeout(to); cleanup();
     if(resp&&resp.ok){ msg.innerHTML='<span style="color:var(--ok)">✓ Conexão OK — sistema online.</span>'; setUrl(url); }
-    else{ msg.innerHTML='<span style="color:var(--pend)">Conectou, mas a resposta veio inesperada.</span>'; } };
-  s.onerror=function(){ clearTimeout(to); cleanup(); msg.innerHTML='<span style="color:var(--div)">Não carregou. Quase sempre é a implantação não estar como <b>"Qualquer pessoa"</b>.</span>'; };
+    else{ msg.innerHTML='<span style="color:var(--pend)">Conectou, mas a resposta veio inesperada. Republicar a versão costuma resolver.</span>'; } };
+  s.onerror=function(){ clearTimeout(to); cleanup(); falhou('erro'); };
   s.src=url+(url.indexOf('?')<0?'?':'&')+'action=ping&callback='+cb;
   document.body.appendChild(s);
 }
@@ -688,6 +737,8 @@ document.addEventListener('click',function(e){
   if(act==='sincronizar')sincronizar();
   if(act==='rodarDiag')rodarDiagnostico();
   if(act==='adicionarContagem')adicionarContagem();
+  if(act==='salvarReserva')salvarReserva();
+  if(act==='restaurarUrl'){ setUrl(URL_PADRAO); var cu=document.getElementById('cfgUrl'); if(cu)cu.value=URL_PADRAO; var m=document.getElementById('cfgMsg'); if(m)m.innerHTML='<span style="color:var(--ok)">URL padrão restaurada. Toque em Testar conexão.</span>'; }
 });
 
 document.addEventListener('click',function(e){
@@ -702,6 +753,76 @@ document.addEventListener('click',function(e){
     var sc=document.querySelector('.screen[data-screen="contagem"]')||window; try{ (sc.scrollTo?sc:window).scrollTo(0,0); }catch(_){}
   }
 });
+
+/* ===== RESERVAS ===== */
+var _resBuscaTimer=null;
+function buscarItensReserva(termo){
+  var out=document.getElementById('resBuscaOut'); if(!out)return;
+  if(!getUrl()){ out.innerHTML='<div class="row"><div class="note" style="color:var(--pend)">Configure a conexão em Sincronização.</div></div>'; return; }
+  if(!termo||termo.trim().length<2){ out.innerHTML='<div class="row"><div class="note">Digite ao menos 2 letras.</div></div>'; return; }
+  clearTimeout(_resBuscaTimer);
+  _resBuscaTimer=setTimeout(function(){
+    out.innerHTML='<div class="row"><div class="note">Buscando...</div></div>';
+    apiJsonp('buscarItensReserva',{termo:termo.trim()},function(r){
+      if(!r||!r.ok){ out.innerHTML='<div class="row"><div class="note" style="color:var(--div)">Erro na busca.</div></div>'; return; }
+      if(!r.itens||!r.itens.length){ out.innerHTML='<div class="row"><div class="note">Nenhum item inventariado encontrado.</div></div>'; return; }
+      window._resLista=r.itens;
+      out.innerHTML=r.itens.map(function(i){
+        return '<div class="row" data-resp-cod="'+i.cod+'" style="cursor:pointer"><span class="thumb">📦</span><div style="flex:1"><b style="font-size:13px">'+i.nm+'</b><div class="code">Cód: '+i.cod+(i.local?' · Local: '+i.local:'')+'</div></div><b style="color:var(--g600)">R$ '+(i.vu||0).toFixed(2)+'</b></div>';
+      }).join('');
+    });
+  },350);
+}
+document.addEventListener('click',function(e){
+  var p=e.target.closest('[data-resp-cod]'); if(!p)return;
+  var cod=p.getAttribute('data-resp-cod');
+  var it=(window._resLista||[]).filter(function(x){return String(x.cod)===String(cod);})[0];
+  if(!it)return;
+  window._resItem=it;
+  document.getElementById('resSelNm').textContent=it.nm;
+  document.getElementById('resSelInfo').textContent='Cód: '+it.cod+(it.local?' · Local: '+it.local:'')+' · Valor: R$ '+(it.vu||0).toFixed(2);
+  document.getElementById('resSelCard').style.display='block';
+  var q=document.getElementById('resQtd'); if(q){q.value='';q.focus();}
+});
+var _resQtdItens=0;
+function salvarReserva(){
+  var it=window._resItem;
+  var nome=(document.getElementById('resNome').value||'').trim();
+  if(!nome){ alert('Dê um nome para a reserva (ex: Três Lagoas).'); return; }
+  if(!it){ alert('Selecione um item.'); return; }
+  var q=parseInt(document.getElementById('resQtd').value||'0',10);
+  if(!q||q<=0){ alert('Informe a quantidade.'); return; }
+  apiJsonp('criarReservaApp',{
+    reserva:nome, codigoMaterial:it.cod, descricao:it.nm, quantidade:q,
+    local:it.local||'', valorUnitario:it.vu||0, solicitante:'App'
+  },function(r){
+    if(r&&r.ok){
+      _resQtdItens++;
+      document.getElementById('resCount').textContent='✓ '+_resQtdItens+' item(ns) na reserva "'+nome+'". Adicione mais ou toque em Concluir.';
+      window._resItem=null;
+      document.getElementById('resSelCard').style.display='none';
+      var bi=document.getElementById('resBuscaInp'); if(bi){bi.value='';bi.focus();}
+      document.getElementById('resBuscaOut').innerHTML='<div class="row"><div class="note">Digite o próximo item.</div></div>';
+    } else alert('Não consegui adicionar. Confira a conexão (Diagnóstico).');
+  });
+}
+function loadReservas(){
+  var box=document.getElementById('resList'); if(!box)return;
+  _resQtdItens=0;
+  if(!getUrl()){ box.innerHTML='<div class="row"><div class="note">Configure a conexão em Sincronização.</div></div>'; return; }
+  box.innerHTML='<div class="row"><div class="note">Carregando...</div></div>';
+  apiJsonp('listarReservasAgrupado',{},function(r){
+    if(!r||!r.ok||!r.grupos||!r.grupos.length){ box.innerHTML='<div class="row"><div class="note">Nenhuma reserva ainda. Crie em “Nova reserva”.</div></div>'; return; }
+    box.innerHTML=r.grupos.map(function(g){
+      var itensHtml=g.itens.map(function(x){
+        return '<div class="row" style="padding-left:8px"><div style="flex:1"><b style="font-size:12px">'+x.nm+'</b><div class="code">Qtd: '+x.qtd+(x.local?' · Local: '+x.local:'')+' · R$ '+(x.total||0).toFixed(2)+'</div></div></div>';
+      }).join('');
+      return '<div style="border:1px solid var(--line,#e3ece7);border-radius:14px;margin-bottom:10px;overflow:hidden">'
+        +'<div class="row" style="background:var(--g100,#e7f3ec)"><div style="flex:1"><b style="font-size:14px">📋 Reserva '+g.reserva+'</b><div class="note">'+g.totalItens+' item(ns) · Total R$ '+(g.valorTotal||0).toFixed(2)+'</div></div></div>'
+        +itensHtml+'</div>';
+    }).join('');
+  });
+}
 
 function adicionarContagem(){
   var it=window._itemAtual;
