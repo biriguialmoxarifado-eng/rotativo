@@ -483,7 +483,7 @@ body{
    ============================================================ */
 var State = {
   user: { nome: 'Almoxarife', perfil: 'ALMOXARIFE' },
-  obra: 'TRÊS LAGOAS',
+  obra: localStorage.getItem('almv25_obra') || '',
   online: true,
   apiUrl: '',
   token: '',
@@ -498,9 +498,11 @@ var State = {
 };
 
 /* ============================================================
-   API — Fetch direto (JSON) com fallback JSONP
-   O diagnóstico confirmou: Fetch JSON funciona, JSONP está
-   bloqueado. Usamos fetch como método principal.
+   API — Fetch com retry JSONP
+   Diagnóstico: ping funciona (fetch OK), mas outras ações
+   dão "Failed to fetch" = CORS bloqueado só nelas.
+   Solução: tenta fetch, se CORS falhar tenta JSONP, se JSONP
+   falhar tenta fetch com mode:no-cors + parse JSONP do body.
    ============================================================ */
 function apiJsonp(action, params, cb) {
   var url = State.apiUrl || getUrl();
@@ -509,55 +511,59 @@ function apiJsonp(action, params, cb) {
   var qs = Object.keys(params || {}).map(function(k) {
     return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
   }).join('&');
-  var fullUrl = url + '?action=' + action + (qs ? '&' + qs : '') + '&_=' + Date.now();
+  var baseUrl = url + '?action=' + action + (qs ? '&' + qs : '');
 
-  // Tenta fetch primeiro (funciona conforme diagnóstico)
   var done = false;
   var timer = setTimeout(function() {
     if (!done) { done = true; cb && cb(null); }
-  }, 10000);
+  }, 12000);
 
-  fetch(fullUrl, { method: 'GET' })
-    .then(function(resp) { return resp.text(); })
+  function finish(data) {
+    if (!done) { done = true; clearTimeout(timer); cb && cb(data); }
+  }
+
+  function tryJsonp() {
+    var cbName = '__alm_' + Date.now() + '_' + Math.floor(Math.random()*9999);
+    var jpDone = false;
+    var jpTimer = setTimeout(function() {
+      if (!jpDone) { jpDone = true; delete window[cbName]; finish(null); }
+    }, 8000);
+    window[cbName] = function(r) {
+      clearTimeout(jpTimer);
+      if (!jpDone) { jpDone = true; delete window[cbName]; finish(r); }
+    };
+    var s = document.createElement('script');
+    s.src = baseUrl + '&callback=' + cbName + '&_=' + Date.now();
+    s.onerror = function() {
+      clearTimeout(jpTimer);
+      if (!jpDone) { jpDone = true; delete window[cbName]; finish(null); }
+      s.remove && s.remove();
+    };
+    document.head.appendChild(s);
+  }
+
+  function parseResponse(txt) {
+    if (!txt) return null;
+    txt = txt.trim();
+    try { return JSON.parse(txt); } catch(e) {}
+    // JSONP wrapper
+    var m = txt.match(/^[a-zA-Z0-9_$.]+\s*\(([\s\S]*)\)\s*;?\s*$/);
+    if (m) { try { return JSON.parse(m[1]); } catch(e) {} }
+    return null;
+  }
+
+  // TENTATIVA 1: fetch normal
+  fetch(baseUrl + '&_=' + Date.now())
+    .then(function(r) { return r.text(); })
     .then(function(txt) {
-      if (done) return;
-      // Tenta JSON puro
-      try {
-        var d = JSON.parse(txt);
-        done = true; clearTimeout(timer); cb && cb(d);
-        return;
-      } catch(e) {}
-      // Tenta remover wrapper JSONP: callback({...}) ou callback_123({...})
-      var m = txt.match(/^[a-zA-Z0-9_]+\s*\(([\s\S]*)\)\s*;?\s*$/);
-      if (m) {
-        try {
-          var d2 = JSON.parse(m[1]);
-          done = true; clearTimeout(timer); cb && cb(d2);
-          return;
-        } catch(e2) {}
-      }
-      // Resposta não reconhecida
-      done = true; clearTimeout(timer); cb && cb(null);
+      var d = parseResponse(txt);
+      if (d) { finish(d); return; }
+      // Texto veio mas não parseou — tenta JSONP
+      tryJsonp();
     })
-    .catch(function(e) {
-      if (done) return;
-      // Fetch falhou — tenta JSONP como último recurso
-      var cbName = '__almv25_fb_' + Date.now();
-      var fbDone = false;
-      var fbTimer = setTimeout(function() {
-        if (!fbDone) { fbDone = true; delete window[cbName]; done = true; clearTimeout(timer); cb && cb(null); }
-      }, 8000);
-      window[cbName] = function(r) {
-        clearTimeout(fbTimer);
-        if (!fbDone) { fbDone = true; delete window[cbName]; done = true; clearTimeout(timer); cb && cb(r); }
-      };
-      var s = document.createElement('script');
-      s.src = url + '?action=' + action + (qs ? '&' + qs : '') + '&callback=' + cbName + '&_=' + Date.now();
-      s.onerror = function() {
-        clearTimeout(fbTimer);
-        if (!fbDone) { fbDone = true; delete window[cbName]; done = true; clearTimeout(timer); cb && cb(null); }
-      };
-      document.head.appendChild(s);
+    .catch(function() {
+      // TENTATIVA 2: JSONP (contorna CORS via <script>)
+      tryJsonp();
     });
 }
 
@@ -651,7 +657,7 @@ SCREENS.login = `
       <div class="login-token">
         <div class="login-field">
           <label>Token do Inventário</label>
-          <input id="loginToken" type="text" placeholder="Ex: 01" maxlength="4" autocomplete="off">
+          <input id="loginToken" type="text" placeholder="Ex: INV-202606-001" autocomplete="off">
         </div>
       </div>
       <button class="btn-login" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);margin-top:4px" onclick="doToken()">USAR TOKEN</button>
@@ -676,7 +682,7 @@ SCREENS.dashboard = `
       Olá, Almoxarife! 👋
       <span class="online-pill" id="onlinePill">● Online</span>
     </div>
-    <div class="greet-obra" id="greetObra">📍 TRÊS LAGOAS &nbsp;·&nbsp; ⟳ Sincronizado agora</div>
+    <div class="greet-obra" id="greetObra">📍 Configure em Mais → Configurações</div>
   </div>
 
   <div class="pad">
@@ -684,57 +690,30 @@ SCREENS.dashboard = `
     <div class="ov-grid mb12">
       <div class="ov g" onclick="go('inventarios')">
         <div class="ov-top"><span>Inventários</span>📋</div>
-        <div class="n" id="ovInv">12</div>
+        <div class="n" id="ovInv">—</div>
         <div class="l">Em andamento</div>
       </div>
       <div class="ov b" onclick="go('reservas')">
         <div class="ov-top"><span>Reservas</span>📥</div>
-        <div class="n" id="ovRes">18</div>
+        <div class="n" id="ovRes">—</div>
         <div class="l">Abertas</div>
       </div>
       <div class="ov a" onclick="go('pendencias')">
         <div class="ov-top"><span>Pendências</span>⚠️</div>
-        <div class="n" id="ovPend">7</div>
+        <div class="n" id="ovPend">—</div>
         <div class="l">Itens</div>
       </div>
       <div class="ov r" onclick="go('ocorrencias')">
         <div class="ov-top"><span>Divergências</span>❗</div>
-        <div class="n" id="ovDiv">3</div>
+        <div class="n" id="ovDiv">—</div>
         <div class="l">Itens</div>
       </div>
     </div>
 
     <div class="sec-title" style="margin-left:0">Indicadores em Tempo Real</div>
-    <div class="card mb12">
-      <div class="ring-wrap">
-        <div class="ring" style="--pct:95.4">
-          <span class="ring-label">95%</span>
-        </div>
-        <div class="ring-info" style="flex:1">
-          <div class="pct">95,4%</div>
-          <div class="tag">Excelente &nbsp;▲ 3,2%</div>
-          <div class="sub">Acuracidade do estoque</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:20px;font-family:'Syne',sans-serif;font-weight:900;color:var(--ink)">3.256</div>
-          <div style="font-size:10.5px;color:var(--ink3)">Itens no sistema</div>
-          <div class="mt8" style="font-size:11px;color:var(--ok);font-weight:700">▲ 128 novos</div>
-        </div>
-      </div>
-      <div class="row-sep"></div>
-      <div class="kpi-row">
-        <div class="kpi-cell">
-          <div class="kpi-n" style="color:var(--ink);font-size:14px">R$ 1,24M</div>
-          <div class="kpi-l">Valor do estoque</div>
-        </div>
-        <div class="kpi-cell">
-          <div class="kpi-n" style="color:var(--err)">56</div>
-          <div class="kpi-l">Itens críticos</div>
-        </div>
-        <div class="kpi-cell">
-          <div class="kpi-n" style="color:var(--warn)">7</div>
-          <div class="kpi-l">Pendências</div>
-        </div>
+    <div class="card mb12" id="dashKpiCard">
+      <div style="padding:14px;text-align:center;color:var(--ink3);font-size:12px" id="dashKpiLoading">
+        Carregando dados...
       </div>
     </div>
 
@@ -773,7 +752,7 @@ SCREENS.inventarios = `
       <button class="hdr-icon" onclick="goBack()">‹</button>
       <h1>Inventários</h1>
       <div style="flex:1"></div>
-      <button class="hdr-icon">⊕</button>
+      <button class="hdr-icon" onclick="loadInventarios()">⟳</button>
     </div>
   </div>
   <div class="pad">
@@ -783,47 +762,10 @@ SCREENS.inventarios = `
     </div>
     <div class="search-box">
       <span class="ico">🔍</span>
-      <input type="text" placeholder="Buscar inventário...">
+      <input type="text" id="invBusca" placeholder="Buscar inventário..." oninput="filtrarInv(this.value)">
     </div>
     <div id="invList">
-      <div class="card mb12">
-        <div class="list-row" onclick="go('inventResultado')">
-          <div class="thumb">📋</div>
-          <div style="flex:1">
-            <div style="font-size:14px;font-weight:700">OS 12345</div>
-            <div class="note">Obra: TRÊS LAGOAS</div>
-            <div style="display:flex;gap:6px;align-items:center;margin-top:4px">
-              <div class="prog" style="flex:1"><div class="prog-fill" style="width:93%"></div></div>
-              <span style="font-size:11px;font-weight:700;color:var(--ok)">8/15</span>
-            </div>
-          </div>
-          <span class="pill warn">93%</span>
-        </div>
-        <div class="list-row" onclick="go('inventResultado')">
-          <div class="thumb">📋</div>
-          <div style="flex:1">
-            <div style="font-size:14px;font-weight:700">OS 12347</div>
-            <div class="note">Obra: CAMPO GRANDE</div>
-            <div style="display:flex;gap:6px;align-items:center;margin-top:4px">
-              <div class="prog" style="flex:1"><div class="prog-fill err" style="width:17%"></div></div>
-              <span style="font-size:11px;font-weight:700;color:var(--err)">3/18</span>
-            </div>
-          </div>
-          <span class="pill err">17%</span>
-        </div>
-        <div class="list-row" onclick="go('inventResultado')">
-          <div class="thumb">📋</div>
-          <div style="flex:1">
-            <div style="font-size:14px;font-weight:700">OS 12349</div>
-            <div class="note">Obra: PONTA PORÃ</div>
-            <div style="display:flex;gap:6px;align-items:center;margin-top:4px">
-              <div class="prog" style="flex:1"><div class="prog-fill warn" style="width:70%"></div></div>
-              <span style="font-size:11px;font-weight:700;color:var(--warn)">7/10</span>
-            </div>
-          </div>
-          <span class="pill warn">70%</span>
-        </div>
-      </div>
+      <div class="empty"><div class="ico">📋</div><p>Carregando inventários...</p></div>
     </div>
     <button class="btn btn-primary btn-full" onclick="go('novoInvent')">+ Novo Inventário</button>
   </div>
@@ -842,10 +784,28 @@ SCREENS.inventResultado = `
   <div class="pad">
     <div class="flexb mb8">
       <div>
-        <div style="font-size:13px;font-weight:700">Inventário: OS 12345</div>
-        <div class="note">Obra: TRÊS LAGOAS</div>
+        <div style="font-size:13px;font-weight:700" id="invResOS">Carregando...</div>
+        <div class="note" id="invResObra"></div>
       </div>
-      <span class="pill ok">Finalizado</span>
+      <span class="pill ok" id="invResStatus">Ativo</span>
+    </div>
+    <div class="kpi-row mb12">
+      <div class="kpi-cell">
+        <div class="kpi-n" id="invResTotal">—</div>
+        <div class="kpi-l">Total itens</div>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-n" id="invResContados" style="color:var(--ok)">—</div>
+        <div class="kpi-l">Contados</div>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-n" id="invResDivs" style="color:var(--err)">—</div>
+        <div class="kpi-l">Divergências</div>
+      </div>
+    </div>
+    <div style="text-align:center;margin-bottom:12px">
+      <span style="font-size:28px;font-weight:900;font-family:Syne,sans-serif" id="invResPct">—</span>
+      <span style="font-size:13px;color:var(--ink3)"> contados</span>
     </div>
 
     <div class="sec-title" style="margin-left:0">Acuracidade do Inventário</div>
@@ -855,7 +815,7 @@ SCREENS.inventResultado = `
           <span class="ring-label">95%</span>
         </div>
         <div class="ring-info">
-          <div class="pct">95,4%</div>
+          <div class="pct" id="dashPct">—</div>
           <div class="tag">Excelente</div>
           <div class="sub">Meta: ≥ 90%</div>
         </div>
@@ -869,47 +829,11 @@ SCREENS.inventResultado = `
       <div class="diag-row"><span class="lbl">Total com divergência</span><span class="val err">112</span></div>
     </div>
 
-    <div class="sec-title" style="margin-left:0">Indicadores do Inventário (IT 7.2.7)</div>
-    <div class="card mb12">
-      <ul class="ind-list">
-        <li class="ind-item" onclick="go('indicadorDetalhe')">
-          <div class="ind-tag" style="background:var(--ok)">A</div>
-          <div style="flex:1"><div style="font-size:13px;font-weight:600">Itens contados no ciclo</div></div>
-          <span class="val ok">1.250</span><span style="color:var(--ink3);margin-left:4px">›</span>
-        </li>
-        <li class="ind-item" onclick="go('indicadorDetalhe')">
-          <div class="ind-tag" style="background:var(--err)">B</div>
-          <div style="flex:1"><div style="font-size:13px;font-weight:600">Erros de contagem incorreta</div></div>
-          <span class="val err">15</span><span style="color:var(--ink3);margin-left:4px">›</span>
-        </li>
-        <li class="ind-item" onclick="go('indicadorDetalhe')">
-          <div class="ind-tag" style="background:var(--warn)">C</div>
-          <div style="flex:1"><div style="font-size:13px;font-weight:600">Itens em local incorreto</div></div>
-          <span class="val warn">8</span><span style="color:var(--ink3);margin-left:4px">›</span>
-        </li>
-        <li class="ind-item" onclick="go('indicadorDetalhe')">
-          <div class="ind-tag" style="background:var(--orange)">D</div>
-          <div style="flex:1"><div style="font-size:13px;font-weight:600">Peças entregues e não baixadas</div></div>
-          <span class="val warn">12</span><span style="color:var(--ink3);margin-left:4px">›</span>
-        </li>
-        <li class="ind-item" onclick="go('indicadorDetalhe')">
-          <div class="ind-tag" style="background:var(--blue)">E</div>
-          <div style="flex:1"><div style="font-size:13px;font-weight:600">Falta de lançamento de NF</div></div>
-          <span class="val">5</span><span style="color:var(--ink3);margin-left:4px">›</span>
-        </li>
-        <li class="ind-item" onclick="go('indicadorDetalhe')">
-          <div class="ind-tag" style="background:var(--purple)">F</div>
-          <div style="flex:1"><div style="font-size:13px;font-weight:600">Materiais sobrando</div></div>
-          <span class="val warn">18</span><span style="color:var(--ink3);margin-left:4px">›</span>
-        </li>
-        <li class="ind-item" onclick="go('indicadorDetalhe')">
-          <div class="ind-tag" style="background:var(--g600)">G</div>
-          <div style="flex:1"><div style="font-size:13px;font-weight:600">Materiais faltando</div></div>
-          <span class="val err">22</span><span style="color:var(--ink3);margin-left:4px">›</span>
-        </li>
-      </ul>
+    <div class="sec-title" style="margin-left:0">Itens do Inventário</div>
+    <div id="invItensList">
+      <div class="empty"><p>Carregando itens...</p></div>
     </div>
-    <button class="btn btn-primary btn-full" onclick="go('relatorio')">📄 Gerar Relatório Completo</button>
+    <button class="btn btn-primary btn-full mt12" onclick="go('relatorio')">📄 Gerar Relatório Completo</button>
   </div>
 </div>`;
 
@@ -1065,7 +989,7 @@ SCREENS.contagem = `
       <button class="hdr-icon" onclick="goBack()">‹</button>
       <div style="flex:1">
         <h1>Contagem Inteligente</h1>
-        <div class="sub" id="contagemOS">OS 12345</div>
+        <div class="sub" id="contagemOS">—</div>
       </div>
       <button class="hdr-icon">⋮</button>
     </div>
@@ -1127,43 +1051,8 @@ SCREENS.reservas = `
   </div>
   <div class="pad">
     <div class="search-box"><span class="ico">🔍</span><input type="text" placeholder="Buscar reserva..."></div>
-    <div class="card mb12">
-      <div class="list-row" onclick="go('detalhesReserva')">
-        <div class="thumb">📋</div>
-        <div style="flex:1">
-          <div style="font-size:14px;font-weight:700">OS 12345 – TRÊS LAGOAS</div>
-          <div class="note">15 itens · R$ 1.248,90</div>
-          <div class="prog" style="margin-top:6px"><div class="prog-fill" style="width:53%"></div></div>
-        </div>
-        <span class="pill ok" style="margin-left:8px">Aberta</span>
-      </div>
-      <div class="list-row" onclick="go('detalhesReserva')">
-        <div class="thumb">📋</div>
-        <div style="flex:1">
-          <div style="font-size:14px;font-weight:700">OS 12346 – RIO VERDE</div>
-          <div class="note">20 itens · R$ 3.420,00</div>
-          <div class="prog" style="margin-top:6px"><div class="prog-fill" style="width:100%"></div></div>
-        </div>
-        <span class="pill blue" style="margin-left:8px">Em separação</span>
-      </div>
-      <div class="list-row" onclick="go('detalhesReserva')">
-        <div class="thumb">📋</div>
-        <div style="flex:1">
-          <div style="font-size:14px;font-weight:700">OS 12347 – CAMPO GRANDE</div>
-          <div class="note">18 itens · R$ 890,00</div>
-          <div class="prog" style="margin-top:6px"><div class="prog-fill err" style="width:17%"></div></div>
-        </div>
-        <span class="pill warn" style="margin-left:8px">Conferência</span>
-      </div>
-      <div class="list-row" onclick="go('detalhesReserva')">
-        <div class="thumb">📋</div>
-        <div style="flex:1">
-          <div style="font-size:14px;font-weight:700">OS 12348 – DOURADOS</div>
-          <div class="note">12 itens atrasados</div>
-          <div class="prog" style="margin-top:6px"><div class="prog-fill err" style="width:0%"></div></div>
-        </div>
-        <span class="pill err" style="margin-left:8px">Atrasada</span>
-      </div>
+    <div id="resList">
+      <div class="empty"><div class="ico">📋</div><p>Carregando reservas...</p></div>
     </div>
     <button class="btn btn-primary btn-full" onclick="go('novaReserva')">+ Nova Reserva</button>
   </div>
@@ -1188,7 +1077,7 @@ SCREENS.novaReserva = `
         <div class="field"><label>Tipo / Motivo</label>
           <select id="resTipo"><option>Aguardando Baixa</option><option>Transferência</option><option>Conferência</option><option>Expedição</option></select></div>
         <div class="field"><label>Responsável</label>
-          <input type="text" placeholder="Almoxarife 01" id="resResp"></div>
+          <input type="text" placeholder="Ex: João Silva" id="resResp"></div>
         <div class="field"><label>Data</label>
           <input type="date" id="resData"></div>
       </div>
@@ -1233,10 +1122,10 @@ SCREENS.detalhesReserva = `
   <div class="pad">
     <div class="flexb mb12">
       <div>
-        <div style="font-size:13px;font-weight:800">Reserva: R17824990971950</div>
-        <div class="note">Obra: TRÊS LAGOAS</div>
+        <div style="font-size:13px;font-weight:800" id="detResId">—</div>
+        <div class="note" id="detResObra">—</div>
       </div>
-      <span class="pill ok">Aberta</span>
+      <span class="pill ok" id="detResStatus">Aberta</span>
     </div>
     <div class="tabs">
       <button class="tab-btn active">Resumo</button>
@@ -1245,7 +1134,7 @@ SCREENS.detalhesReserva = `
     </div>
     <div class="card mb12">
       <div class="diag-row"><span class="lbl">Status</span><span class="pill ok">Aberta</span></div>
-      <div class="diag-row"><span class="lbl">Responsável</span><span class="val">Almoxarife 01</span></div>
+      <div class="diag-row"><span class="lbl">Responsável</span><span class="val" id="detResResp">—</span></div>
       <div class="diag-row"><span class="lbl">Data</span><span class="val">27/06/2026</span></div>
       <div class="diag-row"><span class="lbl">Motivo</span><span class="val">Aguardando Baixa</span></div>
       <div class="diag-row"><span class="lbl">Valor total (R$)</span><span class="val" style="color:var(--g600)">R$ 1.248,90</span></div>
@@ -1294,14 +1183,14 @@ SCREENS.detalhesReserva = `
           <div class="tl-dot ok">✓</div>
           <div class="tl-content">
             <div class="tl-title">Reserva criada</div>
-            <div class="tl-sub">27/06/2026 16:32 · Almoxarife 01</div>
+            <div class="tl-sub">Criado · —</div>
           </div>
         </div>
         <div class="tl-item">
           <div class="tl-dot ok">+</div>
           <div class="tl-content">
             <div class="tl-title">Item adicionado</div>
-            <div class="tl-sub">27/06/2026 16:45 · Almoxarife 01</div>
+            <div class="tl-sub">Atualizado · —</div>
           </div>
         </div>
       </div>
@@ -1377,7 +1266,7 @@ SCREENS.mapa = `
   </div>
   <div class="pad">
     <div class="field"><label>Obra</label>
-      <select><option>TRÊS LAGOAS</option><option>RIO VERDE</option><option>CAMPO GRANDE</option></select></div>
+      <select><option id="mapaObraOpt">—</option></select></div>
     <div class="search-box mb12"><span class="ico">🔍</span><input type="text" placeholder="Buscar local..."></div>
     <div class="card mb12" style="overflow:hidden">
       <div style="padding:12px 14px;font-size:12px;font-weight:700;color:var(--ink3);border-bottom:1px solid var(--line)">
@@ -1433,25 +1322,29 @@ SCREENS.conferencia = `
     <div class="scan-code">Aponte a câmera para o código de barras</div>
   </div>
   <div class="pad">
-    <div class="banner">
+    <div id="confBanner" style="display:none" class="banner">
       <div>
         <div style="font-size:12px;font-weight:700;color:var(--ink3)">Último item lido</div>
-        <div style="font-size:14px;font-weight:800">CABO FLEXÍVEL 2,5MM</div>
-        <div class="code">Cód: 7891234567890</div>
-        <div class="note">Qtd esperada: <b>100</b> · Qtd lida: <b>10/100</b></div>
+        <div style="font-size:14px;font-weight:800" id="confNm">—</div>
+        <div class="code" id="confCod">—</div>
+        <div class="note" id="confInfo">—</div>
       </div>
     </div>
-    <div class="card mb12">
+    <div class="card mb12" id="confResult" style="display:none">
       <div class="list-row">
         <div class="thumb">✅</div>
         <div style="flex:1">
           <div style="font-size:13px;font-weight:700">Item encontrado!</div>
-          <div class="note">CABO FLEXÍVEL 2,5MM</div>
-          <div class="code">Código: 7891234567890 · Qtd: 100 M</div>
-          <div class="note">Local: A02-B05-N1</div>
+          <div class="note" id="confResNm">—</div>
+          <div class="code" id="confResCod">—</div>
+          <div class="note" id="confResLocal">—</div>
         </div>
         <span class="pill ok">Conferido</span>
       </div>
+    </div>
+    <div id="confEmpty" class="empty">
+      <div class="ico">📷</div>
+      <p>Aponte a câmera para o código de barras ou toque em Simular para testar.</p>
     </div>
     <button class="btn btn-primary btn-full">Continuar Lendo</button>
   </div>
@@ -1469,31 +1362,8 @@ SCREENS.ocorrencias = `
     </div>
   </div>
   <div class="pad">
-    <div class="card mb12">
-      <div class="list-row">
-        <div class="thumb" style="background:var(--warnbg);color:var(--warn)">⚠️</div>
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:700">Avaria na embalagem</div>
-          <div class="note">OS 12345 · 23/05/2025</div>
-        </div>
-        <span class="pill warn">Aberta</span>
-      </div>
-      <div class="list-row">
-        <div class="thumb" style="background:var(--bluebg);color:var(--blue)">📋</div>
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:700">Item com divergência</div>
-          <div class="note">OS 12347 · 23/05/2025</div>
-        </div>
-        <span class="pill blue">Em análise</span>
-      </div>
-      <div class="list-row">
-        <div class="thumb" style="background:var(--okbg);color:var(--ok)">✓</div>
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:700">Material avariado</div>
-          <div class="note">OS 12346 · 22/05/2025</div>
-        </div>
-        <span class="pill ok">Resolvida</span>
-      </div>
+    <div id="ocList">
+      <div class="empty"><div class="ico">❗</div><p>Nenhuma ocorrência registrada.</p></div>
     </div>
     <button class="btn btn-primary btn-full">+ Nova Ocorrência</button>
   </div>
@@ -1514,41 +1384,9 @@ SCREENS.pendencias = `
       <button class="tab-btn">Inventários</button>
       <button class="tab-btn">Reservas</button>
     </div>
-    <div class="card mb12">
-      <div class="list-row">
-        <div class="ov r" style="width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:9px;font-size:10px;font-weight:800;flex-shrink:0">❗</div>
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:700">OS 12345 – TRÊS LAGOAS</div>
-          <div class="note">72 itens pendentes</div>
-        </div>
-        <span class="pill err">Crítica</span>
-      </div>
-      <div class="list-row">
-        <div class="thumb">📋</div>
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:700">OS 12347 – CAMPO GRANDE</div>
-          <div class="note">15 itens pendentes · Inventário</div>
-        </div>
-        <span class="pill warn">Alta</span>
-      </div>
-      <div class="list-row">
-        <div class="thumb">📥</div>
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:700">Reserva OS 12348 – DOURADOS</div>
-          <div class="note">12 itens atrasados · Reserva</div>
-        </div>
-        <span class="pill warn">Alta</span>
-      </div>
-      <div class="list-row">
-        <div class="thumb">📋</div>
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:700">OS 12346 – RIO VERDE</div>
-          <div class="note">3 divergências não revisadas</div>
-        </div>
-        <span class="pill blue">Média</span>
-      </div>
+    <div id="pendList">
+      <div class="empty"><div class="ico">⚑</div><p>Nenhuma pendência encontrada.</p></div>
     </div>
-    <button class="btn btn-ghost btn-full">Ver Todas as Pendências</button>
   </div>
 </div>`;
 
@@ -1566,9 +1404,9 @@ SCREENS.relatorio = `
   <div class="pad">
     <div class="flexb mb12">
       <div>
-        <div style="font-size:13px;font-weight:800">Inventário: OS 12345</div>
-        <div class="note">Obra: TRÊS LAGOAS</div>
-        <div class="note">Data: 23/05/2025 · Resp.: Almoxarife 01</div>
+        <div style="font-size:13px;font-weight:800" id="relOS">—</div>
+        <div class="note" id="relObra">—</div>
+        <div class="note" id="relData">—</div>
       </div>
       <span class="pill ok">Finalizado</span>
     </div>
@@ -1576,9 +1414,9 @@ SCREENS.relatorio = `
     <div class="sec-title" style="margin-left:0">Acuracidade Geral</div>
     <div class="card mb12">
       <div class="ring-wrap">
-        <div class="ring" style="--pct:95.4"><span class="ring-label">95%</span></div>
+        <div class="ring" style="--pct:0" id="relRing"><span class="ring-label" id="relPctLabel">—</span></div>
         <div class="ring-info">
-          <div class="pct">95,4%</div>
+          <div class="pct" id="dashPct">—</div>
           <div class="tag">Excelente · Variação: 3,2%</div>
           <div class="sub">Meta: ≥ 90%</div>
         </div>
@@ -1612,11 +1450,11 @@ SCREENS.relatorio = `
     <div class="sig-row mb16">
       <div class="sig-box">
         <div class="sig-line"></div>
-        <div class="sig-label">Almoxarife<br>23/05/2025 16:30</div>
+        <div class="sig-label">Almoxarife<br><span id="sigDataAlm">—</span></div>
       </div>
       <div class="sig-box">
         <div class="sig-line"></div>
-        <div class="sig-label">Gerente / Responsável<br>23/05/2025 16:45</div>
+        <div class="sig-label">Gerente / Responsável<br><span id="sigDataGer">—</span></div>
       </div>
     </div>
 
@@ -1663,7 +1501,7 @@ SCREENS.sincronizacao = `
     <div class="card mb12 card-body">
       <div class="field" style="margin-bottom:8px">
         <label>Token</label>
-        <input type="text" id="tokenInput" placeholder="Ex: 01" maxlength="4" autocomplete="off">
+        <input type="text" id="tokenInput" placeholder="Ex: INV-202606-001" autocomplete="off">
       </div>
       <button class="btn btn-primary btn-sm" onclick="carregarToken()">🔑 Carregar Inventário</button>
     </div>
@@ -1774,7 +1612,7 @@ SCREENS.assinatura = `
   </div>
   <div class="pad">
     <div class="card mb12 card-body">
-      <div style="font-size:13px;font-weight:700;margin-bottom:4px">Reserva: OS 12345 – TRÊS LAGOAS</div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px" id="assDocumento">Inventário carregado</div>
       <div class="note">Almoxarife confirma recebimento dos itens listados.</div>
     </div>
     <div class="sec-title" style="margin-left:0">Assinatura Almoxarife</div>
@@ -1849,13 +1687,22 @@ SCREENS.mais = `
       </div>
     </div>
     <div class="card">
-      <div class="list-row">
+      <div class="list-row" onclick="go('configuracoes')">
         <div class="thumb">👤</div>
-        <div style="flex:1"><div style="font-weight:700">Almoxarife</div><div class="note">Perfil: ALMOXARIFE · Obra: TRÊS LAGOAS</div></div>
+        <div style="flex:1">
+          <div style="font-weight:700" id="maisNomeUser">Usuário</div>
+          <div class="note" id="maisObraUser">Configure em Mais → Configurações</div>
+        </div>
+        <span style="color:var(--ink3)">›</span>
       </div>
-      <div class="list-row" style="cursor:pointer" onclick="alert('Saindo...')">
+      <div class="list-row" onclick="go('configuracoes')">
+        <div class="thumb" style="background:var(--purplebg);color:var(--purple)">⚙️</div>
+        <div style="flex:1"><div style="font-weight:700">Configurações</div><div class="note">Personalizar módulos, obra, dados</div></div>
+        <span style="color:var(--ink3)">›</span>
+      </div>
+      <div class="list-row" style="cursor:pointer" onclick="if(confirm('Sair do app?')){limparCacheTotal();}">
         <div class="thumb" style="background:var(--errbg);color:var(--err)">↩</div>
-        <div style="flex:1;color:var(--err);font-weight:700">Sair</div>
+        <div style="flex:1;color:var(--err);font-weight:700">Sair / Redefinir</div>
       </div>
     </div>
   </div>
@@ -1946,8 +1793,8 @@ SCREENS.conexaoApi = `
     <div class="card mb12 card-body">
       <div class="field" style="margin-bottom:8px">
         <label>Token</label>
-        <input type="text" id="caTokenInput" placeholder="Ex: 01" maxlength="6" autocomplete="off"
-          style="font-size:22px;font-weight:800;text-align:center;letter-spacing:.2em">
+        <input type="text" id="caTokenInput" placeholder="Ex: INV-202606-001" autocomplete="off"
+          style="font-size:16px;font-weight:800;text-align:center;letter-spacing:.05em">
       </div>
       <button class="btn btn-primary btn-full" onclick="caCarregarTudo()">⚡ Carregar Inventário Completo</button>
     </div>
@@ -1969,6 +1816,154 @@ SCREENS.conexaoApi = `
     </div>
 
     <button class="btn btn-ghost btn-full btn-sm" onclick="caLimparLogs()">🗑 Limpar Logs</button>
+  </div>
+</div>`;
+
+
+/* ---- CONFIGURAÇÕES ---- */
+SCREENS.configuracoes = `
+<div class="screen" data-screen="configuracoes">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="hdr-icon" onclick="goBack()">‹</button>
+      <h1>Configurações</h1>
+      <div style="flex:1"></div>
+      <button class="hdr-icon" onclick="cfSalvarTudo()" style="font-size:13px;font-weight:800;width:auto;padding:0 10px">Salvar</button>
+    </div>
+  </div>
+  <div class="pad">
+
+    <!-- Buscar dados reais da API -->
+    <div class="banner mb12" style="cursor:pointer" onclick="cfBuscarDadosAPI()">
+      <div style="font-size:22px">☁️</div>
+      <div>
+        <div style="font-size:13px;font-weight:800;color:var(--g600)">Buscar dados da API</div>
+        <div class="note">Preenche automaticamente obra, token e inventários disponíveis</div>
+      </div>
+    </div>
+    <div id="cfAPIResp" style="display:none" class="card mb12">
+      <div id="cfAPIRespBody" style="padding:12px 14px;font-size:12px;color:var(--ink2)"></div>
+    </div>
+
+    <!-- Dados do Usuário -->
+    <div class="sec-title" style="margin-left:0">Identificação</div>
+    <div class="card mb12 card-body">
+      <div class="field">
+        <label>Meu Nome</label>
+        <input type="text" id="cfNome" placeholder="Ex: João Silva" autocomplete="off">
+      </div>
+      <div class="field">
+        <label>Obra / Local de Trabalho</label>
+        <input type="text" id="cfObra" placeholder="Ex: TRÊS LAGOAS" autocomplete="off">
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label>Token do Inventário</label>
+        <input type="text" id="cfToken" placeholder="Ex: INV-202606-001" autocomplete="off"
+          style="font-size:15px;font-weight:700;letter-spacing:.03em">
+      </div>
+    </div>
+
+    <!-- Inventários disponíveis (puxados da API) -->
+    <div class="sec-title" style="margin-left:0">Inventários Disponíveis</div>
+    <div class="card mb12" id="cfInventList">
+      <div style="padding:14px;text-align:center;color:var(--ink3);font-size:12px">
+        Toque em "Buscar dados da API" para listar inventários disponíveis
+      </div>
+    </div>
+
+    <!-- Módulos visíveis -->
+    <div class="sec-title" style="margin-left:0">Módulos Ativos</div>
+    <div class="note pad-x mb8">Escolha o que quer ver no menu e nos atalhos rápidos.</div>
+    <div class="card mb12" id="cfModulos">
+      <div class="list-row">
+        <div class="thumb sm" style="background:var(--g050);color:var(--g600)">📋</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:700">Inventários</div></div>
+        <input type="checkbox" id="cfMod_inventarios" checked style="width:20px;height:20px;accent-color:var(--g600)">
+      </div>
+      <div class="list-row">
+        <div class="thumb sm" style="background:var(--g050);color:var(--g600)">📥</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:700">Reservas</div></div>
+        <input type="checkbox" id="cfMod_reservas" checked style="width:20px;height:20px;accent-color:var(--g600)">
+      </div>
+      <div class="list-row">
+        <div class="thumb sm" style="background:var(--g050);color:var(--g600)">▥</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:700">Scanner / Contagem</div></div>
+        <input type="checkbox" id="cfMod_scanner" checked style="width:20px;height:20px;accent-color:var(--g600)">
+      </div>
+      <div class="list-row">
+        <div class="thumb sm" style="background:var(--g050);color:var(--g600)">📦</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:700">Kits</div></div>
+        <input type="checkbox" id="cfMod_kits" style="width:20px;height:20px;accent-color:var(--g600)">
+      </div>
+      <div class="list-row">
+        <div class="thumb sm" style="background:var(--g050);color:var(--g600)">🗺️</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:700">Mapa do Estoque</div></div>
+        <input type="checkbox" id="cfMod_mapa" style="width:20px;height:20px;accent-color:var(--g600)">
+      </div>
+      <div class="list-row">
+        <div class="thumb sm" style="background:var(--g050);color:var(--g600)">❗</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:700">Ocorrências</div></div>
+        <input type="checkbox" id="cfMod_ocorrencias" checked style="width:20px;height:20px;accent-color:var(--g600)">
+      </div>
+      <div class="list-row">
+        <div class="thumb sm" style="background:var(--g050);color:var(--g600)">📄</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:700">Relatórios PDF</div></div>
+        <input type="checkbox" id="cfMod_relatorio" checked style="width:20px;height:20px;accent-color:var(--g600)">
+      </div>
+      <div class="list-row">
+        <div class="thumb sm" style="background:var(--g050);color:var(--g600)">🤖</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:700">IA do Almoxarife</div></div>
+        <input type="checkbox" id="cfMod_ia" style="width:20px;height:20px;accent-color:var(--g600)">
+      </div>
+      <div class="list-row">
+        <div class="thumb sm" style="background:var(--g050);color:var(--g600)">✍️</div>
+        <div style="flex:1"><div style="font-size:13px;font-weight:700">Assinatura Digital</div></div>
+        <input type="checkbox" id="cfMod_assinatura" style="width:20px;height:20px;accent-color:var(--g600)">
+      </div>
+    </div>
+
+    <!-- Atalhos rápidos (ordem) -->
+    <div class="sec-title" style="margin-left:0">Atalhos no Dashboard</div>
+    <div class="note pad-x mb8">Marque até 8 ações para aparecer nos atalhos rápidos.</div>
+    <div class="card mb12">
+      <div class="list-row">
+        <div style="flex:1;font-size:13px;font-weight:600">Ler Código de Barras</div>
+        <input type="checkbox" id="cfAt_scanner" checked style="width:20px;height:20px;accent-color:var(--g600)">
+      </div>
+      <div class="list-row">
+        <div style="flex:1;font-size:13px;font-weight:600">Conferência por Reserva</div>
+        <input type="checkbox" id="cfAt_conferencia" checked style="width:20px;height:20px;accent-color:var(--g600)">
+      </div>
+      <div class="list-row">
+        <div style="flex:1;font-size:13px;font-weight:600">Mapa do Estoque</div>
+        <input type="checkbox" id="cfAt_mapa" style="width:20px;height:20px;accent-color:var(--g600)">
+      </div>
+      <div class="list-row">
+        <div style="flex:1;font-size:13px;font-weight:600">Kits</div>
+        <input type="checkbox" id="cfAt_kits" style="width:20px;height:20px;accent-color:var(--g600)">
+      </div>
+      <div class="list-row">
+        <div style="flex:1;font-size:13px;font-weight:600">Imprimir Etiquetas</div>
+        <input type="checkbox" id="cfAt_etiquetas" style="width:20px;height:20px;accent-color:var(--g600)">
+      </div>
+      <div class="list-row">
+        <div style="flex:1;font-size:13px;font-weight:600">Assinar Recebimento</div>
+        <input type="checkbox" id="cfAt_assinatura" style="width:20px;height:20px;accent-color:var(--g600)">
+      </div>
+      <div class="list-row">
+        <div style="flex:1;font-size:13px;font-weight:600">IA do Almoxarife</div>
+        <input type="checkbox" id="cfAt_ia" style="width:20px;height:20px;accent-color:var(--g600)">
+      </div>
+      <div class="list-row">
+        <div style="flex:1;font-size:13px;font-weight:600">Ocorrências</div>
+        <input type="checkbox" id="cfAt_ocorrencias" style="width:20px;height:20px;accent-color:var(--g600)">
+      </div>
+    </div>
+
+    <!-- Salvar -->
+    <button class="btn btn-primary btn-full mb12" onclick="cfSalvarTudo()">💾 Salvar Configurações</button>
+    <button class="btn btn-err btn-full btn-sm" onclick="if(confirm('Limpar tudo e redefinir?')){limparCacheTotal();}">🗑 Redefinir App</button>
+    <div style="height:16px"></div>
   </div>
 </div>`;
 
@@ -2075,7 +2070,7 @@ function doLogin() {
     if (r && r.ok) {
       State.user.nome = r.nome || u;
       State.user.perfil = r.perfil || 'ALMOXARIFE';
-      State.obra = r.obra || 'TRÊS LAGOAS';
+      State.obra = r.obra || localStorage.getItem('almv25_obra') || '';
       go('dashboard');
     } else {
       alert('Usuário ou senha incorretos.');
@@ -2467,6 +2462,129 @@ function initConexaoApi() {
   if (tk) tk.value = State.token || localStorage.getItem('almv25_token') || '';
 }
 
+
+/* ============================================================
+   CONFIGURACOES — módulo
+   ============================================================ */
+var CF_DEFAULTS = {
+  modulos: {inventarios:true,reservas:true,scanner:true,kits:false,mapa:false,ocorrencias:true,relatorio:true,ia:false,assinatura:false},
+  atalhos: {scanner:true,conferencia:true,mapa:false,kits:false,etiquetas:false,assinatura:false,ia:false,ocorrencias:false}
+};
+
+function cfInit() {
+  var nome = localStorage.getItem('almv25_nome') || '';
+  var obra = localStorage.getItem('almv25_obra') || '';
+  var token = localStorage.getItem('almv25_token') || State.token || '';
+  var el; 
+  el = document.getElementById('cfNome'); if (el) el.value = nome;
+  el = document.getElementById('cfObra'); if (el) el.value = obra;
+  el = document.getElementById('cfToken'); if (el) el.value = token;
+
+  // Restore checkboxes
+  var mods = JSON.parse(localStorage.getItem('almv25_mods') || 'null') || CF_DEFAULTS.modulos;
+  var ats  = JSON.parse(localStorage.getItem('almv25_ats')  || 'null') || CF_DEFAULTS.atalhos;
+  Object.keys(mods).forEach(function(k) { var cb = document.getElementById('cfMod_' + k); if (cb) cb.checked = !!mods[k]; });
+  Object.keys(ats).forEach(function(k)  { var cb = document.getElementById('cfAt_'  + k); if (cb) cb.checked = !!ats[k]; });
+}
+
+function cfSalvarTudo() {
+  var nome  = (document.getElementById('cfNome')  || {}).value || '';
+  var obra  = (document.getElementById('cfObra')  || {}).value || '';
+  var token = (document.getElementById('cfToken') || {}).value || '';
+
+  if (nome)  localStorage.setItem('almv25_nome', nome.trim());
+  if (obra)  { localStorage.setItem('almv25_obra', obra.trim()); State.obra = obra.trim(); }
+  if (token) { localStorage.setItem('almv25_token', token.trim()); State.token = token.trim(); }
+
+  // Save modules
+  var mods = {};
+  ['inventarios','reservas','scanner','kits','mapa','ocorrencias','relatorio','ia','assinatura'].forEach(function(k) {
+    var cb = document.getElementById('cfMod_' + k); mods[k] = cb ? cb.checked : false;
+  });
+  localStorage.setItem('almv25_mods', JSON.stringify(mods));
+
+  // Save atalhos
+  var ats = {};
+  ['scanner','conferencia','mapa','kits','etiquetas','assinatura','ia','ocorrencias'].forEach(function(k) {
+    var cb = document.getElementById('cfAt_' + k); ats[k] = cb ? cb.checked : false;
+  });
+  localStorage.setItem('almv25_ats', JSON.stringify(ats));
+
+  // Update greeting
+  updateGreetObra();
+
+  alert('Configurações salvas!');
+  goBack();
+}
+
+function cfBuscarDadosAPI() {
+  var url = getUrl();
+  var box = document.getElementById('cfAPIResp');
+  var body = document.getElementById('cfAPIRespBody');
+  var invList = document.getElementById('cfInventList');
+  if (!url) { alert('Configure a URL da API primeiro em Mais -> Conexao API.'); return; }
+  if (box) box.style.display = 'block';
+  if (body) body.innerHTML = '⏳ Buscando dados da API...';
+  if (invList) invList.innerHTML = '<div style="padding:12px 14px;font-size:12px;color:var(--ink3)">Carregando...</div>';
+
+  // Busca lista de inventários / tokens disponíveis
+  fetch(url + '?action=listarInventarios&_=' + Date.now())
+    .then(function(r) { return r.text(); })
+    .then(function(txt) {
+      try {
+        var d = JSON.parse(txt);
+        if (d.ok && (d.inventarios || d.tokens || d.itens)) {
+          var lista = d.inventarios || d.tokens || d.itens || [];
+          if (body) body.innerHTML = '<span style="color:var(--ok);font-weight:700">Conectado! ' + lista.length + ' inventários encontrados.</span>';
+          if (invList) {
+            if (!lista.length) {
+              invList.innerHTML = '<div style="padding:12px 14px;font-size:12px;color:var(--ink3)">Nenhum inventário encontrado na API.</div>';
+            } else {
+              invList.innerHTML = lista.map(function(inv, idx) {
+                var tok = inv.token || inv.id || inv.codigo || inv;
+                var nm  = inv.nome || inv.descricao || inv.inventario || tok;
+                var ob  = inv.obra || inv.local || '';
+                return '<div class="list-row" style="cursor:pointer" onclick="cfSelecionarInventario(' + JSON.stringify(tok) + ',' + JSON.stringify(nm) + ',' + JSON.stringify(ob) + ')">'
+                  + '<div class="thumb sm" style="background:var(--g050);color:var(--g600)">📋</div>'
+                  + '<div style="flex:1"><div style="font-size:13px;font-weight:700">' + nm + '</div>'
+                  + (ob ? '<div class="note">' + ob + '</div>' : '')
+                  + '<div class="code">' + tok + '</div></div>'
+                  + '<span class="btn btn-soft btn-xs">Usar</span></div>';
+              }).join('');
+            }
+          }
+        } else {
+          // API respondeu mas sem inventarios — mostrar resposta bruta
+          if (body) body.innerHTML = '<span style="color:var(--warn);font-weight:700">Conectado, mas a acao listarInventarios retornou:</span><br><pre style="font-size:10px;word-break:break-all;white-space:pre-wrap;margin-top:6px">' + txt.substring(0,300) + '</pre>';
+          if (invList) invList.innerHTML = '<div style="padding:12px 14px"><div class="note">A API nao tem a acao listarInventarios. Cole o token manualmente acima.</div></div>';
+        }
+      } catch(e) {
+        if (body) body.innerHTML = '<span style="color:var(--warn)">Resposta nao-JSON:</span><br><pre style="font-size:10px;word-break:break-all;white-space:pre-wrap;margin-top:6px">' + txt.substring(0,400) + '</pre>';
+        if (invList) invList.innerHTML = '<div style="padding:12px 14px"><div class="note">Cole o token manualmente acima.</div></div>';
+      }
+    })
+    .catch(function(e) {
+      if (body) body.innerHTML = '<span style="color:var(--err);font-weight:700">Erro: ' + e.message + '</span>';
+    });
+}
+
+function cfSelecionarInventario(tok, nm, obra) {
+  var tf = document.getElementById('cfToken'); if (tf) tf.value = tok;
+  var of = document.getElementById('cfObra');  if (of && obra) of.value = obra;
+  // Highlight selection
+  alert('Selecionado: ' + nm + (obra ? ' - ' + obra : '') + ' | Token: ' + tok + ' | Toque em Salvar para confirmar.');
+}
+
+function updateGreetObra() {
+  var obra = State.obra || localStorage.getItem('almv25_obra') || '';
+  var el = document.getElementById('greetObra');
+  if (el) {
+    el.textContent = obra
+      ? ('Obras: ' + obra + ' · Token: ' + (State.token || '—'))
+      : 'Configure em Mais → Configurações';
+  }
+}
+
 /* ============================================================
    DIAGNÓSTICO V25 — passo a passo com logs
    ============================================================ */
@@ -2665,33 +2783,385 @@ function mostrarErro(msg) {
 
 /* --- Dashboard dinâmico --- */
 function loadDashboard() {
-  if (!getUrl()) return;
-  apiJsonp('dashboardApp', {}, function (r) {
-    if (!r || !r.ok) return;
-    var set = function (id, v) { var e = document.getElementById(id); if (e) e.textContent = v; };
-    set('ovInv', r.inventarios || 0);
-    set('ovRes', r.reservas || 0);
-    set('ovPend', r.pendencias || 0);
-    set('ovDiv', r.divergencias || 0);
+  updateGreetObra();
+
+  var url = getUrl();
+  if (!url) {
+    // Sem API — mostra dados do token local
+    var tok = State.token || localStorage.getItem('almv25_token') || '';
+    var kpi = document.getElementById('dashKpiCard');
+    if (kpi) {
+      if (tok) {
+        kpi.innerHTML = '<div style="padding:14px">'
+          + '<div style="font-size:13px;font-weight:700;color:var(--g600);margin-bottom:6px">Token carregado: ' + tok + '</div>'
+          + '<div class="note">Vá em Mais → Conexão API para sincronizar com a planilha.</div>'
+          + '</div>';
+      } else {
+        kpi.innerHTML = '<div style="padding:14px"><div class="note">Configure a URL da API em Mais → Conexão API.</div></div>';
+      }
+    }
+    return;
+  }
+
+  apiJsonp('dashboardApp', {}, function(r) {
+    var set = function(id, v) { var e = document.getElementById(id); if (e) e.textContent = v !== undefined ? v : '—'; };
+    if (r && r.ok) {
+      set('ovInv',  r.inventarios  || 0);
+      set('ovRes',  r.reservas     || 0);
+      set('ovPend', r.pendencias   || 0);
+      set('ovDiv',  r.divergencias || 0);
+
+      // KPI card
+      var kpi = document.getElementById('dashKpiCard');
+      if (kpi) {
+        var tok    = State.token || localStorage.getItem('almv25_token') || '—';
+        var titulo = localStorage.getItem('almv25_titulo') || tok;
+        kpi.innerHTML = '<div style="padding:14px">'
+          + '<div style="font-size:13px;font-weight:800;color:var(--g600);margin-bottom:8px">📋 ' + titulo + '</div>'
+          + '<div class="kpi-row">'
+          + '<div class="kpi-cell"><div class="kpi-n" style="color:var(--ok)">' + (r.totalItens || _itensInv.length || '—') + '</div><div class="kpi-l">Total itens</div></div>'
+          + '<div class="kpi-cell"><div class="kpi-n" style="color:var(--err)">' + (r.divergencias || 0) + '</div><div class="kpi-l">Divergências</div></div>'
+          + '<div class="kpi-cell"><div class="kpi-n" style="color:var(--blue)">' + (r.reservas || 0) + '</div><div class="kpi-l">Reservas</div></div>'
+          + '</div>'
+          + '</div>';
+      }
+    }
   });
 }
 
 /* --- Inventários --- */
+var _invDados = [];
+var _invTab   = 'andamento';
+
 function loadInventarios() {
-  // dados locais já renderizados; API enriquece se disponível
-  if (!getUrl()) return;
+  var box = document.getElementById('invList');
+  if (!box) return;
+
+  // Mostra o inventário já carregado via token (State.inventarioAtual)
+  // mais a lista completa da API
+  var url = getUrl();
+
+  // Se não tem URL, mostra só o inventário do token atual se existir
+  if (!url) {
+    renderInvLocal(box);
+    return;
+  }
+
+  box.innerHTML = '<div class="empty"><p>Carregando...</p></div>';
+
+  apiJsonp('listarInventarios', {}, function(r) {
+    if (r && r.ok && r.inventarios && r.inventarios.length) {
+      _invDados = r.inventarios;
+      renderInvLista(box, r.inventarios);
+    } else {
+      // Fallback: mostra só o inventário do token atual
+      renderInvLocal(box);
+    }
+  });
+}
+
+// Guarda lista de inventários para navegação
+var _invIndex = {};
+
+function renderInvLocal(box) {
+  var token = State.token || localStorage.getItem('almv25_token') || '';
+  var obra  = State.obra  || localStorage.getItem('almv25_obra')  || '';
+  var titulo = localStorage.getItem('almv25_titulo') || token;
+
+  if (!token) {
+    box.innerHTML = '<div class="empty"><div class="ico">📋</div><p>Nenhum inventário carregado.<br>Vá em Mais → Conexão API e carregue um token.</p></div>';
+    return;
+  }
+
+  _invIndex[token] = { token: token, titulo: titulo, obra: obra };
+
+  box.innerHTML = '<div class="card mb12">'
+    + '<div class="list-row inv-item" data-inv-token="' + token + '" style="cursor:pointer">'
+    + '<div class="thumb">📋</div>'
+    + '<div style="flex:1">'
+    + '<div style="font-size:14px;font-weight:700">' + (titulo || token) + '</div>'
+    + '<div class="note">' + (obra ? 'Obra: ' + obra : token) + '</div>'
+    + '<div class="note" style="margin-top:4px;color:var(--ok)">Token: ' + token + '</div>'
+    + '</div>'
+    + '<span class="pill ok">Ativo</span>'
+    + '</div></div>';
+}
+
+function renderInvLista(box, lista) {
+  if (!lista || !lista.length) {
+    renderInvLocal(box);
+    return;
+  }
+
+  var html = '<div class="card mb12">';
+  lista.forEach(function(inv) {
+    var token  = inv.token  || inv.rotId || '';
+    var titulo = inv.titulo || token;
+    var obra   = inv.obra   || '';
+    var lanc   = Number(inv.itensLanc)  || 0;
+    var esper  = Number(inv.itensEsper) || 0;
+    var pct    = esper > 0 ? Math.round(lanc / esper * 100) : 0;
+    var cor    = pct >= 90 ? 'var(--ok)' : pct >= 50 ? 'var(--warn)' : 'var(--err)';
+    var pillCls= pct >= 90 ? 'ok' : pct >= 50 ? 'warn' : 'err';
+    var progCls= pct >= 90 ? '' : pct >= 50 ? ' warn' : ' err';
+
+    _invIndex[token] = { token: token, titulo: titulo, obra: obra };
+
+    html += '<div class="list-row inv-item" data-inv-token="' + token + '" style="cursor:pointer">'
+      + '<div class="thumb">📋</div>'
+      + '<div style="flex:1">'
+      + '<div style="font-size:14px;font-weight:700">' + titulo + '</div>'
+      + (obra ? '<div class="note">Obra: ' + obra + '</div>' : '')
+      + '<div class="note">Token: ' + token + '</div>'
+      + (esper > 0
+        ? '<div style="display:flex;gap:6px;align-items:center;margin-top:4px">'
+          + '<div class="prog" style="flex:1"><div class="prog-fill' + progCls + '" style="width:' + pct + '%"></div></div>'
+          + '<span style="font-size:11px;font-weight:700;color:' + cor + '">' + lanc + '/' + esper + '</span>'
+          + '</div>'
+        : '')
+      + '</div>'
+      + (esper > 0 ? '<span class="pill ' + pillCls + '">' + pct + '%</span>' : '<span class="pill ok">Ativo</span>')
+      + '</div>';
+  });
+  html += '</div>';
+  box.innerHTML = html;
+}
+
+function filtrarInv(termo) {
+  if (!_invDados.length) return;
+  if (!termo) { renderInvLista(document.getElementById('invList'), _invDados); return; }
+  var t = termo.toLowerCase();
+  var filtrado = _invDados.filter(function(i) {
+    return String(i.titulo||'').toLowerCase().indexOf(t) >= 0
+        || String(i.token||'').toLowerCase().indexOf(t) >= 0
+        || String(i.obra||'').toLowerCase().indexOf(t) >= 0;
+  });
+  renderInvLista(document.getElementById('invList'), filtrado);
+}
+
+function abrirInventario(inv) {
+  // Salva o inventário selecionado e abre a tela de itens
+  State.token = inv.token || State.token;
+  State.obra  = inv.obra  || State.obra;
+  localStorage.setItem('almv25_titulo', inv.titulo || inv.token);
+  go('inventResultado');
+  // Carrega os itens deste inventário
+  setTimeout(function() { loadItensInventario(inv.token); }, 100);
 }
 
 function tabInv(btn, tab) {
-  document.querySelectorAll('[data-screen="inventarios"] .tab-btn').forEach(function (b) {
+  _invTab = tab;
+  document.querySelectorAll('[data-screen="inventarios"] .tab-btn').forEach(function(b) {
     b.classList.remove('active');
   });
   btn.classList.add('active');
+  loadInventarios();
+}
+
+/* --- Itens do Inventário --- */
+var _itensInv = [];
+var _itensIndex = {};
+
+function loadItensInventario(token) {
+  var tok = token || State.token || localStorage.getItem('almv25_token') || '';
+  if (!tok || !getUrl()) return;
+
+  // Atualiza header da tela
+  var titulo = localStorage.getItem('almv25_titulo') || tok;
+  var hdr = document.querySelector('[data-screen="inventResultado"] h1');
+  if (hdr) hdr.textContent = titulo;
+
+  // Carrega itens via API
+  apiJsonp('carregarInventario', { token: tok }, function(r) {
+    if (!r || !r.ok) return;
+    _itensInv = r.itens || [];
+
+    // Atualiza os indicadores no topo
+    var el;
+    el = document.getElementById('invResOS');    if (el) el.textContent = r.titulo || tok;
+    el = document.getElementById('invResObra');  if (el) el.textContent = r.obra   || '';
+    el = document.getElementById('invResTotal'); if (el) el.textContent = r.total  || 0;
+
+    // Renderiza a lista de indicadores
+    renderIndicadores(r.itens || []);
+  });
+}
+
+function renderIndicadores(itens) {
+  // Calcula divergências
+  var divs = itens.filter(function(i) { return (i.dif || (i.c - i.t)) !== 0; });
+  var contados = itens.filter(function(i) { return i.c > 0; });
+  var pct = itens.length > 0 ? Math.round(contados.length / itens.length * 100) : 0;
+
+  var el;
+  el = document.getElementById('invResContados');  if (el) el.textContent = contados.length;
+  el = document.getElementById('invResDivs');      if (el) el.textContent = divs.length;
+  el = document.getElementById('invResPct');       if (el) { el.textContent = pct + '%'; el.style.color = pct>=90?'var(--ok)':pct>=50?'var(--warn)':'var(--err)'; }
+
+  // Renderiza lista de itens
+  var box = document.getElementById('invItensList');
+  if (!box) return;
+  if (!itens.length) {
+    box.innerHTML = '<div class="empty"><p>Nenhum item encontrado neste inventário.</p></div>';
+    return;
+  }
+  box.innerHTML = '<div class="card">' + itens.map(function(it, idx) {
+    var dif = it.dif !== undefined ? it.dif : (it.c - it.t);
+    var difCor = dif === 0 ? 'var(--ok)' : dif > 0 ? 'var(--warn)' : 'var(--err)';
+    var difTxt = dif === 0 ? '✓' : (dif > 0 ? '+' + dif : String(dif));
+    var bg = it.c > 0 ? 'background:var(--okbg);' : '';
+    return '<div class="list-row item-cont" data-item-idx="' + idx + '" style="cursor:pointer;' + bg + '">'
+      + '<div class="thumb sm">📦</div>'
+      + '<div style="flex:1">'
+      + '<div style="font-size:13px;font-weight:700">' + (it.nm || it.cod) + '</div>'
+      + '<div class="code">' + it.cod + (it.local ? ' · ' + it.local : '') + '</div>'
+      + '<div style="font-size:11px;margin-top:3px">SAP: <b>' + it.t + '</b> · Contado: <b style="color:' + (it.c>0?'var(--ok)':'var(--ink3)') + '">' + it.c + '</b></div>'
+      + '</div>'
+      + '<div style="text-align:right">'
+      + '<div style="font-size:18px;font-weight:900;color:' + difCor + '">' + difTxt + '</div>'
+      + '<div style="font-size:10px;color:var(--ink3)">' + (it.un || 'UN') + '</div>'
+      + '</div></div>';
+  }).join('') + '</div>';
+}
+
+/* --- Modal de contagem do item --- */
+function abrirContagemItem(idx) {
+  var it = _itensInv[idx];
+  if (!it) return;
+  window._itemContAtual = { it: it, idx: idx };
+
+  // Cria modal
+  var modal = document.getElementById('modalContagem');
+  if (modal) modal.remove();
+
+  var m = document.createElement('div');
+  m.id = 'modalContagem';
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:flex;align-items:flex-end;justify-content:center';
+  m.innerHTML = '<div style="background:#fff;width:100%;max-width:430px;border-radius:20px 20px 0 0;padding:20px 18px 32px">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'
+    + '<div style="font-size:15px;font-weight:800;color:var(--ink);flex:1;padding-right:8px">' + (it.nm || it.cod) + '</div>'
+    + '<button onclick="fecharModal()" style="background:var(--errbg);border:none;border-radius:8px;width:32px;height:32px;font-size:18px;cursor:pointer;color:var(--err)">✕</button>'
+    + '</div>'
+    + '<div style="font-size:12px;color:var(--ink3);margin-bottom:4px">Cód: <b>' + it.cod + '</b> &nbsp;·&nbsp; SAP: <b>' + it.t + ' ' + (it.un||'UN') + '</b> &nbsp;·&nbsp; Contado atual: <b>' + it.c + '</b></div>'
+    + '<div style="height:1px;background:var(--line);margin:12px 0"></div>'
+    // Quantidade
+    + '<div style="font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Quantidade contada</div>'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+    + '<button onclick="adjModalCnt(-1)" style="width:52px;height:52px;border-radius:50%;border:1.5px solid var(--line);background:#fff;font-size:26px;font-weight:700;color:var(--g600);cursor:pointer">−</button>'
+    + '<div style="text-align:center">'
+    + '<div id="modalCntVal" style="font-size:48px;font-family:Syne,sans-serif;font-weight:900;color:var(--ink);line-height:1">' + it.c + '</div>'
+    + '<div style="font-size:11px;color:var(--ink3);font-weight:700;letter-spacing:.1em">' + (it.un||'UN') + '</div>'
+    + '</div>'
+    + '<button onclick="adjModalCnt(1)" style="width:52px;height:52px;border-radius:50%;border:1.5px solid var(--line);background:#fff;font-size:26px;font-weight:700;color:var(--g600);cursor:pointer">+</button>'
+    + '</div>'
+    // Teclado
+    + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">'
+    + [1,2,3,4,5,6,7,8,9,'C',0,'⌫'].map(function(k) {
+        var cor = k==='C'?'color:var(--err)':k==='⌫'?'color:var(--warn)':'';
+        return '<button onclick="kpModal(\'' + k + '\')" style="background:#fff;border:1.5px solid var(--line);border-radius:12px;padding:14px 0;font-size:20px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;' + cor + '">' + k + '</button>';
+      }).join('')
+    + '</div>'
+    // Botão salvar
+    + '<button onclick="salvarContagemItem()" style="width:100%;background:linear-gradient(150deg,var(--g500),var(--g700));color:#fff;border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;font-family:Inter,sans-serif;box-shadow:0 4px 12px rgba(30,107,69,.3)">✓ Confirmar Contagem</button>'
+    + '</div>';
+
+  document.body.appendChild(m);
+  m.addEventListener('click', function(e) { if (e.target === m) fecharModal(); });
+
+  window._modalCntStr = String(it.c || 0);
+}
+
+function fecharModal() {
+  var m = document.getElementById('modalContagem');
+  if (m) m.remove();
+}
+
+function adjModalCnt(d) {
+  var v = parseInt(window._modalCntStr || '0', 10) + d;
+  if (v < 0) v = 0;
+  window._modalCntStr = String(v);
+  var el = document.getElementById('modalCntVal');
+  if (el) el.textContent = v;
+}
+
+function kpModal(k) {
+  var s = window._modalCntStr || '0';
+  if (k === 'C') s = '0';
+  else if (k === '⌫') s = s.length > 1 ? s.slice(0, -1) : '0';
+  else { if (s === '0') s = ''; s += k; }
+  window._modalCntStr = s;
+  var el = document.getElementById('modalCntVal');
+  if (el) el.textContent = s || '0';
+}
+
+function salvarContagemItem() {
+  var info = window._itemContAtual;
+  if (!info) return;
+  var it  = info.it;
+  var idx = info.idx;
+  var qtd = parseInt(window._modalCntStr || '0', 10);
+  var tok = State.token || localStorage.getItem('almv25_token') || '';
+
+  if (!getUrl()) { alert('Configure a URL da API em Mais → Conexão API.'); return; }
+  if (!tok)      { alert('Carregue o inventário primeiro.'); return; }
+
+  var btn = document.querySelector('#modalContagem button:last-child');
+  if (btn) btn.textContent = 'Salvando...';
+
+  apiJsonp('lancarItemToken', {
+    token:             tok,
+    codigoMaterial:    it.cod,
+    descricao:         it.nm || '',
+    quantidadeContada: qtd,
+    quantidadeSap:     it.t  || 0,
+    valorUnitario:     it.vu || 0,
+    unidade:           it.un || 'UN',
+    local:             it.local || '',
+    lancadoPor:        localStorage.getItem('almv25_nome') || 'App'
+  }, function(r) {
+    if (r && r.ok) {
+      // Atualiza localmente
+      _itensInv[idx].c   = qtd;
+      _itensInv[idx].dif = qtd - (it.t || 0);
+      fecharModal();
+      // Recarrega lista
+      renderIndicadores(_itensInv);
+      alert('✓ Contagem salva!');
+    } else {
+      alert('Erro ao salvar. Verifique a conexão.');
+      if (btn) btn.textContent = '✓ Confirmar Contagem';
+    }
+  });
 }
 
 /* --- Reservas --- */
 var _resItems = [];
-function loadReservas() { /* dados estáticos para demo */ }
+function loadReservas() {
+  var box = document.getElementById('resList');
+  if (!box) return;
+  if (!getUrl()) {
+    box.innerHTML = '<div class="empty"><div class="ico">📋</div><p>Configure a API em Mais → Conexão API.</p></div>';
+    return;
+  }
+  box.innerHTML = '<div class="empty"><p>Carregando...</p></div>';
+  apiJsonp('listarReservasAgrupado', {}, function(r) {
+    if (!r || !r.ok || !r.grupos || !r.grupos.length) {
+      box.innerHTML = '<div class="empty"><div class="ico">📋</div><p>Nenhuma reserva encontrada.<br>Crie uma nova reserva abaixo.</p></div>';
+      return;
+    }
+    box.innerHTML = '<div class="card mb12">' + r.grupos.map(function(g) {
+      return '<div class="list-row res-item" data-res-id="' + g.reserva + '" style="cursor:pointer">'
+        + '<div class="thumb">📋</div>'
+        + '<div style="flex:1">'
+        + '<div style="font-size:14px;font-weight:700">' + g.reserva + '</div>'
+        + (g.obra ? '<div class="note">Obra: ' + g.obra + '</div>' : '')
+        + '<div class="note">' + g.totalItens + ' itens · R$ ' + Number(g.valorTotal||0).toFixed(2) + '</div>'
+        + '</div>'
+        + '<span class="pill ' + (g.status==='ABERTA'?'ok':g.status==='EM SEPARAÇÃO'?'blue':'warn') + '">' + (g.status||'Aberta') + '</span>'
+        + '</div>';
+    }).join('') + '</div>';
+  });
+}
 
 function buscarItensReserva(termo) {
   var out = document.getElementById('resBuscaOut');
@@ -2854,6 +3324,23 @@ document.addEventListener('click', function (e) {
   // back
   if (e.target.closest('[data-back]')) { goBack(); return; }
 
+  // contagem item click
+  var contItem = e.target.closest('.item-cont[data-item-idx]');
+  if (contItem) {
+    var idx = parseInt(contItem.getAttribute('data-item-idx'), 10);
+    abrirContagemItem(idx);
+    return;
+  }
+
+  // inventário item click
+  var invItem = e.target.closest('.inv-item[data-inv-token]');
+  if (invItem) {
+    var tok = invItem.getAttribute('data-inv-token');
+    var inv = _invIndex[tok] || { token: tok, titulo: tok, obra: '' };
+    abrirInventario(inv);
+    return;
+  }
+
   // search item select
   var resRow = e.target.closest('[data-res-cod]');
   if (resRow) {
@@ -2874,6 +3361,16 @@ document.addEventListener('click', function (e) {
    SCREEN LIFECYCLE — chamado em go()
    ============================================================ */
 function onScreenActivated(id) {
+  if (id === 'configuracoes') setTimeout(cfInit, 30);
+  if (id === 'mais') {
+    var nome = localStorage.getItem('almv25_nome') || 'Usuário';
+    var obra = State.obra || localStorage.getItem('almv25_obra') || '';
+    var tok  = State.token || localStorage.getItem('almv25_token') || '';
+    var el;
+    el = document.getElementById('maisNomeUser'); if(el) el.textContent = nome;
+    el = document.getElementById('maisObraUser');
+    if(el) el.textContent = (obra ? 'Obra: ' + obra : '') + (tok ? ' · Token: ' + tok : '');
+  }
   if (id === 'conexaoApi') setTimeout(initConexaoApi, 30);
   if (id === 'mapa') setTimeout(buildMapa, 30);
   if (id === 'assinatura') setTimeout(initCanvas, 80);
@@ -2888,9 +3385,13 @@ loadSavedUrl();
 buildScreens();
 go('dashboard');
 
-// Restore token
+// Restore saved config
 var savedToken = localStorage.getItem('almv25_token');
 if (savedToken) State.token = savedToken;
+var savedObra = localStorage.getItem('almv25_obra');
+if (savedObra) State.obra = savedObra;
+// Update greeting after short delay (DOM ready)
+setTimeout(updateGreetObra, 100);
 </script>
 </body>
 </html>
