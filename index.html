@@ -479,7 +479,7 @@ body{
 
 <script>
 /* ============================================================
-   V25 — GLOBAL STATE
+   V25 -- GLOBAL STATE
    ============================================================ */
 var State = {
   user: { nome: 'Almoxarife', perfil: 'ALMOXARIFE' },
@@ -498,7 +498,7 @@ var State = {
 };
 
 /* ============================================================
-   API — Fetch com retry JSONP
+   API -- Fetch com retry JSONP
    Diagnóstico: ping funciona (fetch OK), mas outras ações
    dão "Failed to fetch" = CORS bloqueado só nelas.
    Solução: tenta fetch, se CORS falhar tenta JSONP, se JSONP
@@ -558,7 +558,7 @@ function apiJsonp(action, params, cb) {
     .then(function(txt) {
       var d = parseResponse(txt);
       if (d) { finish(d); return; }
-      // Texto veio mas não parseou — tenta JSONP
+      // Texto veio mas não parseou -- tenta JSONP
       tryJsonp();
     })
     .catch(function() {
@@ -690,22 +690,22 @@ SCREENS.dashboard = `
     <div class="ov-grid mb12">
       <div class="ov g" onclick="go('inventarios')">
         <div class="ov-top"><span>Inventários</span>📋</div>
-        <div class="n" id="ovInv">—</div>
+        <div class="n" id="ovInv">--</div>
         <div class="l">Em andamento</div>
       </div>
       <div class="ov b" onclick="go('reservas')">
         <div class="ov-top"><span>Reservas</span>📥</div>
-        <div class="n" id="ovRes">—</div>
+        <div class="n" id="ovRes">--</div>
         <div class="l">Abertas</div>
       </div>
       <div class="ov a" onclick="go('pendencias')">
         <div class="ov-top"><span>Pendências</span>⚠️</div>
-        <div class="n" id="ovPend">—</div>
+        <div class="n" id="ovPend">--</div>
         <div class="l">Itens</div>
       </div>
       <div class="ov r" onclick="go('ocorrencias')">
         <div class="ov-top"><span>Divergências</span>❗</div>
-        <div class="n" id="ovDiv">—</div>
+        <div class="n" id="ovDiv">--</div>
         <div class="l">Itens</div>
       </div>
     </div>
@@ -791,20 +791,20 @@ SCREENS.inventResultado = `
     </div>
     <div class="kpi-row mb12">
       <div class="kpi-cell">
-        <div class="kpi-n" id="invResTotal">—</div>
+        <div class="kpi-n" id="invResTotal">--</div>
         <div class="kpi-l">Total itens</div>
       </div>
       <div class="kpi-cell">
-        <div class="kpi-n" id="invResContados" style="color:var(--ok)">—</div>
+        <div class="kpi-n" id="invResContados" style="color:var(--ok)">--</div>
         <div class="kpi-l">Contados</div>
       </div>
       <div class="kpi-cell">
-        <div class="kpi-n" id="invResDivs" style="color:var(--err)">—</div>
+        <div class="kpi-n" id="invResDivs" style="color:var(--err)">--</div>
         <div class="kpi-l">Divergências</div>
       </div>
     </div>
     <div style="text-align:center;margin-bottom:12px">
-      <span style="font-size:28px;font-weight:900;font-family:Syne,sans-serif" id="invResPct">—</span>
+      <span style="font-size:28px;font-weight:900;font-family:Syne,sans-serif" id="invResPct">--</span>
       <span style="font-size:13px;color:var(--ink3)"> contados</span>
     </div>
 
@@ -815,7 +815,7 @@ SCREENS.inventResultado = `
           <span class="ring-label">95%</span>
         </div>
         <div class="ring-info">
-          <div class="pct" id="dashPct">—</div>
+          <div class="pct" id="dashPct">--</div>
           <div class="tag">Excelente</div>
           <div class="sub">Meta: ≥ 90%</div>
         </div>
@@ -989,7 +989,7 @@ SCREENS.contagem = `
       <button class="hdr-icon" onclick="goBack()">‹</button>
       <div style="flex:1">
         <h1>Contagem Inteligente</h1>
-        <div class="sub" id="contagemOS">—</div>
+        <div class="sub" id="contagemOS">--</div>
       </div>
       <button class="hdr-icon">⋮</button>
     </div>
@@ -1122,8 +1122,8 @@ SCREENS.detalhesReserva = `
   <div class="pad">
     <div class="flexb mb12">
       <div>
-        <div style="font-size:13px;font-weight:800" id="detResId">—</div>
-        <div class="note" id="detResObra">—</div>
+        <div style="font-size:13px;font-weight:800" id="detResId">--</div>
+        <div class="note" id="detResObra">--</div>
       </div>
       <span class="pill ok" id="detResStatus">Aberta</span>
     </div>
@@ -1134,7 +1134,7 @@ SCREENS.detalhesReserva = `
     </div>
     <div class="card mb12">
       <div class="diag-row"><span class="lbl">Status</span><span class="pill ok">Aberta</span></div>
-      <div class="diag-row"><span class="lbl">Responsável</span><span class="val" id="detResResp">—</span></div>
+      <div class="diag-row"><span class="lbl">Responsável</span><span class="val" id="detResResp">--</span></div>
       <div class="diag-row"><span class="lbl">Data</span><span class="val">27/06/2026</span></div>
       <div class="diag-row"><span class="lbl">Motivo</span><span class="val">Aguardando Baixa</span></div>
       <div class="diag-row"><span class="lbl">Valor total (R$)</span><span class="val" style="color:var(--g600)">R$ 1.248,90</span></div>
@@ -1183,14 +1183,14 @@ SCREENS.detalhesReserva = `
           <div class="tl-dot ok">✓</div>
           <div class="tl-content">
             <div class="tl-title">Reserva criada</div>
-            <div class="tl-sub">Criado · —</div>
+            <div class="tl-sub">Criado · --</div>
           </div>
         </div>
         <div class="tl-item">
           <div class="tl-dot ok">+</div>
           <div class="tl-content">
             <div class="tl-title">Item adicionado</div>
-            <div class="tl-sub">Atualizado · —</div>
+            <div class="tl-sub">Atualizado · --</div>
           </div>
         </div>
       </div>
@@ -1266,11 +1266,11 @@ SCREENS.mapa = `
   </div>
   <div class="pad">
     <div class="field"><label>Obra</label>
-      <select><option id="mapaObraOpt">—</option></select></div>
+      <select><option id="mapaObraOpt">--</option></select></div>
     <div class="search-box mb12"><span class="ico">🔍</span><input type="text" placeholder="Buscar local..."></div>
     <div class="card mb12" style="overflow:hidden">
       <div style="padding:12px 14px;font-size:12px;font-weight:700;color:var(--ink3);border-bottom:1px solid var(--line)">
-        MAPA DO ALMOXARIFADO — RUAS / PRATELEIRAS
+        MAPA DO ALMOXARIFADO -- RUAS / PRATELEIRAS
       </div>
       <div style="padding:14px">
         <div style="display:flex;gap:6px;margin-bottom:10px">
@@ -1325,9 +1325,9 @@ SCREENS.conferencia = `
     <div id="confBanner" style="display:none" class="banner">
       <div>
         <div style="font-size:12px;font-weight:700;color:var(--ink3)">Último item lido</div>
-        <div style="font-size:14px;font-weight:800" id="confNm">—</div>
-        <div class="code" id="confCod">—</div>
-        <div class="note" id="confInfo">—</div>
+        <div style="font-size:14px;font-weight:800" id="confNm">--</div>
+        <div class="code" id="confCod">--</div>
+        <div class="note" id="confInfo">--</div>
       </div>
     </div>
     <div class="card mb12" id="confResult" style="display:none">
@@ -1335,9 +1335,9 @@ SCREENS.conferencia = `
         <div class="thumb">✅</div>
         <div style="flex:1">
           <div style="font-size:13px;font-weight:700">Item encontrado!</div>
-          <div class="note" id="confResNm">—</div>
-          <div class="code" id="confResCod">—</div>
-          <div class="note" id="confResLocal">—</div>
+          <div class="note" id="confResNm">--</div>
+          <div class="code" id="confResCod">--</div>
+          <div class="note" id="confResLocal">--</div>
         </div>
         <span class="pill ok">Conferido</span>
       </div>
@@ -1396,72 +1396,13 @@ SCREENS.relatorio = `
   <div class="hdr">
     <div class="hdr-row">
       <button class="hdr-icon" onclick="goBack()">‹</button>
-      <h1>Relatório do Inventário</h1>
+      <h1>Relatório</h1>
       <div style="flex:1"></div>
-      <button class="hdr-icon">⬆</button>
+      <button class="hdr-icon" onclick="gerarRelatorio()">⟳</button>
     </div>
   </div>
-  <div class="pad">
-    <div class="flexb mb12">
-      <div>
-        <div style="font-size:13px;font-weight:800" id="relOS">—</div>
-        <div class="note" id="relObra">—</div>
-        <div class="note" id="relData">—</div>
-      </div>
-      <span class="pill ok">Finalizado</span>
-    </div>
-
-    <div class="sec-title" style="margin-left:0">Acuracidade Geral</div>
-    <div class="card mb12">
-      <div class="ring-wrap">
-        <div class="ring" style="--pct:0" id="relRing"><span class="ring-label" id="relPctLabel">—</span></div>
-        <div class="ring-info">
-          <div class="pct" id="dashPct">—</div>
-          <div class="tag">Excelente · Variação: 3,2%</div>
-          <div class="sub">Meta: ≥ 90%</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="sec-title" style="margin-left:0">Resumo dos Indicadores (IT 7.2.7)</div>
-    <div class="card mb12">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)">
-        <div style="background:#fff;padding:10px 14px"><div class="note">A · Itens contados no ciclo</div><div style="font-weight:800;font-size:16px;color:var(--ok)">1.250</div></div>
-        <div style="background:#fff;padding:10px 14px"><div class="note">F · Materiais sobrando</div><div style="font-weight:800;font-size:16px;color:var(--warn)">18</div></div>
-        <div style="background:#fff;padding:10px 14px"><div class="note">B · Erros de contagem</div><div style="font-weight:800;font-size:16px;color:var(--err)">15</div></div>
-        <div style="background:#fff;padding:10px 14px"><div class="note">G · Materiais faltando</div><div style="font-weight:800;font-size:16px;color:var(--err)">22</div></div>
-        <div style="background:#fff;padding:10px 14px"><div class="note">C · Local incorreto</div><div style="font-weight:800;font-size:16px;color:var(--warn)">8</div></div>
-        <div style="background:#fff;padding:10px 14px"><div class="note">H · Materiais avariados</div><div style="font-weight:800;font-size:16px">5</div></div>
-        <div style="background:#fff;padding:10px 14px"><div class="note">D · Entregues não baixados</div><div style="font-weight:800;font-size:16px;color:var(--warn)">12</div></div>
-        <div style="background:#fff;padding:10px 14px"><div class="note">J · Itens vencidos</div><div style="font-weight:800;font-size:16px;color:var(--err)">7</div></div>
-      </div>
-    </div>
-
-    <div class="sec-title" style="margin-left:0">Valor Financeiro das Divergências</div>
-    <div class="card mb12 card-body" style="display:flex;align-items:center;gap:12px">
-      <div>
-        <div class="note">Total de divergências (R$)</div>
-        <div style="font-size:24px;font-weight:900;font-family:'Syne',sans-serif;color:var(--err)">R$ 8.456,70</div>
-      </div>
-      <div style="font-size:32px;margin-left:auto">💰</div>
-    </div>
-
-    <div class="sec-title" style="margin-left:0">Assinaturas</div>
-    <div class="sig-row mb16">
-      <div class="sig-box">
-        <div class="sig-line"></div>
-        <div class="sig-label">Almoxarife<br><span id="sigDataAlm">—</span></div>
-      </div>
-      <div class="sig-box">
-        <div class="sig-line"></div>
-        <div class="sig-label">Gerente / Responsável<br><span id="sigDataGer">—</span></div>
-      </div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <button class="btn btn-err" onclick="alert('Baixando PDF...')">📄 Baixar PDF</button>
-      <button class="btn btn-ghost" onclick="alert('Enviando por e-mail...')">✉️ Enviar E-mail</button>
-    </div>
+  <div class="pad" id="relConteudo">
+    <div class="empty"><div class="ico">📄</div><p>Carregando relatório...</p></div>
   </div>
 </div>`;
 
@@ -1512,12 +1453,12 @@ SCREENS.sincronizacao = `
       <div class="diag-row" id="dUrl"><span class="lbl">🔗 URL da API</span><span class="val" style="color:var(--ink3)" id="dUrlVal">⏳ Aguardando</span></div>
       <div class="diag-row" id="dFetch"><span class="lbl">📡 Fetch (JSON)</span><span class="val" style="color:var(--ink3)" id="dFetchVal">⏳ Aguardando</span></div>
       <div class="diag-row" id="dJsonp"><span class="lbl">🔄 JSONP</span><span class="val" style="color:var(--ink3)" id="dJsonpVal">⏳ Aguardando</span></div>
-      <div class="diag-row"><span class="lbl">⚙️ Versão API</span><span class="val" id="dApiVerVal" style="color:var(--ink3)">—</span></div>
-      <div class="diag-row"><span class="lbl">🔑 Token</span><span class="val" id="dTokenVal" style="color:var(--ink3)">—</span></div>
-      <div class="diag-row"><span class="lbl">⏱ Latência</span><span class="val" id="dLatenciaVal" style="color:var(--ink3)">—</span></div>
+      <div class="diag-row"><span class="lbl">⚙️ Versão API</span><span class="val" id="dApiVerVal" style="color:var(--ink3)">--</span></div>
+      <div class="diag-row"><span class="lbl">🔑 Token</span><span class="val" id="dTokenVal" style="color:var(--ink3)">--</span></div>
+      <div class="diag-row"><span class="lbl">⏱ Latência</span><span class="val" id="dLatenciaVal" style="color:var(--ink3)">--</span></div>
       <div class="diag-row" id="dErroRow" style="display:none">
         <span class="lbl">❌ Erro</span>
-        <span id="dErroTxt" style="font-size:10px;color:var(--err);word-break:break-all;flex:1;text-align:right">—</span>
+        <span id="dErroTxt" style="font-size:10px;color:var(--err);word-break:break-all;flex:1;text-align:right">--</span>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
@@ -1563,10 +1504,10 @@ SCREENS.ia = `
       <div class="ai-title">🤖 Análise Inteligente</div>
       <div class="ai-text">Com base nos seus inventários recentes, detectei os seguintes pontos de atenção:</div>
       <div class="ai-list" style="margin-top:12px">
-        <div class="ai-item">5 itens com estoque abaixo do mínimo — considere repor antes da próxima obra</div>
-        <div class="ai-item">3 materiais com alta taxa de giro — risco de ruptura em 15 dias</div>
+        <div class="ai-item">5 itens com estoque abaixo do mínimo -- considere repor antes da próxima obra</div>
+        <div class="ai-item">3 materiais com alta taxa de giro -- risco de ruptura em 15 dias</div>
         <div class="ai-item">2 reservas em atraso precisam de aprovação do gerente</div>
-        <div class="ai-item">Acuracidade subiu 3,2% este mês — bom trabalho!</div>
+        <div class="ai-item">Acuracidade subiu 3,2% este mês -- bom trabalho!</div>
       </div>
     </div>
     <div class="sec-title" style="margin-left:0">Sugestões de Ação</div>
@@ -1743,7 +1684,7 @@ SCREENS.conexaoApi = `
           <div style="width:24px;height:24px;border-radius:50%;background:var(--g050);color:var(--g600);font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
           <span style="font-size:13px;font-weight:600">Testar URL</span>
         </div>
-        <span id="caS1" style="font-size:12px;font-weight:700;color:var(--ink3)">—</span>
+        <span id="caS1" style="font-size:12px;font-weight:700;color:var(--ink3)">--</span>
         <button class="btn btn-soft btn-xs" style="margin-left:8px" onclick="caTestarUrl()">Testar</button>
       </div>
       <div class="row-sep"></div>
@@ -1753,7 +1694,7 @@ SCREENS.conexaoApi = `
           <div style="width:24px;height:24px;border-radius:50%;background:var(--g050);color:var(--g600);font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
           <span style="font-size:13px;font-weight:600">Testar Token</span>
         </div>
-        <span id="caS2" style="font-size:12px;font-weight:700;color:var(--ink3)">—</span>
+        <span id="caS2" style="font-size:12px;font-weight:700;color:var(--ink3)">--</span>
         <button class="btn btn-soft btn-xs" style="margin-left:8px" onclick="caTestarToken()">Testar</button>
       </div>
       <div class="row-sep"></div>
@@ -1763,7 +1704,7 @@ SCREENS.conexaoApi = `
           <div style="width:24px;height:24px;border-radius:50%;background:var(--g050);color:var(--g600);font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
           <span style="font-size:13px;font-weight:600">Buscar Inventário</span>
         </div>
-        <span id="caS3" style="font-size:12px;font-weight:700;color:var(--ink3)">—</span>
+        <span id="caS3" style="font-size:12px;font-weight:700;color:var(--ink3)">--</span>
         <button class="btn btn-soft btn-xs" style="margin-left:8px" onclick="caBuscarInventario()">Buscar</button>
       </div>
       <div class="row-sep"></div>
@@ -1773,7 +1714,7 @@ SCREENS.conexaoApi = `
           <div style="width:24px;height:24px;border-radius:50%;background:var(--g050);color:var(--g600);font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0">4</div>
           <span style="font-size:13px;font-weight:600">Buscar Localizações</span>
         </div>
-        <span id="caS4" style="font-size:12px;font-weight:700;color:var(--ink3)">—</span>
+        <span id="caS4" style="font-size:12px;font-weight:700;color:var(--ink3)">--</span>
         <button class="btn btn-soft btn-xs" style="margin-left:8px" onclick="caBuscarLocalizacoes()">Buscar</button>
       </div>
       <div class="row-sep"></div>
@@ -1783,7 +1724,7 @@ SCREENS.conexaoApi = `
           <div style="width:24px;height:24px;border-radius:50%;background:var(--g050);color:var(--g600);font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0">5</div>
           <span style="font-size:13px;font-weight:600">Verificar Permissões</span>
         </div>
-        <span id="caS5" style="font-size:12px;font-weight:700;color:var(--ink3)">—</span>
+        <span id="caS5" style="font-size:12px;font-weight:700;color:var(--ink3)">--</span>
         <button class="btn btn-soft btn-xs" style="margin-left:8px" onclick="caVerificarPermissoes()">Verificar</button>
       </div>
     </div>
@@ -2138,7 +2079,7 @@ function loadSyncStatus() {
 /* --- Diagnóstico --- */
 
 /* ============================================================
-   CONEXÃO API — módulo fetch puro
+   CONEXÃO API -- módulo fetch puro
    ============================================================ */
 var _caLogs = [];
 
@@ -2194,7 +2135,7 @@ function caLimparLogs() {
   var box = document.getElementById('caLogsBox'); if (box) box.innerHTML = 'Logs limpos.';
 }
 
-/* PASSO 1 — Testar URL (fetch ping) */
+/* PASSO 1 -- Testar URL (fetch ping) */
 function caTestarUrl() {
   var url = caGetUrl();
   if (!url) { caStatus('caS1','🔴','Sem URL','var(--err)'); caLog('ERRO: URL não configurada'); return; }
@@ -2214,7 +2155,7 @@ function caTestarUrl() {
         if (d.ok || d.status === 'online') {
           caStatus('caS1','🟢','Online · ' + ms + 'ms','var(--ok)');
           caResp('✓ Ping OK (' + ms + 'ms)', d, 'var(--ok)');
-          caLog('OK: ok=' + d.ok + ' versaoApi=' + (d.versaoApi||'—'));
+          caLog('OK: ok=' + d.ok + ' versaoApi=' + (d.versaoApi||'--'));
         } else {
           caStatus('caS1','🟡','Resposta sem ok=true','var(--warn)');
           caResp('⚠ Resposta recebida mas ok≠true', d, 'var(--warn)');
@@ -2233,7 +2174,7 @@ function caTestarUrl() {
     });
 }
 
-/* PASSO 2 — Testar Token */
+/* PASSO 2 -- Testar Token */
 function caTestarToken() {
   var url = caGetUrl();
   var tok = (document.getElementById('caTokenInput') || {}).value || State.token || localStorage.getItem('almv25_token') || '';
@@ -2252,7 +2193,7 @@ function caTestarToken() {
           caResp('✓ Token ' + tok + ' encontrado', d, 'var(--ok)');
           State.token = tok;
           localStorage.setItem('almv25_token', tok);
-          caLog('Token OK: inventario=' + (d.inventario||'—') + ' obra=' + (d.obra||'—'));
+          caLog('Token OK: inventario=' + (d.inventario||'--') + ' obra=' + (d.obra||'--'));
         } else {
           caStatus('caS2','🔴','Token não encontrado','var(--err)');
           caResp('❌ Token inválido', d, 'var(--err)');
@@ -2271,7 +2212,7 @@ function caTestarToken() {
     });
 }
 
-/* PASSO 3 — Buscar Inventário */
+/* PASSO 3 -- Buscar Inventário */
 function caBuscarInventario() {
   var url = caGetUrl();
   var tok = (document.getElementById('caTokenInput') || {}).value || State.token || '';
@@ -2289,7 +2230,7 @@ function caBuscarInventario() {
           var qtd = (d.itens||[]).length;
           caStatus('caS3','🟢', qtd + ' itens carregados','var(--ok)');
           caResp('✓ Inventário carregado · ' + qtd + ' itens', d, 'var(--ok)');
-          caLog('Inventário OK: ' + qtd + ' itens, obra=' + (d.obra||'—'));
+          caLog('Inventário OK: ' + qtd + ' itens, obra=' + (d.obra||'--'));
         } else {
           caStatus('caS3','🔴','Falhou','var(--err)');
           caResp('❌ Inventário não carregado', d, 'var(--err)');
@@ -2308,7 +2249,7 @@ function caBuscarInventario() {
     });
 }
 
-/* PASSO 4 — Buscar Localizações */
+/* PASSO 4 -- Buscar Localizações */
 function caBuscarLocalizacoes() {
   var url = caGetUrl();
   if (!url) { caStatus('caS4','🔴','Sem URL','var(--err)'); return; }
@@ -2333,7 +2274,7 @@ function caBuscarLocalizacoes() {
       } catch(e) {
         caStatus('caS4','🟡','Resposta não-JSON','var(--warn)');
         caResp('⚠ Resposta bruta (pode ser correto):', txt.substring(0,400), 'var(--warn)');
-        caLog('Parse falhou — resposta: ' + txt.substring(0,100));
+        caLog('Parse falhou -- resposta: ' + txt.substring(0,100));
       }
     })
     .catch(function(e) {
@@ -2343,13 +2284,13 @@ function caBuscarLocalizacoes() {
     });
 }
 
-/* PASSO 5 — Verificar Permissões (checa se retorna corretamente sem auth) */
+/* PASSO 5 -- Verificar Permissões (checa se retorna corretamente sem auth) */
 function caVerificarPermissoes() {
   var url = caGetUrl();
   if (!url) { caStatus('caS5','🔴','Sem URL','var(--err)'); return; }
   caStatus('caS5','⏳','Verificando...','var(--ink3)');
   caLog('Verificando permissões de acesso...');
-  // Testa sem parâmetros — se retornar algo = acesso público OK
+  // Testa sem parâmetros -- se retornar algo = acesso público OK
   fetch(url + '?action=ping&_=' + Date.now(), {
     method: 'GET',
     headers: { 'Accept': 'application/json' }
@@ -2358,26 +2299,26 @@ function caVerificarPermissoes() {
       caLog('HTTP ' + r.status + ' headers ok=' + r.ok);
       if (r.status === 200) {
         caStatus('caS5','🟢','Acesso público OK','var(--ok)');
-        caResp('✓ Permissão OK — script acessível publicamente', 'HTTP ' + r.status, 'var(--ok)');
+        caResp('✓ Permissão OK -- script acessível publicamente', 'HTTP ' + r.status, 'var(--ok)');
         caLog('Permissão OK: HTTP 200');
       } else if (r.status === 302 || r.status === 401) {
         caStatus('caS5','🔴','Não autorizado (302/401)','var(--err)');
-        caResp('❌ Acesso negado — reimplante como "Qualquer pessoa"', 'HTTP ' + r.status, 'var(--err)');
+        caResp('❌ Acesso negado -- reimplante como "Qualquer pessoa"', 'HTTP ' + r.status, 'var(--err)');
         caLog('PERMISSÃO NEGADA: HTTP ' + r.status + ' → reimplante no Apps Script como "Qualquer pessoa"');
       } else {
         caStatus('caS5','🟡','HTTP ' + r.status,'var(--warn)');
-        caResp('⚠ HTTP ' + r.status + ' — verifique o script', 'HTTP ' + r.status, 'var(--warn)');
+        caResp('⚠ HTTP ' + r.status + ' -- verifique o script', 'HTTP ' + r.status, 'var(--warn)');
         caLog('Status inesperado: HTTP ' + r.status);
       }
     })
     .catch(function(e) {
       caStatus('caS5','🔴','Erro CORS','var(--err)');
-      caResp('❌ Erro CORS — o script não permite requisições externas', e.message, 'var(--err)');
+      caResp('❌ Erro CORS -- o script não permite requisições externas', e.message, 'var(--err)');
       caLog('CORS ERROR: ' + e.message);
     });
 }
 
-/* CARREGAR TUDO — executa passos 1→2→3 em sequência */
+/* CARREGAR TUDO -- executa passos 1→2→3 em sequência */
 function caCarregarTudo() {
   var url = caGetUrl();
   var tok = ((document.getElementById('caTokenInput') || {}).value || '').trim();
@@ -2403,7 +2344,7 @@ function caCarregarTudo() {
         var d = JSON.parse(txt);
         if (d.ok || d.status === 'online') {
           caStatus('caS1','🟢','OK','var(--ok)');
-          caLog('Ping OK versaoApi=' + (d.versaoApi||'—'));
+          caLog('Ping OK versaoApi=' + (d.versaoApi||'--'));
         } else { caStatus('caS1','🟡','Resposta estranha','var(--warn)'); }
       } catch(e) { caStatus('caS1','🟡','Não-JSON','var(--warn)'); }
 
@@ -2417,7 +2358,7 @@ function caCarregarTudo() {
         var d = JSON.parse(txt);
         if (d.ok) {
           caStatus('caS2','🟢','Válido','var(--ok)');
-          caLog('Token OK: obra=' + (d.obra||'—'));
+          caLog('Token OK: obra=' + (d.obra||'--'));
           if (d.obra) State.obra = d.obra;
         } else { caStatus('caS2','🔴','Inválido','var(--err)'); caLog('Token inválido: ' + JSON.stringify(d)); return Promise.reject('token_invalido'); }
       } catch(e) { caStatus('caS2','🟡','Não-JSON','var(--warn)'); }
@@ -2464,7 +2405,7 @@ function initConexaoApi() {
 
 
 /* ============================================================
-   CONFIGURACOES — módulo
+   CONFIGURACOES -- módulo
    ============================================================ */
 var CF_DEFAULTS = {
   modulos: {inventarios:true,reservas:true,scanner:true,kits:false,mapa:false,ocorrencias:true,relatorio:true,ia:false,assinatura:false},
@@ -2554,7 +2495,7 @@ function cfBuscarDadosAPI() {
             }
           }
         } else {
-          // API respondeu mas sem inventarios — mostrar resposta bruta
+          // API respondeu mas sem inventarios -- mostrar resposta bruta
           if (body) body.innerHTML = '<span style="color:var(--warn);font-weight:700">Conectado, mas a acao listarInventarios retornou:</span><br><pre style="font-size:10px;word-break:break-all;white-space:pre-wrap;margin-top:6px">' + txt.substring(0,300) + '</pre>';
           if (invList) invList.innerHTML = '<div style="padding:12px 14px"><div class="note">A API nao tem a acao listarInventarios. Cole o token manualmente acima.</div></div>';
         }
@@ -2580,13 +2521,249 @@ function updateGreetObra() {
   var el = document.getElementById('greetObra');
   if (el) {
     el.textContent = obra
-      ? ('Obras: ' + obra + ' · Token: ' + (State.token || '—'))
+      ? ('Obras: ' + obra + ' · Token: ' + (State.token || '--'))
       : 'Configure em Mais → Configurações';
   }
 }
 
+
 /* ============================================================
-   DIAGNÓSTICO V25 — passo a passo com logs
+   RELATÓRIO DINÂMICO + PDF
+   ============================================================ */
+
+function gerarRelatorio() {
+  var itens  = _itensInv;
+  var titulo = localStorage.getItem('almv25_titulo') || State.token || '--';
+  var obra   = State.obra  || localStorage.getItem('almv25_obra')  || '--';
+  var nome   = localStorage.getItem('almv25_nome') || 'Almoxarife';
+  var token  = State.token || localStorage.getItem('almv25_token') || '--';
+  var agora  = new Date().toLocaleString('pt-BR');
+
+  if (!itens || !itens.length) {
+    var box = document.getElementById('relConteudo');
+    if (box) box.innerHTML = '<div class="empty"><div class="ico">📄</div><p>Nenhum item carregado.<br>Abra o inventário primeiro.</p></div>';
+    return;
+  }
+
+  // -- Calcula indicadores ---------------------------------------
+  var total    = itens.length;
+  var contados = itens.filter(function(i){ return i.c > 0; }).length;
+  var semDiv   = itens.filter(function(i){ return (i.c - i.t) === 0 && i.c > 0; }).length;
+  var sobrando = itens.filter(function(i){ return (i.c - i.t) > 0; }).length;
+  var faltando = itens.filter(function(i){ return (i.c - i.t) < 0 && i.c > 0; }).length;
+  var naoLanc  = itens.filter(function(i){ return i.c === 0; }).length;
+
+  var pct      = total > 0 ? Math.round(contados / total * 100) : 0;
+  var pctOk    = total > 0 ? Math.round(semDiv   / total * 100) : 0;
+  var pctCor   = pct >= 90 ? 'var(--ok)' : pct >= 70 ? 'var(--warn)' : 'var(--err)';
+  var pctTag   = pct >= 90 ? 'Excelente' : pct >= 70 ? 'Regular' : 'Atenção';
+
+  // -- Valores financeiros ---------------------------------------
+  var vlrTotal = 0, vlrDiv = 0, vlrSob = 0, vlrFalt = 0;
+  itens.forEach(function(i) {
+    var vu  = i.vu  || 0;
+    var dif = i.c - i.t;
+    vlrTotal += i.t * vu;
+    if (dif !== 0) vlrDiv += Math.abs(dif) * vu;
+    if (dif > 0)   vlrSob  += dif * vu;
+    if (dif < 0)   vlrFalt += Math.abs(dif) * vu;
+  });
+
+  function brl(v) {
+    var s = Math.abs(v).toFixed(2);
+    var parts = s.split('.');
+    var intStr = parts[0];
+    var dec = parts[1];
+    var result = '';
+    for (var i = 0; i < intStr.length; i++) {
+      if (i > 0 && (intStr.length - i) % 3 === 0) result += '.';
+      result += intStr[i];
+    }
+    return (v < 0 ? '-' : '') + 'R$ ' + result + ',' + dec;
+  }
+
+  // -- Monta HTML do relatório -----------------------------------
+  var html = '';
+
+  // Cabeçalho
+  html += '<div class="card mb12 card-body" style="background:linear-gradient(150deg,var(--g700),var(--g600));color:#fff">'
+    + '<div style="font-size:11px;opacity:.7;font-weight:700;letter-spacing:.08em;text-transform:uppercase">Relatório do Inventário</div>'
+    + '<div style="font-size:18px;font-weight:900;font-family:Syne,sans-serif;margin:4px 0">' + titulo + '</div>'
+    + '<div style="font-size:12px;opacity:.8">Obra: ' + obra + '</div>'
+    + '<div style="font-size:11px;opacity:.7;margin-top:4px">Token: ' + token + ' &nbsp;·&nbsp; ' + agora + '</div>'
+    + '</div>';
+
+  // Acurácia
+  html += '<div class="sec-title" style="margin-left:0">Acurácia do Inventário</div>'
+    + '<div class="card mb12"><div class="ring-wrap">'
+    + '<div class="ring" style="--pct:' + pct + '"><span class="ring-label" style="color:' + pctCor + '">' + pct + '%</span></div>'
+    + '<div class="ring-info" style="flex:1">'
+    + '<div style="font-size:24px;font-weight:900;font-family:Syne,sans-serif;color:' + pctCor + '">' + pct + '%</div>'
+    + '<div style="font-size:12px;font-weight:700;color:' + pctCor + '">' + pctTag + '</div>'
+    + '<div style="font-size:11px;color:var(--ink3)">Meta: ≥ 90% · ' + contados + '/' + total + ' itens contados</div>'
+    + '</div>'
+    + '<div style="text-align:right">'
+    + '<div style="font-size:20px;font-weight:900;font-family:Syne,sans-serif;color:var(--ok)">' + pctOk + '%</div>'
+    + '<div style="font-size:10px;color:var(--ink3)">Sem divergência</div>'
+    + '</div>'
+    + '</div></div>';
+
+  // Resumo itens
+  html += '<div class="sec-title" style="margin-left:0">Resumo dos Itens</div>'
+    + '<div class="card mb12">'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)">'
+    + '<div style="background:#fff;padding:11px 14px"><div class="note">Total no inventário</div><div style="font-size:18px;font-weight:900;font-family:Syne,sans-serif">' + total + '</div></div>'
+    + '<div style="background:#fff;padding:11px 14px"><div class="note">Contados</div><div style="font-size:18px;font-weight:900;font-family:Syne,sans-serif;color:var(--ok)">' + contados + '</div></div>'
+    + '<div style="background:#fff;padding:11px 14px"><div class="note">Sobrando (excesso)</div><div style="font-size:18px;font-weight:900;font-family:Syne,sans-serif;color:var(--warn)">' + sobrando + '</div></div>'
+    + '<div style="background:#fff;padding:11px 14px"><div class="note">Faltando</div><div style="font-size:18px;font-weight:900;font-family:Syne,sans-serif;color:var(--err)">' + faltando + '</div></div>'
+    + '<div style="background:#fff;padding:11px 14px"><div class="note">Sem divergência</div><div style="font-size:18px;font-weight:900;font-family:Syne,sans-serif;color:var(--ok)">' + semDiv + '</div></div>'
+    + '<div style="background:#fff;padding:11px 14px"><div class="note">Não lançados</div><div style="font-size:18px;font-weight:900;font-family:Syne,sans-serif;color:var(--ink3)">' + naoLanc + '</div></div>'
+    + '</div></div>';
+
+  // Valores financeiros
+  html += '<div class="sec-title" style="margin-left:0">Valores Financeiros</div>'
+    + '<div class="card mb12 card-body">'
+    + '<div class="flexb mb8"><span class="note">Valor total do inventário (SAP)</span><span style="font-weight:700">' + brl(vlrTotal) + '</span></div>'
+    + '<div class="flexb mb8"><span class="note">Valor em divergência total</span><span style="font-weight:700;color:var(--err)">' + brl(vlrDiv) + '</span></div>'
+    + '<div class="flexb mb8"><span class="note">Valor sobrando</span><span style="font-weight:700;color:var(--warn)">' + brl(vlrSob) + '</span></div>'
+    + '<div class="flexb"><span class="note">Valor faltando</span><span style="font-weight:700;color:var(--err)">' + brl(vlrFalt) + '</span></div>'
+    + '</div>';
+
+  // Lista de divergências
+  var divs = itens.filter(function(i){ return (i.c - i.t) !== 0 || i.c === 0; });
+  if (divs.length) {
+    html += '<div class="sec-title" style="margin-left:0">Itens com Divergência (' + divs.length + ')</div>'
+      + '<div class="card mb12">'
+      + divs.map(function(i) {
+          var dif = i.c - i.t;
+          var cor = dif === 0 && i.c === 0 ? 'var(--ink3)' : dif > 0 ? 'var(--warn)' : 'var(--err)';
+          var txt = i.c === 0 ? 'Não lançado' : (dif > 0 ? '+'+dif : String(dif));
+          return '<div class="list-row">'
+            + '<div style="flex:1">'
+            + '<div style="font-size:12px;font-weight:700">' + (i.nm || i.cod) + '</div>'
+            + '<div class="code">' + i.cod + '</div>'
+            + '<div style="font-size:11px;margin-top:2px">SAP: <b>' + i.t + '</b> · Contado: <b>' + i.c + '</b> · Valor: <b>' + brl(Math.abs(dif)*(i.vu||0)) + '</b></div>'
+            + '</div>'
+            + '<div style="font-size:16px;font-weight:900;color:' + cor + '">' + txt + '</div>'
+            + '</div>';
+        }).join('')
+      + '</div>';
+  }
+
+  // Assinaturas
+  html += '<div class="sec-title" style="margin-left:0">Assinaturas</div>'
+    + '<div class="sig-row mb12">'
+    + '<div class="sig-box"><div class="sig-line"></div><div class="sig-label">' + nome + '<br>' + agora + '</div></div>'
+    + '<div class="sig-box"><div class="sig-line"></div><div class="sig-label">Gerente / Responsável<br>&nbsp;</div></div>'
+    + '</div>';
+
+  // Botões
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">'
+    + '<button class="btn btn-primary" onclick="baixarPDF()">📄 Baixar PDF</button>'
+    + '<button class="btn btn-ghost" onclick="compartilharRelatorio()">✉️ Compartilhar</button>'
+    + '</div>';
+
+  var box = document.getElementById('relConteudo');
+  if (box) box.innerHTML = html;
+}
+
+/* --- PDF via janela de impressão --- */
+function baixarPDF() {
+  var itens  = _itensInv;
+  var titulo = localStorage.getItem('almv25_titulo') || State.token || '--';
+  var obra   = State.obra  || localStorage.getItem('almv25_obra')  || '--';
+  var nome   = localStorage.getItem('almv25_nome') || 'Almoxarife';
+  var token  = State.token || localStorage.getItem('almv25_token') || '--';
+  var agora  = new Date().toLocaleString('pt-BR');
+
+  if (!itens || !itens.length) { alert('Nenhum item carregado.'); return; }
+
+  var total    = itens.length;
+  var contados = itens.filter(function(i){ return i.c > 0; }).length;
+  var pct      = total > 0 ? Math.round(contados / total * 100) : 0;
+  var vlrTotal = 0, vlrDiv = 0;
+  itens.forEach(function(i){ var d=i.c-i.t; vlrTotal+=i.t*(i.vu||0); if(d!==0) vlrDiv+=Math.abs(d)*(i.vu||0); });
+  function brl(v) {
+    var s = Math.abs(v).toFixed(2);
+    var parts = s.split('.');
+    var intStr = parts[0];
+    var dec = parts[1];
+    var result = '';
+    for (var i = 0; i < intStr.length; i++) {
+      if (i > 0 && (intStr.length - i) % 3 === 0) result += '.';
+      result += intStr[i];
+    }
+    return (v < 0 ? '-' : '') + 'R$ ' + result + ',' + dec;
+  }
+
+  var rows = itens.map(function(i,n){
+    var dif=i.c-i.t;
+    var bg=dif===0&&i.c>0?'#e6f5ed':dif!==0?'#fdeaea':'#fff';
+    return '<tr style="background:'+bg+'">'
+      +'<td style="padding:5px 8px;border-bottom:1px solid #eee;font-size:11px">'+(n+1)+'</td>'
+      +'<td style="padding:5px 8px;border-bottom:1px solid #eee;font-size:11px">'+i.cod+'</td>'
+      +'<td style="padding:5px 8px;border-bottom:1px solid #eee;font-size:11px">'+i.nm+'</td>'
+      +'<td style="padding:5px 8px;border-bottom:1px solid #eee;font-size:11px;text-align:center">'+i.t+'</td>'
+      +'<td style="padding:5px 8px;border-bottom:1px solid #eee;font-size:11px;text-align:center">'+i.c+'</td>'
+      +'<td style="padding:5px 8px;border-bottom:1px solid #eee;font-size:11px;text-align:center;font-weight:700;color:'+(dif===0?'#1E9A5A':dif>0?'#D09010':'#D93F3C')+'">'+dif+'</td>'
+      +'<td style="padding:5px 8px;border-bottom:1px solid #eee;font-size:11px;text-align:right">'+brl(Math.abs(dif)*(i.vu||0))+'</td>'
+      +'</tr>';
+  }).join('');
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+    +'<title>Relatório '+titulo+'</title>'
+    +'<style>body{font-family:Arial,sans-serif;margin:20px;color:#14241B}'
+    +'h1{color:#1B562F;font-size:18px;margin:0}h2{font-size:13px;color:#5E7569;font-weight:400;margin:4px 0 16px}'
+    +'table{width:100%;border-collapse:collapse}th{background:#1B562F;color:#fff;padding:7px 8px;font-size:11px;text-align:left}'
+    +'.kpi{display:inline-block;margin:0 12px 12px 0;padding:10px 16px;border:1px solid #DDE8E2;border-radius:8px}'
+    +'.kpi b{display:block;font-size:22px;font-family:Arial;font-weight:900}'
+    +'.kpi span{font-size:10px;color:#5E7569}'
+    +'@media print{button{display:none}}'
+    +'</style></head><body>'
+    +'<div style="background:#1B562F;color:#fff;padding:16px 20px;border-radius:8px;margin-bottom:16px">'
+    +'<h1>'+titulo+'</h1>'
+    +'<h2 style="color:rgba(255,255,255,.8);margin:4px 0 0">Obra: '+obra+' &nbsp;·&nbsp; Token: '+token+' &nbsp;·&nbsp; '+agora+'</h2>'
+    +'</div>'
+    +'<div style="margin-bottom:16px">'
+    +'<div class="kpi"><b>'+pct+'%</b><span>Acurácia</span></div>'
+    +'<div class="kpi"><b>'+total+'</b><span>Total itens</span></div>'
+    +'<div class="kpi"><b>'+contados+'</b><span>Contados</span></div>'
+    +'<div class="kpi"><b>'+brl(vlrTotal)+'</b><span>Valor total SAP</span></div>'
+    +'<div class="kpi" style="border-color:#D93F3C"><b style="color:#D93F3C">'+brl(vlrDiv)+'</b><span>Valor divergente</span></div>'
+    +'</div>'
+    +'<table><thead><tr><th>#</th><th>Código</th><th>Descrição</th><th>SAP</th><th>Contado</th><th>Dif.</th><th>Valor Div.</th></tr></thead>'
+    +'<tbody>'+rows+'</tbody></table>'
+    +'<div style="margin-top:40px;display:grid;grid-template-columns:1fr 1fr;gap:40px">'
+    +'<div style="text-align:center;border-top:1px solid #333;padding-top:6px;font-size:11px">'+nome+'</div>'
+    +'<div style="text-align:center;border-top:1px solid #333;padding-top:6px;font-size:11px">Gerente / Responsável</div>'
+    +'</div>'
+    +'<script>window.onload=function(){window.print();}<'+'/script>'
+    +'</body></html>';
+
+  var w = window.open('', '_blank');
+  if (w) { w.document.write(html); w.document.close(); }
+  else alert('Permita pop-ups no navegador para gerar o PDF.');
+}
+
+function compartilharRelatorio() {
+  var titulo = localStorage.getItem('almv25_titulo') || State.token || '--';
+  var itens  = _itensInv || [];
+  var total  = itens.length;
+  var contados = itens.filter(function(i){ return i.c > 0; }).length;
+  var pct    = total > 0 ? Math.round(contados/total*100) : 0;
+  var divs   = itens.filter(function(i){ return (i.c-i.t) !== 0; }).length;
+  var txt    = 'RELATORIO: '+titulo+'\nAcuracia: '+pct+'%\nItens: '+contados+'/'+total+' contados\nDivergencias: '+divs+'\nData: '+new Date().toLocaleString('pt-BR');
+  if (navigator.share) {
+    navigator.share({ title: 'Relatório '+titulo, text: txt });
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(txt).then(function(){ alert('Relatório copiado!'); });
+  } else {
+    alert(txt);
+  }
+}
+
+/* ============================================================
+   DIAGNÓSTICO V25 -- passo a passo com logs
    ============================================================ */
 var _diagLogs = [];
 
@@ -2638,27 +2815,27 @@ function rodarDiagnostico() {
 
   diagLog('Diagnóstico V25 iniciado');
 
-  // PASSO 1 — Internet
+  // PASSO 1 -- Internet
   if (navigator.onLine) {
     diagSet('dInternetVal','🟢','Conectado', ok);
     diagLog('Internet: OK (navigator.onLine = true)');
   } else {
     diagSet('dInternetVal','🔴','Offline', err);
-    diagLog('Internet: FALHOU — dispositivo sem conexão');
+    diagLog('Internet: FALHOU -- dispositivo sem conexão');
     return;
   }
 
-  // PASSO 2 — URL
+  // PASSO 2 -- URL
   var url = getUrl();
   if (!url) {
-    diagSet('dUrlVal','🔴','Não encontrada — salve a URL', err);
-    diagLog('URL: FALHOU — localStorage vazio e State.apiUrl vazio');
+    diagSet('dUrlVal','🔴','Não encontrada -- salve a URL', err);
+    diagLog('URL: FALHOU -- localStorage vazio e State.apiUrl vazio');
     return;
   }
   diagSet('dUrlVal','🟢','Encontrada', ok);
   diagLog('URL: ' + url);
 
-  // PASSO 3 — Fetch JSON (verifica CORS)
+  // PASSO 3 -- Fetch JSON (verifica CORS)
   var t0 = Date.now();
   diagSet('dFetchVal','⏳','Testando...', muted);
   diagLog('Fetch: tentando ' + url + '?action=ping&_=' + Date.now());
@@ -2676,16 +2853,16 @@ function rodarDiagnostico() {
         var d = JSON.parse(txt);
         diagSet('dFetchVal','🟢','JSON válido', ok);
         diagLog('Fetch: JSON parseado OK. ok=' + d.ok + ' status=' + d.status);
-        diagSet('dApiVerVal', '', d.versaoApi || d.version || d.status || '—', ok);
-        diagLog('API versão: ' + (d.versaoApi || d.version || '—'));
+        diagSet('dApiVerVal', '', d.versaoApi || d.version || d.status || '--', ok);
+        diagLog('API versão: ' + (d.versaoApi || d.version || '--'));
       } catch(e) {
-        // Pode ser JSONP — resposta com callback wrapping
+        // Pode ser JSONP -- resposta com callback wrapping
         if (txt.indexOf('(') > -1) {
           diagSet('dFetchVal','🟡','Resposta JSONP (não JSON puro)', warn);
-          diagLog('Fetch: resposta não é JSON puro — é JSONP. Isso é normal se a API só suporta JSONP.');
+          diagLog('Fetch: resposta não é JSON puro -- é JSONP. Isso é normal se a API só suporta JSONP.');
         } else {
           diagSet('dFetchVal','🔴','Resposta inválida', err);
-          diagLog('Fetch: ERRO parse JSON — ' + e.message);
+          diagLog('Fetch: ERRO parse JSON -- ' + e.message);
           mostrarErro('Resposta inválida: ' + txt.substring(0,80));
         }
       }
@@ -2698,7 +2875,7 @@ function rodarDiagnostico() {
       mostrarErro(e.message);
     });
 
-  // PASSO 4 — JSONP (método principal do app)
+  // PASSO 4 -- JSONP (método principal do app)
   diagSet('dJsonpVal','⏳','Testando...', muted);
   var cbName = '_diagJsonp' + Date.now();
   var t1 = Date.now();
@@ -2706,12 +2883,12 @@ function rodarDiagnostico() {
   var jsonpTimer = setTimeout(function() {
     if (!jsonpDone) {
       jsonpDone = true;
-      diagSet('dJsonpVal','🔴','Timeout (8s) — sem resposta', err);
-      diagLog('JSONP: TIMEOUT — a API não respondeu em 8s');
+      diagSet('dJsonpVal','🔴','Timeout (8s) -- sem resposta', err);
+      diagLog('JSONP: TIMEOUT -- a API não respondeu em 8s');
       diagLog('DICA 1: Reimplante o script como "Qualquer pessoa" no Apps Script');
       diagLog('DICA 2: Verifique se a URL não está desatualizada (URL antiga salva)');
       diagLog('DICA 3: Abra a URL no navegador e veja o que retorna');
-      mostrarErro('JSONP timeout — reimplante o Apps Script como "Qualquer pessoa"');
+      mostrarErro('JSONP timeout -- reimplante o Apps Script como "Qualquer pessoa"');
       delete window[cbName];
     }
   }, 8000);
@@ -2725,9 +2902,9 @@ function rodarDiagnostico() {
     diagLog('JSONP: resposta recebida em ' + ms2 + 'ms. ok=' + d.ok + ' status=' + d.status);
     if (d && (d.ok || d.status === 'online')) {
       diagSet('dJsonpVal','🟢','Funcionando', ok);
-      diagSet('dApiVerVal','', d.versaoApi || d.version || d.status || '—', ok);
+      diagSet('dApiVerVal','', d.versaoApi || d.version || d.status || '--', ok);
       diagSet('dLatenciaVal','', ms2 + ' ms', ms2 < 2000 ? ok : warn);
-      diagLog('API OK! versão=' + (d.versaoApi||'—') + ' data=' + (d.data||'—'));
+      diagLog('API OK! versão=' + (d.versaoApi||'--') + ' data=' + (d.data||'--'));
       // Testa token se tiver
       var tok = State.token || localStorage.getItem('almv25_token') || '';
       if (tok) {
@@ -2751,7 +2928,7 @@ function rodarDiagnostico() {
     jsonpDone = true;
     delete window[cbName];
     diagSet('dJsonpVal','🔴','Erro ao carregar script', err);
-    diagLog('JSONP script.onerror — URL bloqueada ou inválida: ' + s.src);
+    diagLog('JSONP script.onerror -- URL bloqueada ou inválida: ' + s.src);
     mostrarErro('JSONP bloqueado. Verifique a URL e se o script está publicado.');
   };
   diagLog('JSONP: carregando ' + s.src.substring(0,80) + '...');
@@ -2764,8 +2941,8 @@ function testarTokenDiag(tok) {
   diagLog('Token: testando token=' + tok);
   apiJsonp('buscarToken', { token: tok }, function(r) {
     if (r && r.ok) {
-      diagSet('dTokenVal','🟢','Token ' + tok + ' válido — ' + (r.inventario||''), ok);
-      diagLog('Token OK: inventario=' + (r.inventario||'—') + ' obra=' + (r.obra||'—'));
+      diagSet('dTokenVal','🟢','Token ' + tok + ' válido -- ' + (r.inventario||''), ok);
+      diagLog('Token OK: inventario=' + (r.inventario||'--') + ' obra=' + (r.obra||'--'));
     } else {
       diagSet('dTokenVal','🔴','Token ' + tok + ' não encontrado', err);
       diagLog('Token FALHOU: API retornou ' + JSON.stringify(r||{}).substring(0,60));
@@ -2787,7 +2964,7 @@ function loadDashboard() {
 
   var url = getUrl();
   if (!url) {
-    // Sem API — mostra dados do token local
+    // Sem API -- mostra dados do token local
     var tok = State.token || localStorage.getItem('almv25_token') || '';
     var kpi = document.getElementById('dashKpiCard');
     if (kpi) {
@@ -2804,7 +2981,7 @@ function loadDashboard() {
   }
 
   apiJsonp('dashboardApp', {}, function(r) {
-    var set = function(id, v) { var e = document.getElementById(id); if (e) e.textContent = v !== undefined ? v : '—'; };
+    var set = function(id, v) { var e = document.getElementById(id); if (e) e.textContent = v !== undefined ? v : '--'; };
     if (r && r.ok) {
       set('ovInv',  r.inventarios  || 0);
       set('ovRes',  r.reservas     || 0);
@@ -2814,12 +2991,12 @@ function loadDashboard() {
       // KPI card
       var kpi = document.getElementById('dashKpiCard');
       if (kpi) {
-        var tok    = State.token || localStorage.getItem('almv25_token') || '—';
+        var tok    = State.token || localStorage.getItem('almv25_token') || '--';
         var titulo = localStorage.getItem('almv25_titulo') || tok;
         kpi.innerHTML = '<div style="padding:14px">'
           + '<div style="font-size:13px;font-weight:800;color:var(--g600);margin-bottom:8px">📋 ' + titulo + '</div>'
           + '<div class="kpi-row">'
-          + '<div class="kpi-cell"><div class="kpi-n" style="color:var(--ok)">' + (r.totalItens || _itensInv.length || '—') + '</div><div class="kpi-l">Total itens</div></div>'
+          + '<div class="kpi-cell"><div class="kpi-n" style="color:var(--ok)">' + (r.totalItens || _itensInv.length || '--') + '</div><div class="kpi-l">Total itens</div></div>'
           + '<div class="kpi-cell"><div class="kpi-n" style="color:var(--err)">' + (r.divergencias || 0) + '</div><div class="kpi-l">Divergências</div></div>'
           + '<div class="kpi-cell"><div class="kpi-n" style="color:var(--blue)">' + (r.reservas || 0) + '</div><div class="kpi-l">Reservas</div></div>'
           + '</div>'
@@ -3062,6 +3239,10 @@ function abrirContagemItem(idx) {
       }).join('')
     + '</div>'
     // Botão salvar
+    + '<div style="margin-bottom:12px">'
+    + '<div style="font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Quem está contando</div>'
+    + '<input id="modalContador" type="text" placeholder="Seu nome" value="' + (localStorage.getItem('almv25_nome')||'') + '" style="width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 13px;font-size:14px;font-family:Inter,sans-serif;outline:none">'
+    + '</div>'
     + '<button onclick="salvarContagemItem()" style="width:100%;background:linear-gradient(150deg,var(--g500),var(--g700));color:#fff;border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;font-family:Inter,sans-serif;box-shadow:0 4px 12px rgba(30,107,69,.3)">✓ Confirmar Contagem</button>'
     + '</div>';
 
@@ -3117,7 +3298,7 @@ function salvarContagemItem() {
     valorUnitario:     it.vu || 0,
     unidade:           it.un || 'UN',
     local:             it.local || '',
-    lancadoPor:        localStorage.getItem('almv25_nome') || 'App'
+    lancadoPor:        (document.getElementById('modalContador')||{}).value || localStorage.getItem('almv25_nome') || 'App'
   }, function(r) {
     if (r && r.ok) {
       // Atualiza localmente
@@ -3358,7 +3539,7 @@ document.addEventListener('click', function (e) {
 });
 
 /* ============================================================
-   SCREEN LIFECYCLE — chamado em go()
+   SCREEN LIFECYCLE -- chamado em go()
    ============================================================ */
 function onScreenActivated(id) {
   if (id === 'configuracoes') setTimeout(cfInit, 30);
@@ -3372,6 +3553,7 @@ function onScreenActivated(id) {
     if(el) el.textContent = (obra ? 'Obra: ' + obra : '') + (tok ? ' · Token: ' + tok : '');
   }
   if (id === 'conexaoApi') setTimeout(initConexaoApi, 30);
+  if (id === 'relatorio') setTimeout(gerarRelatorio, 100);
   if (id === 'mapa') setTimeout(buildMapa, 30);
   if (id === 'assinatura') setTimeout(initCanvas, 80);
   if (id === 'sincronizacao') setTimeout(loadSyncStatus, 30);
