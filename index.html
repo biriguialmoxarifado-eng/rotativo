@@ -201,7 +201,7 @@ function bar(pct,st){var c=st==='fim'||pct>=100?'var(--ok)':pct<25?'var(--div)':
 function back(t){return '<button class="ic" data-back>‹</button>';}
 
 /* ====== TELAS ====== */
-var APP_VERSION='v20 · 25/06 (url nova)';
+var APP_VERSION='v22 · 26/06 (url #3)';
 var SCREENS={};
 
 /* DASHBOARD */
@@ -659,9 +659,17 @@ document.addEventListener('click',function(e){
 (function(){function t(){var d=new Date();document.getElementById('clock').textContent=(d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();}t();setInterval(t,30000);})();
 
 /* ====== CONEXÃO COM O SCRIPT (Apps Script /exec) ====== */
-var URL_PADRAO='https://script.google.com/macros/s/AKfycbwyw4bWeKk1VJTTct9F7PXp74AkoHdfxkCs-EnBcZ3LNehotzZdLtM3EsgJkGU9AvXldA/exec';
+var URL_PADRAO='https://script.google.com/macros/s/AKfycbzZZ3wdp2xGhwddKNyLEJx9PiMxORiE6U4OE1lQgtWyy7o59622zNgNrzrSv9j7ZUz3Ow/exec';
 function getUrl(){ try{return localStorage.getItem('almoxa_exec_url')||URL_PADRAO;}catch(e){return URL_PADRAO;} }
 function setUrl(u){ try{localStorage.setItem('almoxa_exec_url',u);}catch(e){} }
+// AUTO-CORREÇÃO: quando uma versão nova do app carrega, adota a URL embutida
+// uma vez (resolve celular com URL antiga salva travando a conexão).
+(function(){ try{
+  if(localStorage.getItem('almoxa_url_stamp')!==APP_VERSION){
+    localStorage.setItem('almoxa_exec_url',URL_PADRAO);
+    localStorage.setItem('almoxa_url_stamp',APP_VERSION);
+  }
+}catch(e){} })();
 
 /* chamada genérica JSONP ao Apps Script (via payload do doGet) */
 function apiJsonp(action,extra,done){
