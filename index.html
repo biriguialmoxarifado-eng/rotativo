@@ -201,7 +201,7 @@ function bar(pct,st){var c=st==='fim'||pct>=100?'var(--ok)':pct<25?'var(--div)':
 function back(t){return '<button class="ic" data-back>‹</button>';}
 
 /* ====== TELAS ====== */
-var APP_VERSION='v22 · 26/06 (url #3)';
+var APP_VERSION='v24 · 26/06 (estilo bipagem)';
 var SCREENS={};
 
 /* DASHBOARD */
@@ -659,7 +659,7 @@ document.addEventListener('click',function(e){
 (function(){function t(){var d=new Date();document.getElementById('clock').textContent=(d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();}t();setInterval(t,30000);})();
 
 /* ====== CONEXÃO COM O SCRIPT (Apps Script /exec) ====== */
-var URL_PADRAO='https://script.google.com/macros/s/AKfycbzZZ3wdp2xGhwddKNyLEJx9PiMxORiE6U4OE1lQgtWyy7o59622zNgNrzrSv9j7ZUz3Ow/exec';
+var URL_PADRAO='https://script.google.com/macros/s/AKfycbxYEDXJpJOF1wRwUq2I2szdl__LVNbcEuD0JPwbv1vq3d6AmFYqVLGzgSiU_5RKL4tMrg/exec';
 function getUrl(){ try{return localStorage.getItem('almoxa_exec_url')||URL_PADRAO;}catch(e){return URL_PADRAO;} }
 function setUrl(u){ try{localStorage.setItem('almoxa_exec_url',u);}catch(e){} }
 // AUTO-CORREÇÃO: quando uma versão nova do app carrega, adota a URL embutida
@@ -682,7 +682,7 @@ function apiJsonp(action,extra,done){
   s.onerror=function(){ clearTimeout(to); clean(); done&&done(null); };
   var payload=encodeURIComponent(JSON.stringify(Object.assign({action:action},extra||{})));
   s.src=url+(url.indexOf('?')<0?'?':'&')+'payload='+payload+'&callback='+cb;
-  document.body.appendChild(s);
+  document.head.appendChild(s);
 }
 
 /* limpa a URL: tira espaços, corrige /dev->/exec, corta lixo depois de /exec */
@@ -728,7 +728,7 @@ function _pingTry(url,msg,tentativas){
     else{ msg.innerHTML='<span style="color:var(--pend)">Conectou, mas a resposta veio inesperada. Republicar a versão costuma resolver.</span>'; } };
   s.onerror=function(){ clearTimeout(to); cleanup(); falhou('erro'); };
   s.src=url+(url.indexOf('?')<0?'?':'&')+'action=ping&callback='+cb;
-  document.body.appendChild(s);
+  document.head.appendChild(s);
 }
 
 function sincronizar(){
