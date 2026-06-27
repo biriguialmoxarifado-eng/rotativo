@@ -3,889 +3,2894 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>ALMOXA PRO — Coletor Inteligente</title>
+<title>ALMOXA PRO V25</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <style>
+/* ============================================================
+   ALMOXA PRO V25 — DESIGN SYSTEM
+   ============================================================ */
 :root{
-  --g900:#10371D; --g800:#164A29; --g700:#1B5E3F; --g600:#1E6B45; --g500:#2E9E6A;
-  --g400:#34C77B; --g050:#E8F3ED;
-  --bg:#EEF3F0; --card:#FFFFFF; --ink:#16261E; --ink2:#33473D; --muted:#6E817857; --muted2:#6E8178;
-  --line:#E3EAE6;
-  --ok:#1FA463; --okbg:#E6F6EE; --pend:#E0A21A; --pendbg:#FCF3DC; --div:#E0413E; --divbg:#FBE7E7;
-  --blue:#1A8FE3; --bluebg:#E5F1FB; --crit:#E0413E;
-  --r:14px; --r2:10px;
-  --sh:0 2px 10px rgba(16,55,29,.06), 0 10px 30px rgba(16,55,29,.05);
+  /* Greens */
+  --g900:#0D2E1A; --g800:#144023; --g700:#1B562F; --g600:#1E6B45;
+  --g500:#259A5E; --g400:#2DBF72; --g300:#52D48A; --g050:#E8F5EE; --g025:#F4FAF6;
+
+  /* Surfaces */
+  --bg:#EEF3F0; --card:#FFFFFF; --ink:#14241B; --ink2:#354D3F; --ink3:#5E7569;
+  --line:#DDE8E2; --line2:#C9DDD3;
+
+  /* Semantics */
+  --ok:#1E9A5A;     --okbg:#E6F5ED;
+  --warn:#D09010;   --warnbg:#FDF3DC;
+  --err:#D93F3C;    --errbg:#FDEAEA;
+  --blue:#1A7FD4;   --bluebg:#E5F0FB;
+  --purple:#7B54C4; --purplebg:#F0EBF9;
+  --orange:#E06520; --orangebg:#FDF0E8;
+
+  /* Radii & shadows */
+  --r:14px; --r2:10px; --r3:8px;
+  --sh:0 1px 4px rgba(14,44,26,.05),0 6px 20px rgba(14,44,26,.06);
+  --sh2:0 2px 12px rgba(14,44,26,.10);
 }
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;padding:0}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+html,body{min-height:100vh}
 body{
-  font-family:'Inter',system-ui,sans-serif;background:#0c160f;color:var(--ink);
-  display:flex;justify-content:center;padding:0;min-height:100vh;
+  font-family:'Inter',system-ui,sans-serif;
+  background:#091409;
+  display:flex;justify-content:center;align-items:flex-start;
 }
-.display{font-family:'Syne','Inter',sans-serif;font-weight:800;letter-spacing:-.01em}
+.display{font-family:'Syne','Inter',sans-serif;font-weight:800;letter-spacing:-.02em}
 
-/* phone frame */
-.phone{width:100%;max-width:430px;min-height:100vh;background:var(--bg);position:relative;overflow:hidden;box-shadow:0 0 60px rgba(0,0,0,.5)}
-@media(min-width:480px){ .phone{margin:18px 0;min-height:calc(100vh - 36px);border-radius:30px} }
+/* ============================================================
+   PHONE FRAME
+   ============================================================ */
+.phone{
+  width:100%;max-width:430px;min-height:100vh;height:100vh;
+  background:var(--bg);position:relative;overflow:hidden;
+  display:flex;flex-direction:column;
+}
+@media(min-width:460px){.phone{height:calc(100vh - 32px);min-height:600px;margin:16px 0;border-radius:32px;box-shadow:0 0 80px rgba(0,0,0,.6)}}
 
-/* status bar */
-.sbar{height:30px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;font-size:12px;font-weight:600;color:#fff;background:var(--g700)}
-.sbar .r{display:flex;gap:5px;align-items:center;font-size:11px}
+/* ============================================================
+   STATUS BAR
+   ============================================================ */
+.sbar{
+  height:28px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 18px;font-size:11.5px;font-weight:700;color:#fff;
+  background:var(--g700);flex-shrink:0;
+}
+.sbar .right{display:flex;gap:6px;align-items:center;font-size:11px}
 
-/* header */
-.hdr{background:linear-gradient(160deg,var(--g700),var(--g600));color:#fff;padding:14px 16px 16px}
-.hdr.tall{padding-bottom:20px}
-.hdr-row{display:flex;align-items:center;gap:12px}
-.hdr-row .ic{width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:16px;border:none;color:#fff;cursor:pointer;flex-shrink:0}
-.hdr h1{font-size:17px;margin:0;line-height:1.15}
-.hdr .sub{font-size:11.5px;opacity:.82;margin-top:1px}
-.hdr .spacer{flex:1}
+/* ============================================================
+   SCREENS & NAVIGATION
+   ============================================================ */
+.screens{flex:1;overflow:hidden;position:relative;min-height:0}
+.screen{display:none;position:absolute;top:0;left:0;right:0;bottom:0;overflow-y:auto;overflow-x:hidden;padding-bottom:80px;background:var(--bg)}
+.screen.active{display:block;animation:fadeUp .2s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-/* screen scroller */
-.screens{position:relative}
-.screen{display:none;padding-bottom:78px;min-height:60vh}
-.screen.active{display:block;animation:fade .22s ease}
-@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+/* Bottom Nav */
+.nav{
+  background:#fff;border-top:1px solid var(--line);
+  display:flex;justify-content:space-around;align-items:center;
+  padding:6px 4px 12px;z-index:100;flex-shrink:0;
+}
+.nav-btn{
+  background:none;border:none;display:flex;flex-direction:column;
+  align-items:center;gap:3px;font-size:9.5px;font-weight:700;color:var(--ink3);
+  cursor:pointer;font-family:inherit;flex:1;padding:4px 2px;letter-spacing:.02em;
+}
+.nav-btn.active{color:var(--g600)}
+.nav-ico{font-size:17px;line-height:1}
+.nav-scan{
+  width:48px;height:48px;border-radius:50%;
+  background:linear-gradient(145deg,var(--g500),var(--g700));
+  color:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:20px;margin-top:-20px;
+  box-shadow:0 6px 18px rgba(30,107,69,.45);border:3px solid var(--bg);
+}
+
+/* ============================================================
+   LAYOUT HELPERS
+   ============================================================ */
 .pad{padding:14px 16px}
+.pad-x{padding:0 16px}
+.mb4{margin-bottom:4px}.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}
+.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}
+.flex{display:flex;align-items:center}.flexb{display:flex;align-items:center;justify-content:space-between}
+.gap8{gap:8px}.gap12{gap:12px}.f1{flex:1}
+.row-sep{height:1px;background:var(--line);margin:0}
+.sec-title{font-size:11px;font-weight:800;letter-spacing:.07em;color:var(--ink3);text-transform:uppercase;margin:14px 16px 8px}
 
-/* cards & bits */
+/* ============================================================
+   HEADER
+   ============================================================ */
+.hdr{
+  background:linear-gradient(150deg,var(--g700) 0%,var(--g600) 100%);
+  color:#fff;padding:12px 16px 14px;flex-shrink:0;
+}
+.hdr-row{display:flex;align-items:center;gap:10px}
+.hdr h1{font-size:17px;font-weight:700;line-height:1.1;flex:1}
+.hdr .sub{font-size:11px;opacity:.78;margin-top:2px}
+.hdr-icon{
+  width:34px;height:34px;border-radius:9px;background:rgba(255,255,255,.14);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;border:none;color:#fff;cursor:pointer;flex-shrink:0;
+}
+.greet{
+  background:linear-gradient(150deg,var(--g700) 0%,var(--g600) 100%);
+  color:#fff;padding:0 16px 18px;
+}
+.greet-name{font-size:18px;font-weight:800;display:flex;align-items:center;gap:10px}
+.online-pill{
+  font-size:10px;font-weight:700;background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.25);padding:3px 9px;border-radius:20px;
+  display:inline-flex;gap:5px;align-items:center;
+}
+.greet-obra{font-size:12px;opacity:.8;margin-top:5px}
+
+/* ============================================================
+   CARDS
+   ============================================================ */
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
-.sec-title{font-size:12px;font-weight:700;letter-spacing:.04em;color:var(--ink);margin:6px 2px 10px;text-transform:uppercase}
-.muted{color:var(--muted2)}
-.pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px}
-.pill.ok{background:var(--okbg);color:var(--ok)} .pill.pend{background:var(--pendbg);color:var(--pend)}
-.pill.div{background:var(--divbg);color:var(--div)} .pill.blue{background:var(--bluebg);color:var(--blue)}
-.pill.crit{background:var(--divbg);color:var(--crit)}
+.card-body{padding:14px}
 
-/* greeting */
-.greet{background:linear-gradient(160deg,var(--g700),var(--g600));color:#fff;padding:0 16px 18px;margin-top:-2px}
-.greet .hi{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700}
-.badge-on{font-size:10px;font-weight:700;background:rgba(255,255,255,.18);padding:3px 9px;border-radius:20px;display:inline-flex;gap:5px;align-items:center}
-.greet .sy{font-size:11px;opacity:.8;margin-top:8px;line-height:1.7}
+/* Overview grid */
+.ov-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ov{padding:13px 14px;border-radius:var(--r);cursor:pointer;border:1px solid transparent}
+.ov .ov-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;font-size:11px;font-weight:700;color:var(--ink3)}
+.ov .n{font-size:28px;font-weight:900;font-family:'Syne',sans-serif;line-height:1}
+.ov .l{font-size:11px;font-weight:500;margin-top:3px;opacity:.75}
+.ov.g{background:linear-gradient(150deg,#fff,#F0FAF5);border-color:#D0E8DA} .ov.g .n{color:var(--g600)}
+.ov.b{background:linear-gradient(150deg,#fff,#EDF5FD);border-color:#CCDFF0} .ov.b .n{color:var(--blue)}
+.ov.a{background:linear-gradient(150deg,#fff,#FDF7E8);border-color:#EDE0BF} .ov.a .n{color:var(--warn)}
+.ov.r{background:linear-gradient(150deg,#fff,#FDF0F0);border-color:#EDDADA} .ov.r .n{color:var(--err)}
 
-/* overview grid */
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
-.ov{padding:13px 14px;border-radius:var(--r)}
-.ov .n{font-size:24px;font-weight:800;font-family:'Syne',sans-serif;line-height:1}
-.ov .l{font-size:11px;color:var(--muted2);margin-top:3px}
-.ov .t{font-size:11px;font-weight:600;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.ov.green{background:linear-gradient(150deg,#fff,#F2F9F5);border:1px solid #DCEDE4}
-.ov.green .n{color:var(--g600)}
-.ov.blue{background:linear-gradient(150deg,#fff,#EFF6FD);border:1px solid #DBEAF7} .ov.blue .n{color:var(--blue)}
-.ov.amber{background:linear-gradient(150deg,#fff,#FDF8EC);border:1px solid #F1E6C9} .ov.amber .n{color:var(--pend)}
-.ov.red{background:linear-gradient(150deg,#fff,#FCEFEF);border:1px solid #F3D8D8} .ov.red .n{color:var(--div)}
+/* KPI row */
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border-radius:var(--r);overflow:hidden;border:1px solid var(--line)}
+.kpi-cell{background:#fff;padding:13px 8px;text-align:center}
+.kpi-n{font-size:22px;font-weight:900;font-family:'Syne',sans-serif;line-height:1}
+.kpi-l{font-size:10px;color:var(--ink3);margin-top:4px;font-weight:600}
 
-/* quick actions */
-.qa{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
-.qa button{background:var(--card);border:1px solid var(--line);border-radius:var(--r2);padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;font-family:inherit}
-.qa .qi{width:34px;height:34px;border-radius:9px;background:var(--g050);color:var(--g600);display:flex;align-items:center;justify-content:center;font-size:16px}
-.qa .ql{font-size:10.5px;font-weight:600;color:var(--ink2);text-align:center;line-height:1.25}
+/* Accuracy ring — CSS only */
+.ring-wrap{display:flex;align-items:center;gap:14px;padding:14px}
+.ring{width:62px;height:62px;border-radius:50%;background:conic-gradient(var(--g400) calc(var(--pct,95.4)*1%),#E0EDE7 0);display:flex;align-items:center;justify-content:center;position:relative}
+.ring::before{content:'';position:absolute;width:44px;height:44px;border-radius:50%;background:#fff}
+.ring-label{font-size:13px;font-weight:900;font-family:'Syne',sans-serif;position:relative;color:var(--g600)}
+.ring-info .pct{font-size:22px;font-weight:900;font-family:'Syne',sans-serif;color:var(--g600)}
+.ring-info .tag{font-size:12px;font-weight:700;color:var(--ok)}
+.ring-info .sub{font-size:10.5px;color:var(--ink3)}
 
-/* list rows */
-.row{display:flex;align-items:center;gap:12px;padding:13px 14px;border-bottom:1px solid var(--line)}
-.row:last-child{border-bottom:none}
-.prog{height:6px;border-radius:6px;background:#EAEFEC;overflow:hidden;margin-top:8px}
-.prog>i{display:block;height:100%;border-radius:6px}
+/* ============================================================
+   PILLS & BADGES
+   ============================================================ */
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.pill.ok{background:var(--okbg);color:var(--ok)}
+.pill.warn{background:var(--warnbg);color:var(--warn)}
+.pill.err{background:var(--errbg);color:var(--err)}
+.pill.blue{background:var(--bluebg);color:var(--blue)}
+.pill.purple{background:var(--purplebg);color:var(--purple)}
+.pill.orange{background:var(--orangebg);color:var(--orange)}
+.badge{min-width:18px;height:18px;border-radius:9px;background:var(--err);color:#fff;font-size:10px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;padding:0 4px}
 
-/* tabs */
-.tabs{display:flex;gap:6px;background:#E7EEEA;border-radius:11px;padding:4px;margin-bottom:14px}
-.tabs button{flex:1;border:none;background:transparent;padding:8px 6px;font-size:12px;font-weight:600;color:var(--muted2);border-radius:8px;cursor:pointer;font-family:inherit}
-.tabs button.on{background:#fff;color:var(--g600);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+/* ============================================================
+   PROGRESS
+   ============================================================ */
+.prog{height:6px;background:#E2EBE6;border-radius:6px;overflow:hidden;margin-top:8px}
+.prog-fill{height:100%;border-radius:6px;background:var(--g400)}
+.prog-fill.warn{background:var(--warn)}
+.prog-fill.err{background:var(--err)}
 
-/* buttons */
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer}
-.btn-primary{background:var(--g600);color:#fff}
-.btn-ghost{background:#fff;border:1px solid var(--line);color:var(--ink2)}
+/* ============================================================
+   LIST ROWS
+   ============================================================ */
+.list-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.list-row:last-child{border-bottom:none}
+.thumb{width:40px;height:40px;border-radius:10px;background:var(--g050);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;color:var(--g600)}
+.thumb.sm{width:32px;height:32px;border-radius:8px;font-size:14px}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--g050);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:var(--g600);flex-shrink:0}
+
+/* Indicator letters */
+.ind-tag{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;flex-shrink:0}
+
+/* ============================================================
+   QUICK ACTIONS GRID
+   ============================================================ */
+.qa-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.qa-btn{
+  background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:12px 6px 10px;display:flex;flex-direction:column;align-items:center;gap:7px;
+  cursor:pointer;font-family:inherit;transition:background .15s;
+}
+.qa-btn:active{background:var(--g025)}
+.qa-icon{width:36px;height:36px;border-radius:10px;background:var(--g050);color:var(--g600);display:flex;align-items:center;justify-content:center;font-size:17px}
+.qa-label{font-size:9.5px;font-weight:700;color:var(--ink2);text-align:center;line-height:1.25;letter-spacing:.01em}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  border:none;border-radius:12px;padding:14px 18px;
+  font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;
+  letter-spacing:.01em;transition:opacity .15s;
+}
+.btn:active{opacity:.82}
+.btn-full{width:100%}
+.btn-primary{background:linear-gradient(150deg,var(--g500),var(--g700));color:#fff;box-shadow:0 4px 12px rgba(30,107,69,.3)}
+.btn-ghost{background:#fff;border:1px solid var(--line2);color:var(--ink2)}
 .btn-soft{background:var(--g050);color:var(--g600)}
-.btn-sm{padding:9px 12px;font-size:12px;border-radius:9px;width:auto}
+.btn-err{background:var(--errbg);color:var(--err)}
+.btn-sm{padding:9px 14px;font-size:12px;border-radius:10px}
+.btn-xs{padding:6px 11px;font-size:11px;border-radius:8px}
 
-/* search */
-.search{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:11px 13px;color:var(--muted2);font-size:13px;margin-bottom:13px}
-.search input{border:none;outline:none;flex:1;font-family:inherit;font-size:13px;background:transparent}
+/* ============================================================
+   FORM FIELDS
+   ============================================================ */
+.field{margin-bottom:13px}
+.field label{font-size:11px;font-weight:700;color:var(--ink2);letter-spacing:.03em;text-transform:uppercase;display:block;margin-bottom:5px}
+.field input,.field select,.field textarea{
+  width:100%;border:1.5px solid var(--line);border-radius:10px;
+  padding:12px 13px;font-size:14px;font-family:inherit;background:#fff;
+  outline:none;color:var(--ink);transition:border-color .15s;
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--g400)}
+.field textarea{resize:vertical;min-height:70px}
 
-/* stat trio */
-.trio{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line);border-radius:var(--r);overflow:hidden;border:1px solid var(--line)}
-.trio>div{background:#fff;padding:13px 8px;text-align:center}
-.trio .n{font-size:23px;font-weight:800;font-family:'Syne',sans-serif;line-height:1}
-.trio .l{font-size:10.5px;color:var(--muted2);margin-top:4px}
+/* Search box */
+.search-box{
+  display:flex;align-items:center;gap:9px;background:#fff;
+  border:1.5px solid var(--line);border-radius:12px;padding:11px 13px;
+  color:var(--ink3);margin-bottom:12px;
+}
+.search-box input{border:none;outline:none;flex:1;font-family:inherit;font-size:13.5px;background:transparent;color:var(--ink)}
+.search-box .ico{font-size:16px}
 
-/* item card */
-.item{display:flex;align-items:center;gap:12px;padding:13px 14px}
-.thumb{width:42px;height:42px;border-radius:10px;background:var(--g050);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
-.icirc{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;font-weight:800}
-.icirc.ok{background:var(--ok);color:#fff} .icirc.pend{background:#fff;border:2px solid var(--pend);color:var(--pend)}
-.icirc.div{background:var(--div);color:#fff}
+/* ============================================================
+   TABS
+   ============================================================ */
+.tabs{display:flex;gap:4px;background:#E5EDE8;border-radius:11px;padding:4px;margin-bottom:14px}
+.tab-btn{flex:1;border:none;background:transparent;padding:8px 6px;font-size:12px;font-weight:700;color:var(--ink3);border-radius:8px;cursor:pointer;font-family:inherit;letter-spacing:.01em}
+.tab-btn.active{background:#fff;color:var(--g600);box-shadow:0 1px 5px rgba(0,0,0,.1)}
 
-/* keypad */
-.counter{display:flex;align-items:center;justify-content:space-between;padding:6px 4px}
-.counter .stepper{width:54px;height:54px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:24px;color:var(--g600);cursor:pointer;display:flex;align-items:center;justify-content:center}
-.counter .big{text-align:center}
-.counter .big b{font-size:40px;font-family:'Syne',sans-serif;font-weight:800;line-height:1;display:block}
-.counter .big span{font-size:11px;color:var(--muted2);letter-spacing:.08em}
-.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:14px}
-.keys button{background:#fff;border:1px solid var(--line);border-radius:11px;padding:15px 0;font-size:20px;font-weight:700;font-family:inherit;color:var(--ink);cursor:pointer}
+/* ============================================================
+   SCANNER SCREEN
+   ============================================================ */
+.scanner-view{
+  background:#0a1a0d;height:240px;position:relative;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+}
+.scan-corner{position:absolute;width:60px;height:60px;border-color:var(--g400);border-style:solid}
+.scan-c1{top:30px;left:30px;border-width:3px 0 0 3px;border-radius:4px 0 0 0}
+.scan-c2{top:30px;right:30px;border-width:3px 3px 0 0;border-radius:0 4px 0 0}
+.scan-c3{bottom:30px;left:30px;border-width:0 0 3px 3px;border-radius:0 0 0 4px}
+.scan-c4{bottom:30px;right:30px;border-width:0 3px 3px 0;border-radius:0 0 4px 0}
+.scan-line{
+  position:absolute;width:75%;height:2px;
+  background:linear-gradient(90deg,transparent,var(--g400),transparent);
+  animation:scanLine 2s ease-in-out infinite;
+}
+@keyframes scanLine{0%,100%{top:35px}50%{top:calc(100% - 35px)}}
+.scan-code{
+  position:absolute;bottom:14px;left:0;right:0;text-align:center;
+  font-family:ui-monospace,monospace;font-size:12px;color:rgba(255,255,255,.6);letter-spacing:.12em
+}
+.scan-result{
+  margin:14px 16px;padding:12px 14px;border-radius:12px;
+  background:var(--okbg);border:1px solid #B8E5CC;
+  display:flex;align-items:center;gap:12px;
+}
+.scan-result .ico-ok{width:36px;height:36px;border-radius:50%;background:var(--ok);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 
-/* stepper rows */
-.steprow{display:flex;align-items:center;justify-content:space-between;background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:11px}
-.steprow .v{text-align:center}.steprow .v b{font-size:20px;font-family:'Syne',sans-serif}.steprow .v span{font-size:10px;color:var(--muted2);display:block;letter-spacing:.08em}
-.stepbtn{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:20px;color:var(--g600);cursor:pointer}
-.chips{display:flex;gap:8px;margin:6px 0 14px}
-.chips button{flex:1;border:1px solid var(--line);background:#fff;border-radius:9px;padding:10px 4px;font-size:12px;font-weight:700;color:var(--muted2);cursor:pointer;font-family:inherit}
-.chips button.on{background:var(--g600);color:#fff;border-color:var(--g600)}
-.calcbox{background:var(--g050);border:1px solid #CFE7DA;border-radius:12px;padding:14px;text-align:center;margin-bottom:14px}
-.calcbox .t{font-size:11px;color:var(--g600);font-weight:600}
-.calcbox .b{font-size:30px;font-family:'Syne',sans-serif;font-weight:800;color:var(--g600);margin-top:3px}
+/* ============================================================
+   KEYPAD COUNTER
+   ============================================================ */
+.counter{display:flex;align-items:center;justify-content:space-between;padding:8px 0;margin-bottom:4px}
+.stepper{width:52px;height:52px;border-radius:50%;border:1.5px solid var(--line);background:#fff;font-size:24px;color:var(--g600);cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700}
+.counter-big{text-align:center;flex:1}
+.counter-big .val{font-size:48px;font-family:'Syne',sans-serif;font-weight:900;line-height:1;color:var(--ink)}
+.counter-big .unit{font-size:11px;color:var(--ink3);letter-spacing:.1em;font-weight:700}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.keypad button{
+  background:#fff;border:1.5px solid var(--line);border-radius:12px;
+  padding:16px 0;font-size:20px;font-weight:700;font-family:inherit;color:var(--ink);cursor:pointer;
+  transition:background .1s;
+}
+.keypad button:active{background:var(--g050)}
 
-/* form */
-.field{margin-bottom:14px}
-.field label{font-size:11px;font-weight:700;color:var(--ink2);letter-spacing:.02em;display:block;margin-bottom:6px}
-.field input,.field select{width:100%;border:1px solid var(--line);border-radius:10px;padding:12px 13px;font-size:14px;font-family:inherit;background:#fff;outline:none}
-.opt{display:flex;align-items:center;gap:10px;border:1.5px solid var(--line);border-radius:11px;padding:12px 14px;margin-bottom:9px;cursor:pointer;font-size:14px;font-weight:600}
-.opt .dot{width:20px;height:20px;border-radius:50%;border:2px solid var(--line);flex-shrink:0;display:flex;align-items:center;justify-content:center}
-.opt.sel{border-color:var(--ok);background:var(--okbg)} .opt.sel .dot{border-color:var(--ok);background:var(--ok);color:#fff;font-size:12px}
+/* ============================================================
+   MAP PLACEHOLDER
+   ============================================================ */
+.map-area{
+  background:linear-gradient(150deg,#1a2e20,#0d1a10);
+  height:200px;border-radius:12px;overflow:hidden;position:relative;
+  display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(4,1fr);
+  gap:1px;padding:12px;
+}
+.map-grid-cell{
+  border-radius:4px;background:rgba(255,255,255,.06);
+  display:flex;align-items:center;justify-content:center;font-size:9px;
+  color:rgba(255,255,255,.4);font-weight:700;letter-spacing:.05em;
+}
+.map-loc{
+  width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-weight:800;color:#fff;position:absolute;transform:translate(-50%,-50%);
+}
+.map-loc.ok{background:var(--ok)}
+.map-loc.warn{background:var(--warn)}
+.map-loc.err{background:var(--err)}
 
-/* result lines */
-.resline{display:flex;align-items:center;gap:11px;padding:11px 14px;border-bottom:1px solid var(--line)}
-.resline:last-child{border-bottom:none}
-.resline .lbl{flex:1;font-size:13px;font-weight:600}
-.resline .val{font-size:15px;font-weight:800;font-family:'Syne',sans-serif}
-.tag{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
+/* ============================================================
+   INVENTORY INDICATOR LIST
+   ============================================================ */
+.ind-list{list-style:none}
+.ind-item{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line)}
+.ind-item:last-child{border-bottom:none}
+.ind-item .val{font-size:15px;font-weight:900;font-family:'Syne',sans-serif;color:var(--ink);min-width:32px;text-align:right}
+.ind-item .val.warn{color:var(--warn)}
+.ind-item .val.err{color:var(--err)}
+.ind-item .val.ok{color:var(--ok)}
 
-/* bottom nav */
-.nav{position:absolute;bottom:0;left:0;right:0;max-width:430px;margin:0 auto;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;align-items:center;padding:8px 6px 10px;z-index:40}
-.nav button{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:var(--muted2);cursor:pointer;font-family:inherit;font-weight:600;flex:1}
-.nav button.on{color:var(--g600)}
-.nav .scan{width:46px;height:46px;border-radius:50%;background:var(--g600);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;margin-top:-22px;box-shadow:0 6px 16px rgba(30,107,69,.4)}
-.nav .ico{font-size:18px}
+/* ============================================================
+   CONNECTION / SYNC SCREEN
+   ============================================================ */
+.sync-status{
+  padding:16px;display:flex;align-items:center;gap:14px;
+  background:var(--okbg);border:1px solid #C0E5CF;border-radius:12px;margin-bottom:14px;
+}
+.sync-dot{width:10px;height:10px;border-radius:50%;background:var(--ok);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.sync-err{background:var(--errbg);border-color:#F0C5C5}
+.sync-err .sync-dot{background:var(--err);animation:none}
 
-/* helpers */
-.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mt12{margin-top:12px}
-.flexb{display:flex;align-items:center;justify-content:space-between}
-.divider{height:1px;background:var(--line);margin:2px 0}
-.note{font-size:11px;color:var(--muted2);line-height:1.6}
-.code{font-family:ui-monospace,monospace;font-size:11px;color:var(--muted2)}
-.banner{background:#fff;border:1px dashed #CFE7DA;border-radius:12px;padding:12px 14px;display:flex;gap:12px;align-items:center}
-.kpi-bars{display:flex;align-items:flex-end;gap:22px;height:120px;padding:10px 20px 0;justify-content:center}
-.kpi-bars .bar{width:56px;border-radius:7px 7px 0 0;display:flex;align-items:flex-start;justify-content:center;color:#fff;font-weight:800;font-size:13px;padding-top:6px;font-family:'Syne',sans-serif}
-.kpi-bars .lab{font-size:10px;color:var(--muted2);text-align:center;margin-top:6px}
+/* Diag result rows */
+.diag-row{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--line);font-size:13px}
+.diag-row:last-child{border-bottom:none}
+.diag-row .lbl{font-weight:600;color:var(--ink2)}
+.diag-row .val{font-weight:700}
+.diag-row .val.ok{color:var(--ok)}
+.diag-row .val.err{color:var(--err)}
+.diag-row .val.warn{color:var(--warn)}
+
+/* ============================================================
+   REPORT / SIGNATURE
+   ============================================================ */
+.sig-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px}
+.sig-box{border:1px dashed var(--line2);border-radius:10px;padding:12px;text-align:center}
+.sig-line{height:36px;border-bottom:1.5px solid var(--ink3);margin-bottom:6px}
+.sig-label{font-size:10px;color:var(--ink3);font-weight:600}
+
+/* ============================================================
+   TIMELINE / HISTORY
+   ============================================================ */
+.timeline{padding:0 16px}
+.tl-item{display:flex;gap:12px;padding-bottom:14px;position:relative}
+.tl-item::before{content:'';position:absolute;left:11px;top:24px;bottom:0;width:1px;background:var(--line)}
+.tl-item:last-child::before{display:none}
+.tl-dot{width:24px;height:24px;border-radius:50%;background:var(--g050);border:2px solid var(--g300);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;position:relative;z-index:1}
+.tl-dot.ok{background:var(--okbg);border-color:var(--ok)}
+.tl-dot.warn{background:var(--warnbg);border-color:var(--warn)}
+.tl-content{flex:1;padding-top:3px}
+.tl-title{font-size:13px;font-weight:700;color:var(--ink)}
+.tl-sub{font-size:11px;color:var(--ink3);margin-top:2px}
+
+/* ============================================================
+   LOGIN SCREEN
+   ============================================================ */
+.login-wrap{
+  background:linear-gradient(160deg,var(--g900),var(--g700));
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:32px 24px;color:#fff;
+}
+.login-logo{font-family:'Syne',sans-serif;font-size:32px;font-weight:900;letter-spacing:-.02em;margin-bottom:4px}
+.login-logo span{color:var(--g400)}
+.login-sub{font-size:13px;opacity:.7;margin-bottom:36px;letter-spacing:.02em}
+.login-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:24px;width:100%;max-width:380px;backdrop-filter:blur(10px)}
+.login-field label{font-size:11px;font-weight:700;letter-spacing:.05em;opacity:.7;display:block;margin-bottom:6px;text-transform:uppercase}
+.login-field input{
+  width:100%;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.15);
+  border-radius:10px;padding:13px 14px;font-size:14px;color:#fff;font-family:inherit;outline:none;
+  margin-bottom:12px;transition:border-color .15s;
+}
+.login-field input:focus{border-color:var(--g400)}
+.login-field input::placeholder{color:rgba(255,255,255,.35)}
+.btn-login{
+  width:100%;background:linear-gradient(150deg,var(--g400),var(--g600));color:#fff;
+  border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:800;
+  font-family:inherit;cursor:pointer;letter-spacing:.02em;margin-top:4px;
+}
+.login-token{margin-top:20px}
+.login-token input{letter-spacing:.2em;font-size:18px;font-weight:700;text-align:center}
+.login-ver{font-size:10px;opacity:.4;margin-top:24px;text-align:center;letter-spacing:.05em}
+
+/* ============================================================
+   AI CARD
+   ============================================================ */
+.ai-card{
+  background:linear-gradient(135deg,#0d1e30,#162e1e);
+  border:1px solid rgba(255,255,255,.1);border-radius:14px;
+  padding:16px;color:#fff;position:relative;overflow:hidden;
+}
+.ai-card::before{
+  content:'AI';position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  font-family:'Syne',sans-serif;font-size:60px;font-weight:900;color:rgba(255,255,255,.04);
+  pointer-events:none;
+}
+.ai-title{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--g400);text-transform:uppercase;margin-bottom:8px}
+.ai-text{font-size:13px;line-height:1.55;opacity:.9}
+.ai-list{margin-top:10px;display:flex;flex-direction:column;gap:5px}
+.ai-item{font-size:12px;opacity:.85;display:flex;gap:7px;align-items:flex-start}
+.ai-item::before{content:'✓';color:var(--g400);font-weight:800;flex-shrink:0}
+
+/* ============================================================
+   MISC
+   ============================================================ */
+.empty{text-align:center;padding:36px 20px;color:var(--ink3)}
+.empty .ico{font-size:36px;margin-bottom:8px}
+.empty p{font-size:13px;line-height:1.55}
+.note{font-size:11.5px;color:var(--ink3);line-height:1.6}
+.code{font-family:ui-monospace,monospace;font-size:11.5px;color:var(--ink3)}
+.sep{height:8px;background:var(--bg)}
+.banner{
+  background:linear-gradient(150deg,#fff,var(--g025));
+  border:1px dashed var(--g300);border-radius:12px;padding:12px 14px;
+  display:flex;gap:12px;align-items:center;margin-bottom:12px;
+}
+.item-diff{
+  padding:4px 9px;border-radius:8px;font-size:12px;font-weight:800;
+  background:var(--errbg);color:var(--err);margin-top:4px;display:inline-block;
+}
+.item-diff.pos{background:var(--okbg);color:var(--ok)}
+
+/* scroll fix for chromium */
+.screen::-webkit-scrollbar{width:0}
 </style>
 </head>
 <body>
-<div class="phone">
+<div class="phone" id="phone">
   <div class="sbar">
     <span id="clock">9:41</span>
-    <span class="r">ALMOXA PRO &nbsp;·&nbsp; ▮▮▮ ▾ ▮</span>
+    <span class="right">📶 🔋</span>
   </div>
 
-  <div class="screens" id="screens"><!-- screens injected --></div>
+  <!-- SCREENS CONTAINER -->
+  <div class="screens" id="screens"></div>
 
-  <div class="nav" id="nav">
-    <button data-go="dashboard" class="on"><span class="ico">⌂</span>Início</button>
-    <button data-go="inventarios"><span class="ico">🔍</span>Pesquisar</button>
-    <button data-go="contagem" class="mid"><span class="scan">▥</span></button>
-    <button data-go="pendencias"><span class="ico">⚑</span>Pendências</button>
-    <button data-go="mais"><span class="ico">☰</span>Mais</button>
-  </div>
+  <!-- BOTTOM NAV -->
+  <nav class="nav" id="nav">
+    <button class="nav-btn active" data-go="dashboard">
+      <span class="nav-ico">🏠</span>Início
+    </button>
+    <button class="nav-btn" data-go="inventarios">
+      <span class="nav-ico">📋</span>Inventários
+    </button>
+    <button class="nav-btn" data-go="scanner">
+      <span class="nav-scan">▥</span>
+    </button>
+    <button class="nav-btn" data-go="reservas">
+      <span class="nav-ico">📦</span>Reservas
+    </button>
+    <button class="nav-btn" data-go="mais">
+      <span class="nav-ico">☰</span>Mais
+    </button>
+  </nav>
 </div>
+
 <script>
-/* ====== DADOS (vazios — tudo vem do backend) ====== */
-var INVS=[];
-var ITENS=[];
-var RES=[];
+/* ============================================================
+   V25 — GLOBAL STATE
+   ============================================================ */
+var State = {
+  user: { nome: 'Almoxarife', perfil: 'ALMOXARIFE' },
+  obra: 'TRÊS LAGOAS',
+  online: true,
+  apiUrl: '',
+  token: '',
+  inventarioAtual: null,
+  scanCount: 0,
+  scanItem: null,
+  itemAtual: null,
+  contagem: 0,
+  resItems: [],
+  kits: [],
+  ocorrencias: []
+};
 
-/* ====== HELPERS ====== */
-function el(h){var d=document.createElement('div');d.innerHTML=h.trim();return d.firstChild;}
-function bar(pct,st){var c=st==='fim'||pct>=100?'var(--ok)':pct<25?'var(--div)':'var(--pend)';return '<div class="prog"><i style="width:'+pct+'%;background:'+c+'"></i></div>';}
-function back(t){return '<button class="ic" data-back>‹</button>';}
+/* ============================================================
+   API — Fetch direto (JSON) com fallback JSONP
+   O diagnóstico confirmou: Fetch JSON funciona, JSONP está
+   bloqueado. Usamos fetch como método principal.
+   ============================================================ */
+function apiJsonp(action, params, cb) {
+  var url = State.apiUrl || getUrl();
+  if (!url) { cb && cb(null); return; }
 
-/* ====== TELAS ====== */
-var APP_VERSION='v24 · 26/06 (estilo bipagem)';
-var SCREENS={};
+  var qs = Object.keys(params || {}).map(function(k) {
+    return encodeURIComponent(k) + '=' + encodeURIComponent(params[k]);
+  }).join('&');
+  var fullUrl = url + '?action=' + action + (qs ? '&' + qs : '') + '&_=' + Date.now();
 
-/* DASHBOARD */
-SCREENS.dashboard=`
-<section class="screen active" data-screen="dashboard">
-  <div class="hdr"><div class="hdr-row"><div class="ic">☰</div><h1 class="display">Dashboard</h1><div class="spacer"></div><div class="ic">☁</div></div></div>
-  <div class="greet">
-    <div class="hi">Olá, Almoxarife! <span class="badge-on">● Online</span></div>
-    <div class="sy">⟳ Última sincronização<br>📅 hoje, 16:32</div>
-  </div>
-  <div class="pad">
-    <div class="sec-title">Visão geral</div>
-    <div class="grid2 mb12">
-      <div class="ov green"><div class="t"><span>Reservas</span>📋</div><div class="n">0</div><div class="l">Abertas</div></div>
-      <div class="ov blue"><div class="t"><span>Inventários</span>📦</div><div class="n">0</div><div class="l">Em andamento</div></div>
-      <div class="ov amber"><div class="t"><span>Pendências</span>⚠</div><div class="n">0</div><div class="l">Itens</div></div>
-      <div class="ov red"><div class="t"><span>Ocorrências</span>❗</div><div class="n">0</div><div class="l">Abertas</div></div>
-    </div>
-    <div class="sec-title">Atalhos rápidos</div>
-    <div class="qa mb12">
-      <button data-go="inventarios"><div class="qi">📋</div><div class="ql">Iniciar Inventário</div></button>
-      <button data-go="reservas"><div class="qi">📥</div><div class="ql">Reservas</div></button>
-      <button data-go="contagem"><div class="qi">▥</div><div class="ql">Código de Barras</div></button>
-      <button data-go="ocorrencias"><div class="qi">❗</div><div class="ql">Ocorrências</div></button>
-      <button data-go="mapa"><div class="qi">📍</div><div class="ql">Mapa do Estoque</div></button>
-      <button data-go="sync"><div class="qi">⟳</div><div class="ql">Sincronizar</div></button>
-    </div>
-    <div class="sec-title">Resumo da contagem (—)</div>
-    <div class="card mb12" style="padding:6px 0">
-      <div class="resline"><div class="lbl muted">Total no sistema</div><div class="val" style="color:var(--ink)">—</div></div>
-      <div class="resline"><div class="lbl" style="color:var(--ok)">Conferidos</div><div class="val" style="color:var(--ok)">—</div></div>
-      <div class="resline"><div class="lbl" style="color:var(--pend)">Pendentes</div><div class="val" style="color:var(--pend)">—</div></div>
-      <div class="resline"><div class="lbl" style="color:var(--div)">Divergências</div><div class="val" style="color:var(--div)">—</div></div>
-      <div class="resline"><div class="lbl" style="color:var(--g600)">Acuracidade</div><div class="val" style="color:var(--g600)">—</div></div>
-    </div>
-    <div class="sec-title">Ocorrências abertas</div>
-    <div class="card">
-      <div class="row"><div class="note">Nenhuma ocorrência aberta no momento.</div></div>
-    </div>
-  </div>
-</section>`;
+  // Tenta fetch primeiro (funciona conforme diagnóstico)
+  var done = false;
+  var timer = setTimeout(function() {
+    if (!done) { done = true; cb && cb(null); }
+  }, 10000);
 
-/* INVENTÁRIOS */
-SCREENS.inventarios=`
-<section class="screen" data-screen="inventarios">
-  <div class="hdr"><div class="hdr-row">${back()}<h1 class="display">Inventários</h1><div class="spacer"></div><div class="ic">ⓧ</div></div></div>
-  <div class="pad">
-    <div class="tabs" data-tabs><button class="on">Todos</button><button>Em andamento</button><button>Finalizados</button></div>
-    <div class="search">🔍<input placeholder="Buscar inventário..."></div>
-    <div class="card" id="invList"></div>
-    <button class="btn btn-primary mt12" data-go="contagem">＋ Novo inventário</button>
-  </div>
-</section>`;
-
-/* CONTAGEM INTELIGENTE */
-SCREENS.contagem=`
-<section class="screen" data-screen="contagem">
-  <div class="hdr"><div class="hdr-row">${back()}<div><h1 class="display">Contagem Inteligente</h1><div class="sub">—</div></div><div class="spacer"></div><div class="ic">⋮</div></div></div>
-  <div class="pad">
-    <div class="trio mb12">
-      <div><div class="n" style="color:var(--ink)" id="ctTotal">—</div><div class="l">Total no sistema</div></div>
-      <div><div class="n" style="color:var(--ok)" id="ctConf">—</div><div class="l">Conferido</div></div>
-      <div><div class="n" style="color:var(--div)" id="ctFalta">—</div><div class="l">Faltando</div></div>
-    </div>
-    <div class="tabs" data-tabs="cont"><button class="on" data-pane="manual">Manual</button><button data-pane="agrup" data-go="agrupar">Agrupamento</button></div>
-    <div class="card item mb12"><div class="thumb">▥</div><div><b style="font-size:14px" id="ctItem">Leia um código de barras</b><div class="note" id="ctCod">Selecione um item para contar</div></div></div>
-    <div class="card pad" style="padding:14px">
-      <div class="note mb8" style="font-weight:700;color:var(--ink2)">Contagem manual</div>
-      <div class="counter">
-        <button class="stepper" data-cnt="-">−</button>
-        <div class="big"><b id="cntVal">0</b><span>PARES</span></div>
-        <button class="stepper" data-cnt="+">＋</button>
-      </div>
-      <div class="keys" data-keys>
-        <button>1</button><button>2</button><button>3</button>
-        <button>4</button><button>5</button><button>6</button>
-        <button>7</button><button>8</button><button>9</button>
-        <button data-k="C">C</button><button>0</button><button data-k="del">⌫</button>
-      </div>
-    </div>
-    <button class="btn btn-primary mt12" data-act="adicionarContagem"><span id="addLbl">Adicionar</span></button>
-    <div class="sec-title mt12">Últimos itens conferidos</div>
-    <div class="card" id="lastItems"></div>
-  </div>
-</section>`;
-
-/* AGRUPAR POR EMBALAGEM */
-SCREENS.agrupar=`
-<section class="screen" data-screen="agrupar">
-  <div class="hdr"><div class="hdr-row">${back()}<div><h1 class="display">Agrupar por Embalagem</h1><div class="sub">Item selecionado</div></div><div class="spacer"></div><div class="ic">⋮</div></div></div>
-  <div class="pad">
-    <div class="trio mb12">
-      <div><div class="n" style="color:var(--ink)" id="agItens">0</div><div class="l">Itens/embalagem</div></div>
-      <div><div class="n" style="color:var(--ink)" id="agQtd">0</div><div class="l">Embalagens</div></div>
-      <div><div class="n" style="color:var(--g600)" id="agTot">0</div><div class="l">Total (PARES)</div></div>
-    </div>
-    <div class="card pad" style="padding:15px">
-      <div class="note mb8" style="font-weight:700;color:var(--ink2)">Tipo de embalagem</div>
-      <div class="chips" data-chips><button class="on">SACO</button><button>CAIXA</button><button>PACOTE</button><button>OUTRO</button></div>
-      <div class="note mb8" style="font-weight:700;color:var(--ink2)">Itens por embalagem (pares)</div>
-      <div class="steprow"><button class="stepbtn" data-ag="i-">−</button><div class="v"><b id="agItens2">0</b><span>PARES</span></div><button class="stepbtn" data-ag="i+">＋</button></div>
-      <div class="note mb8" style="font-weight:700;color:var(--ink2)">Quantidade de embalagens</div>
-      <div class="steprow"><button class="stepbtn" data-ag="q-">−</button><div class="v"><b id="agQtd2">0</b><span>SACOS</span></div><button class="stepbtn" data-ag="q+">＋</button></div>
-      <div class="calcbox"><div class="t">Total calculado automaticamente</div><div class="b"><span id="agTot2">0</span> PARES</div></div>
-      <label class="opt"><span class="dot"></span> Adicionar observação (opcional)</label>
-    </div>
-    <button class="btn btn-primary mt12">Adicionar ao total</button>
-    <div class="banner mt12"><div style="font-size:26px">🛍️</div><div class="note"><b>Como funciona:</b> você informa quantos itens por embalagem e quantas embalagens. O sistema calcula e soma automaticamente.</div></div>
-  </div>
-</section>`;
-
-/* RESERVAS */
-SCREENS.reservas=`
-<section class="screen" data-screen="reservas">
-  <div class="hdr"><div class="hdr-row">${back()}<h1 class="display">Reservas</h1><div class="spacer"></div><div class="ic">ⓧ</div></div></div>
-  <div class="pad">
-    <div class="tabs" data-tabs><button class="on">Abertas</button><button>Em separação</button><button>Conferência</button><button>Finalizadas</button></div>
-    <div class="search">🔍<input placeholder="Buscar reserva..."></div>
-    <div class="card" id="resList"></div>
-    <button class="btn btn-primary mt12" data-go="novaReserva">＋ Nova reserva</button>
-  </div>
-</section>`;
-
-/* NOVA RESERVA — busca item do inventário, puxa local e valor */
-SCREENS.novaReserva=`
-<section class="screen" data-screen="novaReserva">
-  <div class="hdr"><div class="hdr-row">${back()}<h1 class="display">Nova Reserva</h1></div></div>
-  <div class="pad">
-    <div style="margin-bottom:10px"><div class="note" style="margin-bottom:6px">Nome da reserva (ex: Três Lagoas)</div>
-      <input id="resNome" placeholder="Digite o nome da reserva" style="width:100%;padding:14px;border:1px solid var(--line,#d9e2dc);border-radius:12px;font-size:16px"></div>
-    <div id="resCount" class="note" style="margin-bottom:10px"></div>
-    <div class="search">🔍<input id="resBuscaInp" placeholder="Digite o item (ex: camisa)..." oninput="buscarItensReserva(this.value)"></div>
-    <div id="resBuscaOut" class="card mb12"><div class="row"><div class="note">Digite ao menos 2 letras para buscar um item já inventariado.</div></div></div>
-    <div id="resSelCard" style="display:none">
-      <div class="sec-title">Item selecionado</div>
-      <div class="card pad mb12" style="padding:16px">
-        <b id="resSelNm" style="font-size:14px"></b>
-        <div class="note" id="resSelInfo" style="margin-top:4px"></div>
-        <div style="margin-top:14px"><div class="note" style="margin-bottom:6px">Quantidade a reservar</div>
-          <input id="resQtd" type="number" inputmode="numeric" placeholder="0" style="width:100%;padding:14px;border:1px solid var(--line,#d9e2dc);border-radius:12px;font-size:18px;text-align:center"></div>
-        <button class="btn btn-primary mt12" data-act="salvarReserva">Adicionar item à reserva</button>
-      </div>
-    </div>
-    <button class="btn mt12" data-go="reservas" style="background:var(--g100,#e7f3ec);color:var(--g600,#1f7a4d)">Concluir reserva</button>
-  </div>
-</section>`;
-
-/* RESERVA DETALHE */
-SCREENS.reservaDet=`
-<section class="screen" data-screen="reservaDet">
-  <div class="hdr"><div class="hdr-row">${back()}<div><h1 class="display">Reserva —</h1><div class="sub">TRÊS LAGOAS</div></div><div class="spacer"></div><div class="ic">⋮</div></div></div>
-  <div class="pad">
-    <span class="pill blue mb12" style="display:inline-flex">Separação</span>
-    <div class="trio mb12" style="margin-top:10px">
-      <div><div class="n">—</div><div class="l">Total itens</div></div>
-      <div><div class="n" style="color:var(--ok)">—</div><div class="l">Separados</div></div>
-      <div><div class="n" style="color:var(--pend)">—</div><div class="l">Pendentes</div></div>
-    </div>
-    <div class="card pad mb12" style="padding:14px"><div class="flexb mb8"><b style="font-size:13px">Progresso geral</b><b style="color:var(--g600)">—</b></div>${bar(0)}</div>
-    <div class="card mb12">
-      <div class="row" data-go="reservaItens">📄 Ver itens da reserva <div class="spacer" style="flex:1"></div>›</div>
-      <div class="row">▥ Código de barras / Itens<div style="flex:1"></div>›</div>
-      <div class="row">📝 Observações da reserva<div style="flex:1"></div>›</div>
-      <div class="row" data-go="separacao">🖨 Imprimir etiquetas<div style="flex:1"></div>›</div>
-      <div class="row">🕘 Histórico de movimentações<div style="flex:1"></div>›</div>
-    </div>
-    <button class="btn btn-primary" data-go="reservaItens">Continuar separação</button>
-  </div>
-</section>`;
-
-/* ITENS DA RESERVA */
-SCREENS.reservaItens=`
-<section class="screen" data-screen="reservaItens">
-  <div class="hdr"><div class="hdr-row">${back()}<div><h1 class="display">Itens da Reserva</h1><div class="sub">—</div></div><div class="spacer"></div><div class="ic">▥</div></div></div>
-  <div class="pad">
-    <div class="search">🔍<input placeholder="Buscar item..."></div>
-    <div class="card mb12" id="resItens"></div>
-    <button class="btn btn-primary" data-go="separacao">▥ Ler código de barras</button>
-  </div>
-</section>`;
-
-/* SEPARAÇÃO POR CAIXA */
-SCREENS.separacao=`
-<section class="screen" data-screen="separacao">
-  <div class="hdr"><div class="hdr-row">${back()}<div><h1 class="display">Separação por Caixa</h1><div class="sub">—</div></div><div class="spacer"></div><div class="ic">⋮</div></div></div>
-  <div class="pad">
-    <div class="field"><label>Caixa / Volume</label><select><option>CAIXA 001</option><option>CAIXA 002</option></select></div>
-    <div class="card pad mb12" style="padding:14px">
-      <div class="flexb mb8"><b style="font-size:13px">Capacidade: —</b><span class="pill ok">✓</span></div>
-      <div class="note mb8">Itens na caixa: —</div>${bar(0)}
-    </div>
-    <div class="card mb12" id="caixaItens">
-      <div class="row"><div class="note">Leia os itens para adicionar a esta caixa.</div></div>
-    </div>
-    <button class="btn btn-primary">Fechar caixa</button>
-  </div>
-</section>`;
-
-/* PENDÊNCIAS */
-SCREENS.pendencias=`
-<section class="screen" data-screen="pendencias">
-  <div class="hdr"><div class="hdr-row">${back()}<h1 class="display">Pendências</h1></div></div>
-  <div class="pad">
-    <div class="card">
-      <div class="row"><div style="flex:1"><b style="font-size:13px">— — TRÊS LAGOAS</b><div class="note">72 itens pendentes</div></div><span class="pill pend">72</span></div>
-      <div class="row"><div style="flex:1"><b style="font-size:13px">OS 12347 — CAMPO GRANDE</b><div class="note">15 itens pendentes</div></div><span class="pill pend">15</span></div>
-      <div class="row"><div style="flex:1"><b style="font-size:13px">OS 12348 — DOURADOS</b><div class="note">12 itens pendentes</div></div><span class="pill pend">12</span></div>
-    </div>
-  </div>
-</section>`;
-
-/* OCORRÊNCIAS */
-SCREENS.ocorrencias=`
-<section class="screen" data-screen="ocorrencias">
-  <div class="hdr"><div class="hdr-row">${back()}<h1 class="display">Ocorrências</h1><div class="spacer"></div><div class="ic">＋</div></div></div>
-  <div class="pad">
-    <div class="card mb12" id="ocorrList">
-      <div class="row"><div class="note">Nenhuma ocorrência registrada ainda.</div></div>
-    </div>
-    <button class="btn btn-primary">＋ Registrar ocorrência</button>
-  </div>
-</section>`;
-
-/* INVENTÁRIO COMPLETO — menu */
-SCREENS.completo=`
-<section class="screen" data-screen="completo">
-  <div class="hdr"><div class="hdr-row">${back()}<div><h1 class="display">Inventário</h1><div class="sub">—</div></div><div class="spacer"></div><div class="ic">⋮</div></div></div>
-  <div class="pad">
-    <div class="card pad mb12" style="padding:14px"><div class="flexb mb8"><b style="font-size:13px">Progresso geral</b><b style="color:var(--g600)">—</b></div>${bar(0)}
-      <div class="trio mt12"><div><div class="n" style="color:var(--ok)">—</div><div class="l">Contados</div></div><div><div class="n" style="color:var(--pend)">—</div><div class="l">Pendentes</div></div><div><div class="n" style="color:var(--div)">—</div><div class="l">Divergências</div></div></div>
-    </div>
-    <div class="sec-title">Etapas do inventário</div>
-    <div class="card mb12">
-      <div class="row" data-go="cBaixa"><span class="thumb">📦</span><div style="flex:1"><b style="font-size:13px">Baixa de Estoque</b></div>›</div>
-      <div class="row" data-go="cEmb"><span class="thumb">📦</span><div style="flex:1"><b style="font-size:13px">Embalagem do Produto</b></div>›</div>
-      <div class="row" data-go="cFat"><span class="thumb">🧾</span><div style="flex:1"><b style="font-size:13px">Quantidade Faturada</b></div>›</div>
-      <div class="row" data-go="cRes"><span class="thumb">📊</span><div style="flex:1"><b style="font-size:13px">Resultados do Inventário</b></div>›</div>
-      <div class="row" data-go="cSeg"><span class="thumb">🛡</span><div style="flex:1"><b style="font-size:13px">Cuidados de Segurança</b></div>›</div>
-    </div>
-    <button class="btn btn-primary" data-go="contagem">Continuar inventário</button>
-  </div>
-</section>`;
-
-/* Etapas Sim/Não genéricas */
-function etapa(id,titulo,pergunta,extra){return `
-<section class="screen" data-screen="${id}">
-  <div class="hdr"><div class="hdr-row">${back()}<div><h1 class="display">${titulo}</h1><div class="sub">—</div></div></div></div>
-  <div class="pad">
-    <div class="note mb12">${pergunta}</div>
-    ${extra||''}
-    <label class="opt sel"><span class="dot">✓</span> Sim</label>
-    <label class="opt"><span class="dot"></span> Não</label>
-    <div class="field mt12"><label>Observação (opcional)</label><input placeholder="Informe detalhes se necessário..."></div>
-    <button class="btn btn-primary" data-go="completo">Salvar e continuar</button>
-  </div>
-</section>`;}
-SCREENS.cBaixa=etapa('cBaixa','Baixa de Estoque','Avaliar se a baixa de estoque foi realizada quando existe transferência. Houve transferência antes da baixa?');
-SCREENS.cEmb=etapa('cEmb','Embalagem do Produto','Avaliar se as baixas condizem com a embalagem do produto.','<div class="field"><label>Embalagem cadastrada</label><input value="Caixa com 10 unidades" readonly></div>');
-SCREENS.cFat=etapa('cFat','Quantidade Faturada','Avaliar se as quantidades entradas condizem com a quantidade faturada.','<div class="field"><label>Quantidade faturada</label><input value="120" readonly></div><div class="field"><label>Quantidade recebida</label><input value="120" readonly></div>');
-
-/* Resultados do Inventário */
-SCREENS.cRes=`
-<section class="screen" data-screen="cRes">
-  <div class="hdr"><div class="hdr-row">${back()}<div><h1 class="display">Resultados do Inventário</h1><div class="sub">—</div></div></div></div>
-  <div class="pad">
-    <div class="card mb12">
-      <div class="resline"><span class="tag" style="background:var(--g600)">A</span><div class="lbl">Itens Contados</div><div class="val">—</div></div>
-      <div class="resline"><span class="tag" style="background:var(--pend)">B</span><div class="lbl">Erros Contagem</div><div class="val">—</div></div>
-      <div class="resline"><span class="tag" style="background:var(--blue)">C</span><div class="lbl">Local Incorreto</div><div class="val" data-go="dLocal">—</div></div>
-      <div class="resline"><span class="tag" style="background:#8857E0">D</span><div class="lbl">Dif. Peças Entregues</div><div class="val">—</div></div>
-      <div class="resline"><span class="tag" style="background:var(--pend)">E</span><div class="lbl">Falta Nota Fiscal</div><div class="val" data-go="dFalta">—</div></div>
-      <div class="resline"><span class="tag" style="background:var(--blue)">F</span><div class="lbl">Materiais Sobrando</div><div class="val">—</div></div>
-      <div class="resline"><span class="tag" style="background:#2BA39A">G</span><div class="lbl">Materiais Faltando</div><div class="val">—</div></div>
-      <div class="resline"><span class="tag" style="background:var(--div)">H</span><div class="lbl">Materiais Avariados</div><div class="val">—</div></div>
-      <div class="resline"><span class="tag" style="background:var(--pend)">I</span><div class="lbl">Lançamento Incorreto</div><div class="val">—</div></div>
-      <div class="resline"><span class="tag" style="background:var(--g600)">J</span><div class="lbl">Itens Vencidos</div><div class="val">—</div></div>
-    </div>
-    <button class="btn btn-primary" data-go="completo">Exportar relatório</button>
-  </div>
-</section>`;
-
-SCREENS.dLocal=`
-<section class="screen" data-screen="dLocal">
-  <div class="hdr"><div class="hdr-row">${back()}<div><h1 class="display">Detalhes — Local Incorreto</h1><div class="sub">—</div></div></div></div>
-  <div class="pad">
-    <div class="note mb12">Sem registros.</div>
-    <div class="card pad" style="padding:14px"><div class="note">Sem registros.</div></div>
-  </div>
-</section>`;
-
-SCREENS.dFalta=`
-<section class="screen" data-screen="dFalta">
-  <div class="hdr"><div class="hdr-row">${back()}<div><h1 class="display">Detalhes — Falta NF</h1><div class="sub">—</div></div></div></div>
-  <div class="pad">
-    <div class="note mb12">Sem registros.</div>
-    <div class="card pad" style="padding:14px"><div class="note">Sem registros.</div></div>
-  </div>
-</section>`;
-
-/* Cuidados de Segurança */
-SCREENS.cSeg=`
-<section class="screen" data-screen="cSeg">
-  <div class="hdr"><div class="hdr-row">${back()}<div><h1 class="display">Cuidados de Segurança</h1><div class="sub">—</div></div></div></div>
-  <div class="pad">
-    <div class="note mb12">Para movimentação de itens que não oferecem riscos ergonômicos ou à saúde.</div>
-    <div class="card mb12">
-      ${['Utilizar postura correta','Usar calçados de segurança','Verificar área de circulação','Manter organização do local','Utilizar EPIs quando necessário','Em caso de dúvida, contatar liderança'].map(t=>'<div class="row"><span class="icirc ok">✓</span><div style="flex:1;font-size:13px;font-weight:600">'+t+'</div></div>').join('')}
-    </div>
-    <button class="btn btn-primary" data-go="completo">Confirmar e continuar</button>
-  </div>
-</section>`;
-
-/* MAIS / MAPA / SYNC */
-SCREENS.mais=`
-<section class="screen" data-screen="mais">
-  <div class="hdr"><div class="hdr-row">${back()}<h1 class="display">Mais</h1></div></div>
-  <div class="pad"><div class="card">
-    <div class="row" data-go="completo">📋 Inventário completo<div style="flex:1"></div>›</div>
-    <div class="row" data-go="separacao">📦 Separação por caixa<div style="flex:1"></div>›</div>
-    <div class="row" data-go="mapa">📍 Mapa do estoque<div style="flex:1"></div>›</div>
-    <div class="row" data-go="sync">⟳ Sincronização<div style="flex:1"></div>›</div>
-    <div class="row" data-go="ocorrencias">❗ Ocorrências<div style="flex:1"></div>›</div>
-    <div class="row" data-go="diag">🩺 Diagnóstico<div style="flex:1"></div>›</div>
-  </div></div>
-</section>`;
-SCREENS.mapa=`<section class="screen" data-screen="mapa"><div class="hdr"><div class="hdr-row">${back()}<h1 class="display">Mapa do Estoque</h1></div></div><div class="pad"><div class="card pad" style="padding:24px;text-align:center"><div style="font-size:40px">📍</div><div class="note mt12">Mapa do estoque — em breve.<br>(Liga no backend depois)</div></div></div></section>`;
-SCREENS.sync=`<section class="screen" data-screen="sync"><div class="hdr"><div class="hdr-row">${back()}<h1 class="display">Sincronização</h1></div></div>
-<div class="pad">
-  <div class="card pad mb12" style="padding:16px">
-    <div class="note mb8" style="font-weight:700;color:var(--ink2)">Conexão com o sistema</div>
-    <div class="field"><label>URL do script (/exec)</label><input id="cfgUrl" placeholder="https://script.google.com/macros/s/.../exec"></div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-soft btn-sm" style="flex:1" data-act="salvarUrl">Salvar URL</button>
-      <button class="btn btn-ghost btn-sm" style="flex:1" data-act="testarConexao">Testar conexão</button>
-    </div>
-    <div id="cfgMsg" class="note mt12"></div>
-    <button class="btn btn-ghost btn-sm mt12" style="width:100%" data-act="restaurarUrl">↺ Restaurar URL padrão</button>
-  </div>
-  <div class="card pad" style="padding:20px;text-align:center">
-    <div style="font-size:38px">☁</div>
-    <div class="note mt12 mb12">Última sincronização: <span id="syncWhen">—</span></div>
-    <button class="btn btn-primary" data-act="sincronizar">Sincronizar agora</button>
-    <div class="pill ok mt12" style="display:inline-flex">✓ Dados salvos offline</div>
-    <div class="note mt12" style="text-align:center;color:var(--t3,#9aa)">Versão do app: <b id="appVer"></b></div>
-  </div>
-</div></section>`;
-
-SCREENS.diag=`
-<section class="screen" data-screen="diag">
-  <div class="hdr"><div class="hdr-row">${back()}<h1 class="display">Diagnóstico</h1></div></div>
-  <div class="pad">
-    <button class="btn btn-primary mb12" data-act="rodarDiag">Rodar diagnóstico</button>
-    <div id="diagOut"><div class="card pad" style="padding:16px"><div class="note">Toque em “Rodar diagnóstico” para checar a comunicação com o sistema.</div></div></div>
-  </div>
-</section>`;
-
-/* ====== RENDER ====== */
-var host=document.getElementById('screens');
-Object.keys(SCREENS).forEach(function(k){ host.insertAdjacentHTML('beforeend',SCREENS[k]); });
-
-/* listas dinâmicas */
-function rendInvRows(list){var box=document.getElementById('invList');if(!box)return;
-  if(!list||!list.length){box.innerHTML='<div class="row"><div class="note">Nenhum inventário encontrado.</div></div>';return;}
-  box.innerHTML=list.map(function(i){var c=i.pct>=100?'ok':i.pct<25?'div':'pend';
-   return '<div class="row" data-go="contagem" data-token="'+(i.token||'')+'"><div style="flex:1"><div class="flexb"><b style="font-size:14px">'+(i.os||i.titulo||i.token)+'</b><b class="pill '+c+'">'+i.feito+'/'+i.total+'</b></div><div class="note">Obra: '+(i.obra||'')+' · '+i.pct+'%</div>'+bar(i.pct,(i.status==='FINALIZADO'||i.pct>=100)?'fim':'')+'</div></div>';}).join('');}
-function fillContagem(){
-  var t=document.getElementById('ctTotal');if(!t)return;
-  if(typeof getUrl!=='function'||!getUrl()||!window._tokenSel){ return; }
-  document.getElementById('ctItem').textContent='Carregando...';
-  apiJsonp('itensTokenApp',{token:window._tokenSel},function(r){
-    if(!r||!r.ok){ document.getElementById('ctItem').textContent='Não consegui carregar os itens.'; return; }
-    var s=r.stats||{};
-    document.getElementById('ctTotal').textContent=s.total||0;
-    document.getElementById('ctConf').textContent=s.conferido||0;
-    document.getElementById('ctFalta').textContent=s.faltando||0;
-    var pend=(r.itens||[]).filter(function(x){return x.f===0;})[0]||(r.itens||[])[0];
-    if(pend){ window._itemAtual=pend; document.getElementById('ctItem').textContent=pend.nm; document.getElementById('ctCod').textContent='Código: '+pend.cod; }
-    else { window._itemAtual=null; document.getElementById('ctItem').textContent='Sem itens neste inventário'; document.getElementById('ctCod').textContent=''; }
-    ITENS=r.itens||[]; fillLast();
-  });
-}
-function fillInv(){var box=document.getElementById('invList');if(!box)return;
-  if(typeof getUrl!=='function'||!getUrl()){ rendInvRows(INVS); return; }
-  box.innerHTML='<div class="row"><div class="note">Carregando inventários...</div></div>';
-  apiJsonp('listarInventariosApp',{},function(r){
-    if(r&&r.ok&&r.data){ rendInvRows(r.data); }
-    else{ box.innerHTML='<div class="row"><div class="note" style="color:var(--div)">Não consegui carregar. Confira a URL em Sincronização → Testar conexão.</div></div>'; }
-  });
-}
-function fillRes(){var box=document.getElementById('resList');if(!box)return;if(!RES.length){box.innerHTML='<div class="row"><div class="note">Nenhuma reserva ainda. Crie uma em “Nova reserva”.</div></div>';return;}box.innerHTML=RES.map(function(r){
-  return '<div class="row" data-go="reservaDet"><div style="flex:1"><div class="flexb"><b style="font-size:14px">'+r.os+'</b><span class="pill '+r.stc+'">'+r.st+'</span></div><div class="note">'+r.obra+' · '+r.itens+' itens · '+r.pct+'%</div>'+bar(r.pct)+'</div></div>';
-}).join('');}
-function fillLast(){var box=document.getElementById('lastItems');if(!box)return;if(!ITENS.length){box.innerHTML='<div class="row"><div class="note">Nenhum item conferido ainda.</div></div>';return;}box.innerHTML=ITENS.map(function(i){
-  var c=i.f>=i.t&&i.t>0?'ok':i.f===0?'div':'pend';var ic=i.f>=i.t&&i.t>0?'✓':'○';
-  return '<div class="row" data-pick-cod="'+i.cod+'" style="cursor:pointer"><span class="icirc '+c+'">'+ic+'</span><div style="flex:1"><b style="font-size:13px">'+i.nm+'</b></div><b style="color:var(--'+c+')">'+i.f+'/'+i.t+'</b></div>';
-}).join('');}
-function fillResItens(){var box=document.getElementById('resItens');if(!box)return;if(!ITENS.length){box.innerHTML='<div class="row"><div class="note">Sem itens nesta reserva.</div></div>';return;}box.innerHTML=ITENS.map(function(i){
-  var c=i.f>=i.t?'ok':i.f===0?'div':'pend';var ic=i.f>=i.t?'✓':'○';
-  return '<div class="row"><span class="thumb">📦</span><div style="flex:1"><b style="font-size:13px">'+i.nm+'</b><div class="code">Código: '+i.cod+' · Qtd: '+i.t+'</div></div><b style="color:var(--'+c+')">'+i.f+'/'+i.t+'</b></div>';
-}).join('');}
-
-/* ====== NAVEGAÇÃO ====== */
-var stack=['dashboard'];
-function go(name){
-  var scs=document.querySelectorAll('.screen');var found=false;
-  scs.forEach(function(s){var on=s.getAttribute('data-screen')===name;s.classList.toggle('active',on);if(on)found=true;});
-  if(!found)return;
-  if(stack[stack.length-1]!==name)stack.push(name);
-  // nav highlight
-  document.querySelectorAll('#nav button').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-go')===name);});
-  // refresh dynamic
-  fillInv();fillRes();fillLast();fillResItens();
-  if(name==='contagem')fillContagem();
-  if(name==='reservas')loadReservas();
-  if(name==='sync'){var cu=document.getElementById('cfgUrl');if(cu&&!cu.value)cu.value=getUrl();var av=document.getElementById('appVer');if(av)av.textContent=APP_VERSION;}
-  document.querySelector('.phone').scrollTo&&window.scrollTo(0,0);
-}
-function goBack(){ if(stack.length>1){stack.pop();go(stack[stack.length-1]);stack.pop();} else go('dashboard'); }
-
-document.addEventListener('click',function(e){
-  var g=e.target.closest('[data-go]'); if(g){var tk=g.getAttribute('data-token'); if(tk)window._tokenSel=tk; go(g.getAttribute('data-go'));return;}
-  var b=e.target.closest('[data-back]'); if(b){goBack();return;}
-  // tabs
-  var tb=e.target.closest('[data-tabs] button,[data-tabs] button'); 
-  var tabBtn=e.target.closest('[data-tabs] button')||e.target.closest('[data-chips] button');
-  if(tabBtn){var grp=tabBtn.parentElement;grp.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});tabBtn.classList.add('on');
-    if(tabBtn.closest('[data-chips]')){var unit=tabBtn.textContent==='CAIXA'?'CAIXAS':tabBtn.textContent==='PACOTE'?'PACOTES':tabBtn.textContent==='OUTRO'?'UNID':'SACOS';var q2=document.getElementById('agQtd2');if(q2)q2.nextElementSibling&&(q2.parentElement.querySelector('span').textContent=unit);}
-  }
-});
-
-/* contador manual */
-(function(){
-  var cur=0;
-  function set(v){cur=Math.max(0,v);var cv=document.getElementById('cntVal');if(cv)cv.textContent=cur;var al=document.getElementById('addLbl');if(al)al.textContent='Adicionar'+(cur>0?' ('+cur+')':'');}
-  window._setCnt=set; window._getCnt=function(){return cur;};
-  document.addEventListener('click',function(e){
-    var s=e.target.closest('[data-cnt]');if(s){set(cur+(s.getAttribute('data-cnt')==='+'?1:-1));return;}
-    var k=e.target.closest('[data-keys] button');if(k){var t=k.textContent.trim();var kk=k.getAttribute('data-k');
-      if(kk==='C')set(0);else if(kk==='del')set(parseInt(String(cur).slice(0,-1)||'0',10));
-      else set(parseInt(String(cur===0?'':cur)+t,10));}
-  });
-})();
-
-/* agrupar calc */
-(function(){
-  var ipe=0,qtd=0;
-  function upd(){var tot=ipe*qtd;
-    [['agItens',ipe],['agItens2',ipe],['agQtd',qtd],['agQtd2',qtd],['agTot',tot],['agTot2',tot]].forEach(function(p){var el=document.getElementById(p[0]);if(el)el.textContent=p[1];});}
-  document.addEventListener('click',function(e){
-    var a=e.target.closest('[data-ag]');if(!a)return;var t=a.getAttribute('data-ag');
-    if(t==='i+')ipe++;if(t==='i-')ipe=Math.max(1,ipe-1);if(t==='q+')qtd++;if(t==='q-')qtd=Math.max(1,qtd-1);upd();});
-})();
-
-/* relógio */
-(function(){function t(){var d=new Date();document.getElementById('clock').textContent=(d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();}t();setInterval(t,30000);})();
-
-/* ====== CONEXÃO COM O SCRIPT (Apps Script /exec) ====== */
-var URL_PADRAO='https://script.google.com/macros/s/AKfycbxYEDXJpJOF1wRwUq2I2szdl__LVNbcEuD0JPwbv1vq3d6AmFYqVLGzgSiU_5RKL4tMrg/exec';
-function getUrl(){ try{return localStorage.getItem('almoxa_exec_url')||URL_PADRAO;}catch(e){return URL_PADRAO;} }
-function setUrl(u){ try{localStorage.setItem('almoxa_exec_url',u);}catch(e){} }
-// AUTO-CORREÇÃO: quando uma versão nova do app carrega, adota a URL embutida
-// uma vez (resolve celular com URL antiga salva travando a conexão).
-(function(){ try{
-  if(localStorage.getItem('almoxa_url_stamp')!==APP_VERSION){
-    localStorage.setItem('almoxa_exec_url',URL_PADRAO);
-    localStorage.setItem('almoxa_url_stamp',APP_VERSION);
-  }
-}catch(e){} })();
-
-/* chamada genérica JSONP ao Apps Script (via payload do doGet) */
-function apiJsonp(action,extra,done){
-  var url=getUrl(); if(!url){ done&&done(null); return; }
-  var cb='almoxa_'+Date.now()+Math.floor(Math.random()*9999);
-  var s=document.createElement('script');
-  var to=setTimeout(function(){ clean(); done&&done(null); },20000);
-  function clean(){ try{delete window[cb];}catch(e){} if(s&&s.parentNode)s.parentNode.removeChild(s); }
-  window[cb]=function(resp){ clearTimeout(to); clean(); done&&done(resp); };
-  s.onerror=function(){ clearTimeout(to); clean(); done&&done(null); };
-  var payload=encodeURIComponent(JSON.stringify(Object.assign({action:action},extra||{})));
-  s.src=url+(url.indexOf('?')<0?'?':'&')+'payload='+payload+'&callback='+cb;
-  document.head.appendChild(s);
-}
-
-/* limpa a URL: tira espaços, corrige /dev->/exec, corta lixo depois de /exec */
-function normUrl(u){
-  u=String(u||'').replace(/[\u200B-\u200D\uFEFF]/g,'').trim().replace(/\s+/g,'');
-  u=u.replace(/\/dev(\?|#|$)/,'/exec$1');
-  var i=u.indexOf('/exec'); if(i>=0) u=u.slice(0,i+5);
-  return u;
-}
-
-function salvarUrl(){
-  var inp=document.getElementById('cfgUrl'),msg=document.getElementById('cfgMsg');
-  var url=normUrl(inp.value);
-  if(!url){ msg.innerHTML='<span style="color:var(--div)">Cole a URL /exec primeiro.</span>'; return; }
-  if(url.indexOf('/exec')<0){ msg.innerHTML='<span style="color:var(--pend)">Atenção: a URL precisa terminar em <b>/exec</b> (não use a /dev).</span>'; return; }
-  setUrl(url); inp.value=url;
-  msg.innerHTML='<span style="color:var(--ok)">✓ URL salva e limpa. Agora toque em "Testar conexão".</span>';
-}
-
-function testarConexao(){
-  var msg=document.getElementById('cfgMsg');
-  var inp=document.getElementById('cfgUrl');
-  var url=normUrl((inp&&inp.value)||getUrl());
-  if(!url){ msg.innerHTML='<span style="color:var(--div)">Cole e salve a URL /exec primeiro.</span>'; return; }
-  if(url.indexOf('/exec')<0){ msg.innerHTML='<span style="color:var(--pend)">A URL precisa terminar em <b>/exec</b>. Pegue a URL nova em Implantar → Gerenciar implantações.</span>'; return; }
-  setUrl(url); if(inp)inp.value=url;
-  msg.innerHTML='Testando conexão... <span style="color:var(--t3,#888)">(a 1ª vez pode demorar uns segundos)</span>';
-  _pingTry(url,msg,2);
-}
-/* tenta o ping; se falhar (cold start), tenta de novo antes de desistir */
-function _pingTry(url,msg,tentativas){
-  var cb='almoxaping_'+Date.now()+Math.floor(Math.random()*999);
-  var s=document.createElement('script');
-  function cleanup(){ try{delete window[cb];}catch(e){} if(s&&s.parentNode)s.parentNode.removeChild(s); }
-  function falhou(motivo){
-    if(tentativas>0){ msg.innerHTML='Ainda testando... <span style="color:var(--t3,#888)">tentando de novo</span>'; setTimeout(function(){ _pingTry(url,msg,tentativas-1); },900); }
-    else if(motivo==='timeout'){ msg.innerHTML='<span style="color:var(--div)">Sem resposta após várias tentativas. Confira se a URL é a da implantação <b>atual</b> (cada implantação nova gera uma URL nova) e se está como <b>"Qualquer pessoa"</b>.</span>'; }
-    else{ msg.innerHTML='<span style="color:var(--div)">Não carregou. A URL no celular pode ser de uma implantação <b>antiga</b>. Copie a URL <b>nova</b> em Implantar → Gerenciar implantações e cole aqui.</span>'; }
-  }
-  var to=setTimeout(function(){ cleanup(); falhou('timeout'); },20000);
-  window[cb]=function(resp){ clearTimeout(to); cleanup();
-    if(resp&&resp.ok){ msg.innerHTML='<span style="color:var(--ok)">✓ Conexão OK — API '+(resp.versaoApi||'?')+' · sistema online.</span>'; setUrl(url); }
-    else{ msg.innerHTML='<span style="color:var(--pend)">Conectou, mas a resposta veio inesperada. Republicar a versão costuma resolver.</span>'; } };
-  s.onerror=function(){ clearTimeout(to); cleanup(); falhou('erro'); };
-  s.src=url+(url.indexOf('?')<0?'?':'&')+'action=ping&callback='+cb;
-  document.head.appendChild(s);
-}
-
-function sincronizar(){
-  var w=document.getElementById('syncWhen');
-  if(!getUrl()){ var m=document.getElementById('cfgMsg'); if(m)m.innerHTML='<span style="color:var(--pend)">Salve e teste a URL antes de sincronizar.</span>'; return; }
-  if(w){var d=new Date();w.textContent='hoje, '+(d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes();}
-}
-
-document.addEventListener('click',function(e){
-  var a=e.target.closest('[data-act]'); if(!a)return;
-  var act=a.getAttribute('data-act');
-  if(act==='salvarUrl')salvarUrl();
-  if(act==='testarConexao')testarConexao();
-  if(act==='sincronizar')sincronizar();
-  if(act==='rodarDiag')rodarDiagnostico();
-  if(act==='adicionarContagem')adicionarContagem();
-  if(act==='salvarReserva')salvarReserva();
-  if(act==='restaurarUrl'){ setUrl(URL_PADRAO); var cu=document.getElementById('cfgUrl'); if(cu)cu.value=URL_PADRAO; var m=document.getElementById('cfgMsg'); if(m)m.innerHTML='<span style="color:var(--ok)">URL padrão restaurada. Toque em Testar conexão.</span>'; }
-});
-
-document.addEventListener('click',function(e){
-  var pk=e.target.closest('[data-pick-cod]'); if(!pk)return;
-  var cod=pk.getAttribute('data-pick-cod');
-  var it=(ITENS||[]).filter(function(x){return String(x.cod)===String(cod);})[0];
-  if(it){
-    window._itemAtual=it;
-    document.getElementById('ctItem').textContent=it.nm;
-    document.getElementById('ctCod').textContent='Código: '+it.cod;
-    if(window._setCnt)window._setCnt(it.f||0);
-    var sc=document.querySelector('.screen[data-screen="contagem"]')||window; try{ (sc.scrollTo?sc:window).scrollTo(0,0); }catch(_){}
-  }
-});
-
-/* ===== RESERVAS ===== */
-var _resBuscaTimer=null;
-function buscarItensReserva(termo){
-  var out=document.getElementById('resBuscaOut'); if(!out)return;
-  if(!getUrl()){ out.innerHTML='<div class="row"><div class="note" style="color:var(--pend)">Configure a conexão em Sincronização.</div></div>'; return; }
-  if(!termo||termo.trim().length<2){ out.innerHTML='<div class="row"><div class="note">Digite ao menos 2 letras.</div></div>'; return; }
-  clearTimeout(_resBuscaTimer);
-  _resBuscaTimer=setTimeout(function(){
-    out.innerHTML='<div class="row"><div class="note">Buscando...</div></div>';
-    apiJsonp('buscarItensReserva',{termo:termo.trim()},function(r){
-      if(!r||!r.ok){ out.innerHTML='<div class="row"><div class="note" style="color:var(--div)">Erro na busca.</div></div>'; return; }
-      if(!r.itens||!r.itens.length){ out.innerHTML='<div class="row"><div class="note">Nenhum item inventariado encontrado.</div></div>'; return; }
-      window._resLista=r.itens;
-      out.innerHTML=r.itens.map(function(i){
-        return '<div class="row" data-resp-cod="'+i.cod+'" style="cursor:pointer"><span class="thumb">📦</span><div style="flex:1"><b style="font-size:13px">'+i.nm+'</b><div class="code">Cód: '+i.cod+(i.local?' · Local: '+i.local:'')+'</div></div><b style="color:var(--g600)">R$ '+(i.vu||0).toFixed(2)+'</b></div>';
-      }).join('');
+  fetch(fullUrl, { method: 'GET' })
+    .then(function(resp) { return resp.text(); })
+    .then(function(txt) {
+      if (done) return;
+      // Tenta JSON puro
+      try {
+        var d = JSON.parse(txt);
+        done = true; clearTimeout(timer); cb && cb(d);
+        return;
+      } catch(e) {}
+      // Tenta remover wrapper JSONP: callback({...}) ou callback_123({...})
+      var m = txt.match(/^[a-zA-Z0-9_]+\s*\(([\s\S]*)\)\s*;?\s*$/);
+      if (m) {
+        try {
+          var d2 = JSON.parse(m[1]);
+          done = true; clearTimeout(timer); cb && cb(d2);
+          return;
+        } catch(e2) {}
+      }
+      // Resposta não reconhecida
+      done = true; clearTimeout(timer); cb && cb(null);
+    })
+    .catch(function(e) {
+      if (done) return;
+      // Fetch falhou — tenta JSONP como último recurso
+      var cbName = '__almv25_fb_' + Date.now();
+      var fbDone = false;
+      var fbTimer = setTimeout(function() {
+        if (!fbDone) { fbDone = true; delete window[cbName]; done = true; clearTimeout(timer); cb && cb(null); }
+      }, 8000);
+      window[cbName] = function(r) {
+        clearTimeout(fbTimer);
+        if (!fbDone) { fbDone = true; delete window[cbName]; done = true; clearTimeout(timer); cb && cb(r); }
+      };
+      var s = document.createElement('script');
+      s.src = url + '?action=' + action + (qs ? '&' + qs : '') + '&callback=' + cbName + '&_=' + Date.now();
+      s.onerror = function() {
+        clearTimeout(fbTimer);
+        if (!fbDone) { fbDone = true; delete window[cbName]; done = true; clearTimeout(timer); cb && cb(null); }
+      };
+      document.head.appendChild(s);
     });
-  },350);
 }
-document.addEventListener('click',function(e){
-  var p=e.target.closest('[data-resp-cod]'); if(!p)return;
-  var cod=p.getAttribute('data-resp-cod');
-  var it=(window._resLista||[]).filter(function(x){return String(x.cod)===String(cod);})[0];
-  if(!it)return;
-  window._resItem=it;
-  document.getElementById('resSelNm').textContent=it.nm;
-  document.getElementById('resSelInfo').textContent='Cód: '+it.cod+(it.local?' · Local: '+it.local:'')+' · Valor: R$ '+(it.vu||0).toFixed(2);
-  document.getElementById('resSelCard').style.display='block';
-  var q=document.getElementById('resQtd'); if(q){q.value='';q.focus();}
-});
-var _resQtdItens=0;
-function salvarReserva(){
-  var it=window._resItem;
-  var nome=(document.getElementById('resNome').value||'').trim();
-  if(!nome){ alert('Dê um nome para a reserva (ex: Três Lagoas).'); return; }
-  if(!it){ alert('Selecione um item.'); return; }
-  var q=parseInt(document.getElementById('resQtd').value||'0',10);
-  if(!q||q<=0){ alert('Informe a quantidade.'); return; }
-  apiJsonp('criarReservaApp',{
-    reserva:nome, codigoMaterial:it.cod, descricao:it.nm, quantidade:q,
-    local:it.local||'', valorUnitario:it.vu||0, solicitante:'App'
-  },function(r){
-    if(r&&r.ok){
-      _resQtdItens++;
-      document.getElementById('resCount').textContent='✓ '+_resQtdItens+' item(ns) na reserva "'+nome+'". Adicione mais ou toque em Concluir.';
-      window._resItem=null;
-      document.getElementById('resSelCard').style.display='none';
-      var bi=document.getElementById('resBuscaInp'); if(bi){bi.value='';bi.focus();}
-      document.getElementById('resBuscaOut').innerHTML='<div class="row"><div class="note">Digite o próximo item.</div></div>';
-    } else alert('Não consegui adicionar. Confira a conexão (Diagnóstico).');
+
+function getUrl() { return State.apiUrl || localStorage.getItem('almv25_url') || ''; }
+function setUrl(u) { State.apiUrl = u; if (u) localStorage.setItem('almv25_url', u); }
+function loadSavedUrl() { var u = localStorage.getItem('almv25_url'); if (u) State.apiUrl = u; }
+
+/* ============================================================
+   SCREEN ROUTER
+   ============================================================ */
+var _currentScreen = 'dashboard';
+var _screenStack = [];
+
+function buildScreens() {
+  var container = document.getElementById('screens');
+  var html = '';
+  Object.keys(SCREENS).forEach(function (id) {
+    html += SCREENS[id];
   });
+  container.innerHTML = html;
 }
-function loadReservas(){
-  var box=document.getElementById('resList'); if(!box)return;
-  _resQtdItens=0;
-  if(!getUrl()){ box.innerHTML='<div class="row"><div class="note">Configure a conexão em Sincronização.</div></div>'; return; }
-  box.innerHTML='<div class="row"><div class="note">Carregando...</div></div>';
-  apiJsonp('listarReservasAgrupado',{},function(r){
-    if(!r||!r.ok||!r.grupos||!r.grupos.length){ box.innerHTML='<div class="row"><div class="note">Nenhuma reserva ainda. Crie em “Nova reserva”.</div></div>'; return; }
-    box.innerHTML=r.grupos.map(function(g){
-      var itensHtml=g.itens.map(function(x){
-        return '<div class="row" style="padding-left:8px"><div style="flex:1"><b style="font-size:12px">'+x.nm+'</b><div class="code">Qtd: '+x.qtd+(x.local?' · Local: '+x.local:'')+' · R$ '+(x.total||0).toFixed(2)+'</div></div></div>';
-      }).join('');
-      return '<div style="border:1px solid var(--line,#e3ece7);border-radius:14px;margin-bottom:10px;overflow:hidden">'
-        +'<div class="row" style="background:var(--g100,#e7f3ec)"><div style="flex:1"><b style="font-size:14px">📋 Reserva '+g.reserva+'</b><div class="note">'+g.totalItens+' item(ns) · Total R$ '+(g.valorTotal||0).toFixed(2)+'</div></div></div>'
-        +itensHtml+'</div>';
-    }).join('');
+
+function go(screenId, pushHistory) {
+  if (pushHistory !== false && _currentScreen !== screenId) {
+    _screenStack.push(_currentScreen);
+  }
+  _currentScreen = screenId;
+
+  document.querySelectorAll('.screen').forEach(function (s) {
+    s.classList.remove('active');
+  });
+  var target = document.querySelector('[data-screen="' + screenId + '"]');
+  if (target) {
+    target.classList.add('active');
+    target.scrollTop = 0;
+  }
+
+  // Update nav
+  document.querySelectorAll('.nav-btn').forEach(function (b) {
+    b.classList.toggle('active', b.dataset.go === screenId);
+  });
+
+  // Screen hooks
+  if (screenId === 'inventarios') loadInventarios();
+  if (screenId === 'reservas') loadReservas();
+  onScreenActivated(screenId);
+}
+
+function goBack() {
+  if (_screenStack.length) go(_screenStack.pop(), false);
+  else go('dashboard', false);
+}
+
+/* ============================================================
+   CLOCK
+   ============================================================ */
+function updateClock() {
+  var now = new Date();
+  var h = now.getHours(), m = now.getMinutes();
+  document.getElementById('clock').textContent =
+    (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+}
+setInterval(updateClock, 30000);
+updateClock();
+
+/* ============================================================
+   SCREENS HTML
+   ============================================================ */
+var SCREENS = {};
+
+/* ---- LOGIN ---- */
+SCREENS.login = `
+<div class="screen" data-screen="login" style="padding-bottom:0">
+  <div class="login-wrap">
+    <div class="login-logo">ALMOXA <span>PRO</span></div>
+    <div class="login-sub">COLETOR INTELIGENTE V25</div>
+    <div class="login-card">
+      <div class="login-field">
+        <label>Usuário</label>
+        <input id="loginUser" type="text" placeholder="Digite seu login" autocomplete="off">
+        <label>Senha</label>
+        <input id="loginPass" type="password" placeholder="••••••••">
+      </div>
+      <button class="btn-login" onclick="doLogin()">ENTRAR</button>
+      <div style="height:16px"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <div style="flex:1;height:1px;background:rgba(255,255,255,.12)"></div>
+        <span style="font-size:11px;opacity:.5;letter-spacing:.08em">OU USAR TOKEN</span>
+        <div style="flex:1;height:1px;background:rgba(255,255,255,.12)"></div>
+      </div>
+      <div class="login-token">
+        <div class="login-field">
+          <label>Token do Inventário</label>
+          <input id="loginToken" type="text" placeholder="Ex: 01" maxlength="4" autocomplete="off">
+        </div>
+      </div>
+      <button class="btn-login" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);margin-top:4px" onclick="doToken()">USAR TOKEN</button>
+    </div>
+    <div class="login-ver">ALMOXA PRO V25 · API V21 · Build 2025.06</div>
+  </div>
+</div>`;
+
+/* ---- DASHBOARD ---- */
+SCREENS.dashboard = `
+<div class="screen" data-screen="dashboard">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="hdr-icon" onclick="go('mais')">☰</button>
+      <h1 class="display">Dashboard</h1>
+      <div style="flex:1"></div>
+      <button class="hdr-icon" onclick="go('sincronizacao')">☁</button>
+    </div>
+  </div>
+  <div class="greet">
+    <div class="greet-name">
+      Olá, Almoxarife! 👋
+      <span class="online-pill" id="onlinePill">● Online</span>
+    </div>
+    <div class="greet-obra" id="greetObra">📍 TRÊS LAGOAS &nbsp;·&nbsp; ⟳ Sincronizado agora</div>
+  </div>
+
+  <div class="pad">
+    <div class="sec-title" style="margin-top:4px;margin-left:0">Visão Geral</div>
+    <div class="ov-grid mb12">
+      <div class="ov g" onclick="go('inventarios')">
+        <div class="ov-top"><span>Inventários</span>📋</div>
+        <div class="n" id="ovInv">12</div>
+        <div class="l">Em andamento</div>
+      </div>
+      <div class="ov b" onclick="go('reservas')">
+        <div class="ov-top"><span>Reservas</span>📥</div>
+        <div class="n" id="ovRes">18</div>
+        <div class="l">Abertas</div>
+      </div>
+      <div class="ov a" onclick="go('pendencias')">
+        <div class="ov-top"><span>Pendências</span>⚠️</div>
+        <div class="n" id="ovPend">7</div>
+        <div class="l">Itens</div>
+      </div>
+      <div class="ov r" onclick="go('ocorrencias')">
+        <div class="ov-top"><span>Divergências</span>❗</div>
+        <div class="n" id="ovDiv">3</div>
+        <div class="l">Itens</div>
+      </div>
+    </div>
+
+    <div class="sec-title" style="margin-left:0">Indicadores em Tempo Real</div>
+    <div class="card mb12">
+      <div class="ring-wrap">
+        <div class="ring" style="--pct:95.4">
+          <span class="ring-label">95%</span>
+        </div>
+        <div class="ring-info" style="flex:1">
+          <div class="pct">95,4%</div>
+          <div class="tag">Excelente &nbsp;▲ 3,2%</div>
+          <div class="sub">Acuracidade do estoque</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:20px;font-family:'Syne',sans-serif;font-weight:900;color:var(--ink)">3.256</div>
+          <div style="font-size:10.5px;color:var(--ink3)">Itens no sistema</div>
+          <div class="mt8" style="font-size:11px;color:var(--ok);font-weight:700">▲ 128 novos</div>
+        </div>
+      </div>
+      <div class="row-sep"></div>
+      <div class="kpi-row">
+        <div class="kpi-cell">
+          <div class="kpi-n" style="color:var(--ink);font-size:14px">R$ 1,24M</div>
+          <div class="kpi-l">Valor do estoque</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-n" style="color:var(--err)">56</div>
+          <div class="kpi-l">Itens críticos</div>
+        </div>
+        <div class="kpi-cell">
+          <div class="kpi-n" style="color:var(--warn)">7</div>
+          <div class="kpi-l">Pendências</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-title" style="margin-left:0">Atalhos Rápidos</div>
+    <div class="qa-grid mb12">
+      <button class="qa-btn" onclick="go('scanner')"><div class="qa-icon">▥</div><div class="qa-label">Ler Código</div></button>
+      <button class="qa-btn" onclick="go('contagem')"><div class="qa-icon">📷</div><div class="qa-label">Câmera</div></button>
+      <button class="qa-btn" onclick="go('conferencia')"><div class="qa-icon">📑</div><div class="qa-label">Conferência</div></button>
+      <button class="qa-btn" onclick="go('mapa')"><div class="qa-icon">🗺️</div><div class="qa-label">Mapa</div></button>
+      <button class="qa-btn" onclick="go('kits')"><div class="qa-icon">📦</div><div class="qa-label">Kits</div></button>
+      <button class="qa-btn" onclick="go('relatorio')"><div class="qa-icon">🖨️</div><div class="qa-label">Imprimir</div></button>
+      <button class="qa-btn" onclick="go('assinatura')"><div class="qa-icon">✍️</div><div class="qa-label">Assinar</div></button>
+      <button class="qa-btn" onclick="go('ia')"><div class="qa-icon">🤖</div><div class="qa-label">IA</div></button>
+    </div>
+
+    <div class="ai-card mb12" onclick="go('ia')">
+      <div class="ai-title">🤖 IA do Almoxarife &nbsp;<span class="pill ok" style="font-size:9px">NOVO</span></div>
+      <div class="ai-text">Sugestões inteligentes para melhorar seu almoxarifado</div>
+      <div class="ai-list">
+        <div class="ai-item">5 itens com estoque abaixo do mínimo</div>
+        <div class="ai-item">3 materiais com alta taxa de giro</div>
+        <div class="ai-item">2 reservas em atraso precisam de ação</div>
+      </div>
+      <div class="mt12">
+        <span class="btn btn-soft btn-sm" style="display:inline-flex;width:auto">Ver sugestões →</span>
+      </div>
+    </div>
+  </div>
+</div>`;
+
+/* ---- INVENTÁRIOS ---- */
+SCREENS.inventarios = `
+<div class="screen" data-screen="inventarios">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="hdr-icon" onclick="goBack()">‹</button>
+      <h1>Inventários</h1>
+      <div style="flex:1"></div>
+      <button class="hdr-icon">⊕</button>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="tabInv(this,'andamento')">Em andamento</button>
+      <button class="tab-btn" onclick="tabInv(this,'finalizados')">Finalizados</button>
+    </div>
+    <div class="search-box">
+      <span class="ico">🔍</span>
+      <input type="text" placeholder="Buscar inventário...">
+    </div>
+    <div id="invList">
+      <div class="card mb12">
+        <div class="list-row" onclick="go('inventResultado')">
+          <div class="thumb">📋</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:700">OS 12345</div>
+            <div class="note">Obra: TRÊS LAGOAS</div>
+            <div style="display:flex;gap:6px;align-items:center;margin-top:4px">
+              <div class="prog" style="flex:1"><div class="prog-fill" style="width:93%"></div></div>
+              <span style="font-size:11px;font-weight:700;color:var(--ok)">8/15</span>
+            </div>
+          </div>
+          <span class="pill warn">93%</span>
+        </div>
+        <div class="list-row" onclick="go('inventResultado')">
+          <div class="thumb">📋</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:700">OS 12347</div>
+            <div class="note">Obra: CAMPO GRANDE</div>
+            <div style="display:flex;gap:6px;align-items:center;margin-top:4px">
+              <div class="prog" style="flex:1"><div class="prog-fill err" style="width:17%"></div></div>
+              <span style="font-size:11px;font-weight:700;color:var(--err)">3/18</span>
+            </div>
+          </div>
+          <span class="pill err">17%</span>
+        </div>
+        <div class="list-row" onclick="go('inventResultado')">
+          <div class="thumb">📋</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:700">OS 12349</div>
+            <div class="note">Obra: PONTA PORÃ</div>
+            <div style="display:flex;gap:6px;align-items:center;margin-top:4px">
+              <div class="prog" style="flex:1"><div class="prog-fill warn" style="width:70%"></div></div>
+              <span style="font-size:11px;font-weight:700;color:var(--warn)">7/10</span>
+            </div>
+          </div>
+          <span class="pill warn">70%</span>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="go('novoInvent')">+ Novo Inventário</button>
+  </div>
+</div>`;
+
+/* ---- RESULTADO DO INVENTÁRIO ---- */
+SCREENS.inventResultado = `
+<div class="screen" data-screen="inventResultado">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="hdr-icon" onclick="goBack()">‹</button>
+      <div style="flex:1"><h1>Resultados do Inventário</h1></div>
+      <button class="hdr-icon">⊞</button>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="flexb mb8">
+      <div>
+        <div style="font-size:13px;font-weight:700">Inventário: OS 12345</div>
+        <div class="note">Obra: TRÊS LAGOAS</div>
+      </div>
+      <span class="pill ok">Finalizado</span>
+    </div>
+
+    <div class="sec-title" style="margin-left:0">Acuracidade do Inventário</div>
+    <div class="card mb12">
+      <div class="ring-wrap">
+        <div class="ring" style="--pct:95.4">
+          <span class="ring-label">95%</span>
+        </div>
+        <div class="ring-info">
+          <div class="pct">95,4%</div>
+          <div class="tag">Excelente</div>
+          <div class="sub">Meta: ≥ 90%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-title" style="margin-left:0">Resumo Geral – Itens</div>
+    <div class="card mb12">
+      <div class="diag-row"><span class="lbl">Total de itens no sistema</span><span class="val">3.256</span></div>
+      <div class="diag-row"><span class="lbl">Total contado no ciclo (A)</span><span class="val ok">1.250</span></div>
+      <div class="diag-row"><span class="lbl">Total com divergência</span><span class="val err">112</span></div>
+    </div>
+
+    <div class="sec-title" style="margin-left:0">Indicadores do Inventário (IT 7.2.7)</div>
+    <div class="card mb12">
+      <ul class="ind-list">
+        <li class="ind-item" onclick="go('indicadorDetalhe')">
+          <div class="ind-tag" style="background:var(--ok)">A</div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:600">Itens contados no ciclo</div></div>
+          <span class="val ok">1.250</span><span style="color:var(--ink3);margin-left:4px">›</span>
+        </li>
+        <li class="ind-item" onclick="go('indicadorDetalhe')">
+          <div class="ind-tag" style="background:var(--err)">B</div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:600">Erros de contagem incorreta</div></div>
+          <span class="val err">15</span><span style="color:var(--ink3);margin-left:4px">›</span>
+        </li>
+        <li class="ind-item" onclick="go('indicadorDetalhe')">
+          <div class="ind-tag" style="background:var(--warn)">C</div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:600">Itens em local incorreto</div></div>
+          <span class="val warn">8</span><span style="color:var(--ink3);margin-left:4px">›</span>
+        </li>
+        <li class="ind-item" onclick="go('indicadorDetalhe')">
+          <div class="ind-tag" style="background:var(--orange)">D</div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:600">Peças entregues e não baixadas</div></div>
+          <span class="val warn">12</span><span style="color:var(--ink3);margin-left:4px">›</span>
+        </li>
+        <li class="ind-item" onclick="go('indicadorDetalhe')">
+          <div class="ind-tag" style="background:var(--blue)">E</div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:600">Falta de lançamento de NF</div></div>
+          <span class="val">5</span><span style="color:var(--ink3);margin-left:4px">›</span>
+        </li>
+        <li class="ind-item" onclick="go('indicadorDetalhe')">
+          <div class="ind-tag" style="background:var(--purple)">F</div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:600">Materiais sobrando</div></div>
+          <span class="val warn">18</span><span style="color:var(--ink3);margin-left:4px">›</span>
+        </li>
+        <li class="ind-item" onclick="go('indicadorDetalhe')">
+          <div class="ind-tag" style="background:var(--g600)">G</div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:600">Materiais faltando</div></div>
+          <span class="val err">22</span><span style="color:var(--ink3);margin-left:4px">›</span>
+        </li>
+      </ul>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="go('relatorio')">📄 Gerar Relatório Completo</button>
+  </div>
+</div>`;
+
+/* ---- DETALHE DO INDICADOR ---- */
+SCREENS.indicadorDetalhe = `
+<div class="screen" data-screen="indicadorDetalhe">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="hdr-icon" onclick="goBack()">‹</button>
+      <h1>Detalhes do Indicador</h1>
+    </div>
+  </div>
+  <div class="pad">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+      <div>
+        <span class="pill err" style="margin-bottom:6px;display:inline-flex">Indicador B</span>
+        <div style="font-size:16px;font-weight:800">Erros de contagem incorreta</div>
+        <div class="note mt8">Quantidade de erros devido a contagem incorreta durante o inventário.</div>
+      </div>
+      <div style="text-align:center;background:var(--errbg);border:1.5px solid #F0C5C5;border-radius:12px;padding:10px 16px">
+        <div style="font-size:28px;font-weight:900;font-family:'Syne',sans-serif;color:var(--err)">15</div>
+        <div style="font-size:10px;color:var(--err);font-weight:700">itens</div>
+      </div>
+    </div>
+    <div class="kpi-row mb12">
+      <div class="kpi-cell"><div class="kpi-n">15</div><div class="kpi-l">Itens afetados</div></div>
+      <div class="kpi-cell"><div class="kpi-n">23,00</div><div class="kpi-l">Qtd. total</div></div>
+      <div class="kpi-cell"><div class="kpi-n" style="font-size:14px">R$1.248</div><div class="kpi-l">Valor total</div></div>
+    </div>
+    <div class="search-box"><span class="ico">🔍</span><input type="text" placeholder="Buscar item..."></div>
+    <div class="card">
+      <div class="list-row">
+        <div class="thumb">🔌</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">CABO FLEXÍVEL 2,5MM</div>
+          <div class="code">Cód: 7891234567890</div>
+          <div class="note">Local: A02-B05-N1</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--ink3)">Contado: <b style="color:var(--ink)">100 M</b></div>
+          <div style="font-size:11px;color:var(--ink3)">Sistema: <b style="color:var(--ink)">95 M</b></div>
+          <div class="item-diff">-5 M</div>
+        </div>
+      </div>
+      <div class="list-row">
+        <div class="thumb">🔩</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">PARAFUSO SEXT 1/2X2.1/2</div>
+          <div class="code">Cód: 7891234567891</div>
+          <div class="note">Local: A01-C03-N2</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--ink3)">Contado: <b>50 UN</b></div>
+          <div style="font-size:11px;color:var(--ink3)">Sistema: <b>45 UN</b></div>
+          <div class="item-diff pos">+5 UN</div>
+        </div>
+      </div>
+      <div class="list-row">
+        <div class="thumb">📦</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">CAIXA DE PASSAGEM 4X2</div>
+          <div class="code">Cód: 7891234567892</div>
+          <div class="note">Local: B01-D02-N1</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--ink3)">Contado: <b>15 UN</b></div>
+          <div style="font-size:11px;color:var(--ink3)">Sistema: <b>10 UN</b></div>
+          <div class="item-diff">-5 UN</div>
+        </div>
+      </div>
+    </div>
+    <div class="mt12">
+      <button class="btn btn-ghost btn-full">Ver todos os itens (15)</button>
+    </div>
+  </div>
+</div>`;
+
+/* ---- SCANNER / CONTAGEM ---- */
+SCREENS.scanner = `
+<div class="screen" data-screen="scanner">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="hdr-icon" onclick="goBack()">‹</button>
+      <h1>Scanner</h1>
+      <div style="flex:1"></div>
+      <button class="hdr-icon" id="torchBtn">⚡</button>
+    </div>
+  </div>
+  <div class="scanner-view">
+    <div class="scan-corner scan-c1"></div>
+    <div class="scan-corner scan-c2"></div>
+    <div class="scan-corner scan-c3"></div>
+    <div class="scan-corner scan-c4"></div>
+    <div class="scan-line"></div>
+    <div class="scan-code" id="scanCode">Aponte para o código de barras</div>
+  </div>
+  <div id="scanResult" style="display:none" class="scan-result">
+    <div class="ico-ok">✓</div>
+    <div>
+      <div style="font-size:13px;font-weight:700" id="scanItemNm">CABO FLEXÍVEL 2,5MM</div>
+      <div class="code" id="scanItemCod">Cód: 7891234567890</div>
+      <div class="note" id="scanItemInfo">Qtd: 100 M · Local: A02-B05-N1</div>
+      <span class="pill ok" style="margin-top:4px">Item encontrado ✓</span>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="flexb mb12">
+      <div style="font-size:13px;font-weight:700">Leitura contínua</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:42px;height:24px;border-radius:12px;background:var(--g400);display:flex;align-items:center;padding:2px;cursor:pointer">
+          <div style="width:20px;height:20px;border-radius:50%;background:#fff;margin-left:auto"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div id="scanCounter" style="text-align:center;padding:16px">
+        <div style="font-size:11px;color:var(--ink3);font-weight:700;letter-spacing:.1em">CONTAGEM</div>
+        <div class="counter">
+          <button class="stepper" onclick="adjScan(-1)">−</button>
+          <div class="counter-big">
+            <div class="val" id="cntVal">0</div>
+            <div class="unit">UN</div>
+          </div>
+          <button class="stepper" onclick="adjScan(1)">+</button>
+        </div>
+        <div class="keypad">
+          <button onclick="kp(1)">1</button><button onclick="kp(2)">2</button><button onclick="kp(3)">3</button>
+          <button onclick="kp(4)">4</button><button onclick="kp(5)">5</button><button onclick="kp(6)">6</button>
+          <button onclick="kp(7)">7</button><button onclick="kp(8)">8</button><button onclick="kp(9)">9</button>
+          <button onclick="kp('C')" style="color:var(--err)">C</button>
+          <button onclick="kp(0)">0</button>
+          <button onclick="kp('⌫')" style="color:var(--warn)">⌫</button>
+        </div>
+      </div>
+      <div class="row-sep"></div>
+      <div style="padding:12px 14px">
+        <button class="btn btn-primary btn-full" onclick="adicionarContagem()">
+          ✓ Adicionar Contagem
+        </button>
+      </div>
+    </div>
+    <div class="mt12">
+      <button class="btn btn-ghost btn-full btn-sm" onclick="simularScan()">🔲 Simular Leitura (Teste)</button>
+    </div>
+  </div>
+</div>`;
+
+/* ---- CONTAGEM (tela de contagem manual/inventário) ---- */
+SCREENS.contagem = `
+<div class="screen" data-screen="contagem">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="hdr-icon" onclick="goBack()">‹</button>
+      <div style="flex:1">
+        <h1>Contagem Inteligente</h1>
+        <div class="sub" id="contagemOS">OS 12345</div>
+      </div>
+      <button class="hdr-icon">⋮</button>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="kpi-row mb12">
+      <div class="kpi-cell"><div class="kpi-n">108</div><div class="kpi-l">No sistema</div></div>
+      <div class="kpi-cell"><div class="kpi-n" style="color:var(--ok)">36</div><div class="kpi-l">Conferido</div></div>
+      <div class="kpi-cell"><div class="kpi-n" style="color:var(--err)">72</div><div class="kpi-l">Faltando</div></div>
+    </div>
+    <div class="card mb12">
+      <div class="list-row">
+        <div class="thumb">🧤</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:800">LUVA VAQUETA</div>
+          <div class="code">Cód: 7891234567890</div>
+          <div class="note">Unid: PAR</div>
+        </div>
+      </div>
+      <div class="row-sep"></div>
+      <div style="padding:14px">
+        <div class="tabs" style="margin-bottom:12px">
+          <button class="tab-btn active">Manual</button>
+          <button class="tab-btn">Agrupamento</button>
+        </div>
+        <div class="note mb8">Contagem Manual</div>
+        <div class="counter">
+          <button class="stepper" onclick="adjCnt(-1)">−</button>
+          <div class="counter-big">
+            <div class="val" id="cntManual">12</div>
+            <div class="unit">PARES</div>
+          </div>
+          <button class="stepper" onclick="adjCnt(1)">+</button>
+        </div>
+        <div class="keypad">
+          <button onclick="kpM(1)">1</button><button onclick="kpM(2)">2</button><button onclick="kpM(3)">3</button>
+          <button onclick="kpM(4)">4</button><button onclick="kpM(5)">5</button><button onclick="kpM(6)">6</button>
+          <button onclick="kpM(7)">7</button><button onclick="kpM(8)">8</button><button onclick="kpM(9)">9</button>
+          <button onclick="kpM('C')" style="color:var(--err)">C</button>
+          <button onclick="kpM(0)">0</button>
+          <button onclick="kpM('⌫')" style="color:var(--warn)">⌫</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="salvarContagem()">✓ Adicionar (12)</button>
+  </div>
+</div>`;
+
+/* ---- RESERVAS ---- */
+SCREENS.reservas = `
+<div class="screen" data-screen="reservas">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="hdr-icon" onclick="goBack()">‹</button>
+      <h1>Reservas</h1>
+      <div style="flex:1"></div>
+      <button class="hdr-icon" onclick="go('novaReserva')">⊕</button>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="search-box"><span class="ico">🔍</span><input type="text" placeholder="Buscar reserva..."></div>
+    <div class="card mb12">
+      <div class="list-row" onclick="go('detalhesReserva')">
+        <div class="thumb">📋</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700">OS 12345 – TRÊS LAGOAS</div>
+          <div class="note">15 itens · R$ 1.248,90</div>
+          <div class="prog" style="margin-top:6px"><div class="prog-fill" style="width:53%"></div></div>
+        </div>
+        <span class="pill ok" style="margin-left:8px">Aberta</span>
+      </div>
+      <div class="list-row" onclick="go('detalhesReserva')">
+        <div class="thumb">📋</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700">OS 12346 – RIO VERDE</div>
+          <div class="note">20 itens · R$ 3.420,00</div>
+          <div class="prog" style="margin-top:6px"><div class="prog-fill" style="width:100%"></div></div>
+        </div>
+        <span class="pill blue" style="margin-left:8px">Em separação</span>
+      </div>
+      <div class="list-row" onclick="go('detalhesReserva')">
+        <div class="thumb">📋</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700">OS 12347 – CAMPO GRANDE</div>
+          <div class="note">18 itens · R$ 890,00</div>
+          <div class="prog" style="margin-top:6px"><div class="prog-fill err" style="width:17%"></div></div>
+        </div>
+        <span class="pill warn" style="margin-left:8px">Conferência</span>
+      </div>
+      <div class="list-row" onclick="go('detalhesReserva')">
+        <div class="thumb">📋</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700">OS 12348 – DOURADOS</div>
+          <div class="note">12 itens atrasados</div>
+          <div class="prog" style="margin-top:6px"><div class="prog-fill err" style="width:0%"></div></div>
+        </div>
+        <span class="pill err" style="margin-left:8px">Atrasada</span>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full" onclick="go('novaReserva')">+ Nova Reserva</button>
+  </div>
+</div>`;
+
+/* ---- NOVA RESERVA ---- */
+SCREENS.novaReserva = `
+<div class="screen" data-screen="novaReserva">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="hdr-icon" onclick="goBack()">‹</button>
+      <h1>Nova Reserva</h1>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="card mb12">
+      <div class="card-body">
+        <div class="field"><label>Inventário</label>
+          <input type="text" placeholder="R17824990971950" id="resInventario"></div>
+        <div class="field"><label>Nº da Reserva SAP (opcional)</label>
+          <input type="text" placeholder="Ex: 4500001234" id="resNSAP"></div>
+        <div class="field"><label>Tipo / Motivo</label>
+          <select id="resTipo"><option>Aguardando Baixa</option><option>Transferência</option><option>Conferência</option><option>Expedição</option></select></div>
+        <div class="field"><label>Responsável</label>
+          <input type="text" placeholder="Almoxarife 01" id="resResp"></div>
+        <div class="field"><label>Data</label>
+          <input type="date" id="resData"></div>
+      </div>
+    </div>
+
+    <div class="sec-title" style="margin-left:0">Itens da Reserva</div>
+    <div class="search-box"><span class="ico">🔍</span>
+      <input type="text" placeholder="Buscar ou bipar item..." id="resBuscaInp" oninput="buscarItensReserva(this.value)"></div>
+    <div id="resBuscaOut">
+      <div class="empty"><p>Digite para buscar itens do inventário</p></div>
+    </div>
+
+    <div id="resSelCard" style="display:none" class="card mb12">
+      <div class="card-body">
+        <div style="font-size:13px;font-weight:700" id="resSelNm"></div>
+        <div class="code mt8" id="resSelInfo"></div>
+        <div class="field mt8"><label>Quantidade</label>
+          <input type="number" id="resQtd" placeholder="0" min="0" style="font-size:22px;font-weight:800;text-align:center"></div>
+        <button class="btn btn-soft btn-sm" onclick="adicionarResItem()">+ Adicionar</button>
+      </div>
+    </div>
+
+    <div id="resItensLista"></div>
+    <div id="resCount" class="note mb12" style="display:none"></div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+      <button class="btn btn-ghost" onclick="goBack()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarReserva()">+ Salvar Reserva</button>
+    </div>
+  </div>
+</div>`;
+
+/* ---- DETALHES DA RESERVA ---- */
+SCREENS.detalhesReserva = `
+<div class="screen" data-screen="detalhesReserva">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="hdr-icon" onclick="goBack()">‹</button>
+      <h1>Detalhes da Reserva</h1>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="flexb mb12">
+      <div>
+        <div style="font-size:13px;font-weight:800">Reserva: R17824990971950</div>
+        <div class="note">Obra: TRÊS LAGOAS</div>
+      </div>
+      <span class="pill ok">Aberta</span>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active">Resumo</button>
+      <button class="tab-btn">Itens (8)</button>
+      <button class="tab-btn">Histórico</button>
+    </div>
+    <div class="card mb12">
+      <div class="diag-row"><span class="lbl">Status</span><span class="pill ok">Aberta</span></div>
+      <div class="diag-row"><span class="lbl">Responsável</span><span class="val">Almoxarife 01</span></div>
+      <div class="diag-row"><span class="lbl">Data</span><span class="val">27/06/2026</span></div>
+      <div class="diag-row"><span class="lbl">Motivo</span><span class="val">Aguardando Baixa</span></div>
+      <div class="diag-row"><span class="lbl">Valor total (R$)</span><span class="val" style="color:var(--g600)">R$ 1.248,90</span></div>
+    </div>
+    <div class="sec-title" style="margin-left:0">Progresso</div>
+    <div class="card mb12 card-body">
+      <div class="flexb mb4">
+        <span class="note">8 de 32 itens separados</span>
+        <span style="font-weight:800;color:var(--g600)">25%</span>
+      </div>
+      <div class="prog" style="height:10px"><div class="prog-fill" style="width:25%"></div></div>
+    </div>
+
+    <div class="sec-title" style="margin-left:0">Itens da Reserva</div>
+    <div class="card mb12">
+      <div class="list-row">
+        <div class="thumb sm">🔌</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">CABO FLEXÍVEL 2,5MM</div>
+          <div class="code">Cód: 7891234567890 · Local: A02-B05-N1</div>
+        </div>
+        <div style="text-align:right;font-size:12px;font-weight:700">100 M</div>
+      </div>
+      <div class="list-row">
+        <div class="thumb sm">🔩</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">PARAFUSO SEXT 1/2X2.1/2</div>
+          <div class="code">Cód: 7891234567891 · Local: A01-C03-N2</div>
+        </div>
+        <div style="text-align:right;font-size:12px;font-weight:700">50 UN</div>
+      </div>
+      <div class="list-row">
+        <div class="thumb sm">📦</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">CAIXA DE PASSAGEM 4X2</div>
+          <div class="code">Cód: 7891234567892 · Local: B01-D02-N1</div>
+        </div>
+        <div style="text-align:right;font-size:12px;font-weight:700">15 UN</div>
+      </div>
+    </div>
+
+    <div class="sec-title" style="margin-left:0">Últimas Atualizações</div>
+    <div class="card mb12">
+      <div class="timeline" style="padding:12px 16px">
+        <div class="tl-item">
+          <div class="tl-dot ok">✓</div>
+          <div class="tl-content">
+            <div class="tl-title">Reserva criada</div>
+            <div class="tl-sub">27/06/2026 16:32 · Almoxarife 01</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot ok">+</div>
+          <div class="tl-content">
+            <div class="tl-title">Item adicionado</div>
+            <div class="tl-sub">27/06/2026 16:45 · Almoxarife 01</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      <button class="btn btn-ghost btn-sm">✏️ Editar</button>
+      <button class="btn btn-soft btn-sm" onclick="go('relatorio')">🖨️ Imprimir</button>
+      <button class="btn btn-ghost btn-sm">⋯ Mais</button>
+    </div>
+  </div>
+</div>`;
+
+/* ---- KITS ---- */
+SCREENS.kits = `
+<div class="screen" data-screen="kits">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="hdr-icon" onclick="goBack()">‹</button>
+      <h1>Kits</h1>
+      <div style="flex:1"></div>
+      <button class="hdr-icon" onclick="go('novoKit')">⊕</button>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="search-box"><span class="ico">🔍</span><input type="text" placeholder="Buscar kit..."></div>
+    <div class="card mb12">
+      <div class="list-row">
+        <div class="thumb">🔧</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700">KIT HIDRÁULICO</div>
+          <div class="note">20 itens</div>
+        </div>
+        <span class="pill ok">Ativo</span>
+      </div>
+      <div class="list-row">
+        <div class="thumb">⚡</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700">KIT ELÉTRICO</div>
+          <div class="note">15 itens</div>
+        </div>
+        <span class="pill ok">Ativo</span>
+      </div>
+      <div class="list-row">
+        <div class="thumb">🏗️</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700">KIT ACABAMENTO</div>
+          <div class="note">25 itens</div>
+        </div>
+        <span class="pill ok">Ativo</span>
+      </div>
+      <div class="list-row">
+        <div class="thumb">🦺</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:700">KIT EPI</div>
+          <div class="note">10 itens</div>
+        </div>
+        <span class="pill ok">Ativo</span>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full">+ Novo Kit</button>
+  </div>
+</div>`;
+
+/* ---- MAPA DO ESTOQUE ---- */
+SCREENS.mapa = `
+<div class="screen" data-screen="mapa">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="hdr-icon" onclick="goBack()">‹</button>
+      <h1>Mapa do Estoque</h1>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="field"><label>Obra</label>
+      <select><option>TRÊS LAGOAS</option><option>RIO VERDE</option><option>CAMPO GRANDE</option></select></div>
+    <div class="search-box mb12"><span class="ico">🔍</span><input type="text" placeholder="Buscar local..."></div>
+    <div class="card mb12" style="overflow:hidden">
+      <div style="padding:12px 14px;font-size:12px;font-weight:700;color:var(--ink3);border-bottom:1px solid var(--line)">
+        MAPA DO ALMOXARIFADO — RUAS / PRATELEIRAS
+      </div>
+      <div style="padding:14px">
+        <div style="display:flex;gap:6px;margin-bottom:10px">
+          <div style="font-size:10px;font-weight:700;color:var(--ink3);width:40px">RUA</div>
+          <div style="flex:1;display:grid;grid-template-columns:repeat(5,1fr);gap:4px;text-align:center">
+            <div style="font-size:10px;font-weight:700;color:var(--ink3)">01</div>
+            <div style="font-size:10px;font-weight:700;color:var(--ink3)">02</div>
+            <div style="font-size:10px;font-weight:700;color:var(--ink3)">03</div>
+            <div style="font-size:10px;font-weight:700;color:var(--ink3)">04</div>
+            <div style="font-size:10px;font-weight:700;color:var(--ink3)">05</div>
+          </div>
+        </div>
+        <div id="mapaGrid"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600">
+        <div style="width:12px;height:12px;border-radius:50%;background:var(--ok)"></div>Disponível
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600">
+        <div style="width:12px;height:12px;border-radius:50%;background:var(--warn)"></div>Atenção
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600">
+        <div style="width:12px;height:12px;border-radius:50%;background:var(--err)"></div>Crítico
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600">
+        <div style="width:12px;height:12px;border-radius:50%;background:var(--ink3)"></div>Vazio
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-full">Ver Lista de Locais</button>
+  </div>
+</div>`;
+
+/* ---- CONFERÊNCIA ---- */
+SCREENS.conferencia = `
+<div class="screen" data-screen="conferencia">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="hdr-icon" onclick="goBack()">‹</button>
+      <h1>Conferência</h1>
+    </div>
+  </div>
+  <div class="scanner-view" style="height:200px">
+    <div class="scan-corner scan-c1"></div>
+    <div class="scan-corner scan-c2"></div>
+    <div class="scan-corner scan-c3"></div>
+    <div class="scan-corner scan-c4"></div>
+    <div class="scan-line"></div>
+    <div class="scan-code">Aponte a câmera para o código de barras</div>
+  </div>
+  <div class="pad">
+    <div class="banner">
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--ink3)">Último item lido</div>
+        <div style="font-size:14px;font-weight:800">CABO FLEXÍVEL 2,5MM</div>
+        <div class="code">Cód: 7891234567890</div>
+        <div class="note">Qtd esperada: <b>100</b> · Qtd lida: <b>10/100</b></div>
+      </div>
+    </div>
+    <div class="card mb12">
+      <div class="list-row">
+        <div class="thumb">✅</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">Item encontrado!</div>
+          <div class="note">CABO FLEXÍVEL 2,5MM</div>
+          <div class="code">Código: 7891234567890 · Qtd: 100 M</div>
+          <div class="note">Local: A02-B05-N1</div>
+        </div>
+        <span class="pill ok">Conferido</span>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full">Continuar Lendo</button>
+  </div>
+</div>`;
+
+/* ---- OCORRÊNCIAS ---- */
+SCREENS.ocorrencias = `
+<div class="screen" data-screen="ocorrencias">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="hdr-icon" onclick="goBack()">‹</button>
+      <h1>Ocorrências</h1>
+      <div style="flex:1"></div>
+      <button class="hdr-icon">⊕</button>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="card mb12">
+      <div class="list-row">
+        <div class="thumb" style="background:var(--warnbg);color:var(--warn)">⚠️</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">Avaria na embalagem</div>
+          <div class="note">OS 12345 · 23/05/2025</div>
+        </div>
+        <span class="pill warn">Aberta</span>
+      </div>
+      <div class="list-row">
+        <div class="thumb" style="background:var(--bluebg);color:var(--blue)">📋</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">Item com divergência</div>
+          <div class="note">OS 12347 · 23/05/2025</div>
+        </div>
+        <span class="pill blue">Em análise</span>
+      </div>
+      <div class="list-row">
+        <div class="thumb" style="background:var(--okbg);color:var(--ok)">✓</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">Material avariado</div>
+          <div class="note">OS 12346 · 22/05/2025</div>
+        </div>
+        <span class="pill ok">Resolvida</span>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-full">+ Nova Ocorrência</button>
+  </div>
+</div>`;
+
+/* ---- PENDÊNCIAS ---- */
+SCREENS.pendencias = `
+<div class="screen" data-screen="pendencias">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="hdr-icon" onclick="goBack()">‹</button>
+      <h1>Pendências</h1>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="tabs">
+      <button class="tab-btn active">Todas</button>
+      <button class="tab-btn">Inventários</button>
+      <button class="tab-btn">Reservas</button>
+    </div>
+    <div class="card mb12">
+      <div class="list-row">
+        <div class="ov r" style="width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:9px;font-size:10px;font-weight:800;flex-shrink:0">❗</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">OS 12345 – TRÊS LAGOAS</div>
+          <div class="note">72 itens pendentes</div>
+        </div>
+        <span class="pill err">Crítica</span>
+      </div>
+      <div class="list-row">
+        <div class="thumb">📋</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">OS 12347 – CAMPO GRANDE</div>
+          <div class="note">15 itens pendentes · Inventário</div>
+        </div>
+        <span class="pill warn">Alta</span>
+      </div>
+      <div class="list-row">
+        <div class="thumb">📥</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">Reserva OS 12348 – DOURADOS</div>
+          <div class="note">12 itens atrasados · Reserva</div>
+        </div>
+        <span class="pill warn">Alta</span>
+      </div>
+      <div class="list-row">
+        <div class="thumb">📋</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">OS 12346 – RIO VERDE</div>
+          <div class="note">3 divergências não revisadas</div>
+        </div>
+        <span class="pill blue">Média</span>
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-full">Ver Todas as Pendências</button>
+  </div>
+</div>`;
+
+/* ---- RELATÓRIO ---- */
+SCREENS.relatorio = `
+<div class="screen" data-screen="relatorio">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="hdr-icon" onclick="goBack()">‹</button>
+      <h1>Relatório do Inventário</h1>
+      <div style="flex:1"></div>
+      <button class="hdr-icon">⬆</button>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="flexb mb12">
+      <div>
+        <div style="font-size:13px;font-weight:800">Inventário: OS 12345</div>
+        <div class="note">Obra: TRÊS LAGOAS</div>
+        <div class="note">Data: 23/05/2025 · Resp.: Almoxarife 01</div>
+      </div>
+      <span class="pill ok">Finalizado</span>
+    </div>
+
+    <div class="sec-title" style="margin-left:0">Acuracidade Geral</div>
+    <div class="card mb12">
+      <div class="ring-wrap">
+        <div class="ring" style="--pct:95.4"><span class="ring-label">95%</span></div>
+        <div class="ring-info">
+          <div class="pct">95,4%</div>
+          <div class="tag">Excelente · Variação: 3,2%</div>
+          <div class="sub">Meta: ≥ 90%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-title" style="margin-left:0">Resumo dos Indicadores (IT 7.2.7)</div>
+    <div class="card mb12">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)">
+        <div style="background:#fff;padding:10px 14px"><div class="note">A · Itens contados no ciclo</div><div style="font-weight:800;font-size:16px;color:var(--ok)">1.250</div></div>
+        <div style="background:#fff;padding:10px 14px"><div class="note">F · Materiais sobrando</div><div style="font-weight:800;font-size:16px;color:var(--warn)">18</div></div>
+        <div style="background:#fff;padding:10px 14px"><div class="note">B · Erros de contagem</div><div style="font-weight:800;font-size:16px;color:var(--err)">15</div></div>
+        <div style="background:#fff;padding:10px 14px"><div class="note">G · Materiais faltando</div><div style="font-weight:800;font-size:16px;color:var(--err)">22</div></div>
+        <div style="background:#fff;padding:10px 14px"><div class="note">C · Local incorreto</div><div style="font-weight:800;font-size:16px;color:var(--warn)">8</div></div>
+        <div style="background:#fff;padding:10px 14px"><div class="note">H · Materiais avariados</div><div style="font-weight:800;font-size:16px">5</div></div>
+        <div style="background:#fff;padding:10px 14px"><div class="note">D · Entregues não baixados</div><div style="font-weight:800;font-size:16px;color:var(--warn)">12</div></div>
+        <div style="background:#fff;padding:10px 14px"><div class="note">J · Itens vencidos</div><div style="font-weight:800;font-size:16px;color:var(--err)">7</div></div>
+      </div>
+    </div>
+
+    <div class="sec-title" style="margin-left:0">Valor Financeiro das Divergências</div>
+    <div class="card mb12 card-body" style="display:flex;align-items:center;gap:12px">
+      <div>
+        <div class="note">Total de divergências (R$)</div>
+        <div style="font-size:24px;font-weight:900;font-family:'Syne',sans-serif;color:var(--err)">R$ 8.456,70</div>
+      </div>
+      <div style="font-size:32px;margin-left:auto">💰</div>
+    </div>
+
+    <div class="sec-title" style="margin-left:0">Assinaturas</div>
+    <div class="sig-row mb16">
+      <div class="sig-box">
+        <div class="sig-line"></div>
+        <div class="sig-label">Almoxarife<br>23/05/2025 16:30</div>
+      </div>
+      <div class="sig-box">
+        <div class="sig-line"></div>
+        <div class="sig-label">Gerente / Responsável<br>23/05/2025 16:45</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <button class="btn btn-err" onclick="alert('Baixando PDF...')">📄 Baixar PDF</button>
+      <button class="btn btn-ghost" onclick="alert('Enviando por e-mail...')">✉️ Enviar E-mail</button>
+    </div>
+  </div>
+</div>`;
+
+/* ---- SINCRONIZAÇÃO ---- */
+SCREENS.sincronizacao = `
+<div class="screen" data-screen="sincronizacao">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="hdr-icon" onclick="goBack()">‹</button>
+      <h1>Sincronização</h1>
+    </div>
+  </div>
+  <div class="pad">
+    <div id="syncStatusBox" class="sync-status">
+      <div class="sync-dot"></div>
+      <div>
+        <div style="font-size:14px;font-weight:700" id="syncStatusTitle">Online</div>
+        <div class="note" id="syncStatusSub">Última sincronização: agora</div>
+      </div>
+    </div>
+
+    <div class="card mb12">
+      <div class="card-body">
+        <div class="field">
+          <label>URL da API (Google Apps Script)</label>
+          <input type="url" id="apiUrlInput" placeholder="https://script.google.com/macros/s/SEU_ID/exec"
+            value="" oninput="State.apiUrl=this.value">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button class="btn btn-soft btn-sm" onclick="salvarUrl()">💾 Salvar URL</button>
+          <button class="btn btn-soft btn-sm" onclick="limparCache()">🗑️ Limpar cache</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-title" style="margin-left:0">Token do Inventário</div>
+    <div class="card mb12 card-body">
+      <div class="field" style="margin-bottom:8px">
+        <label>Token</label>
+        <input type="text" id="tokenInput" placeholder="Ex: 01" maxlength="4" autocomplete="off">
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="carregarToken()">🔑 Carregar Inventário</button>
+    </div>
+
+    <div class="sec-title" style="margin-left:0">Diagnóstico V25</div>
+    <div class="card mb12">
+      <div class="diag-row" id="dInternet"><span class="lbl">🌐 Internet</span><span class="val" style="color:var(--ink3)" id="dInternetVal">⏳ Aguardando</span></div>
+      <div class="diag-row" id="dUrl"><span class="lbl">🔗 URL da API</span><span class="val" style="color:var(--ink3)" id="dUrlVal">⏳ Aguardando</span></div>
+      <div class="diag-row" id="dFetch"><span class="lbl">📡 Fetch (JSON)</span><span class="val" style="color:var(--ink3)" id="dFetchVal">⏳ Aguardando</span></div>
+      <div class="diag-row" id="dJsonp"><span class="lbl">🔄 JSONP</span><span class="val" style="color:var(--ink3)" id="dJsonpVal">⏳ Aguardando</span></div>
+      <div class="diag-row"><span class="lbl">⚙️ Versão API</span><span class="val" id="dApiVerVal" style="color:var(--ink3)">—</span></div>
+      <div class="diag-row"><span class="lbl">🔑 Token</span><span class="val" id="dTokenVal" style="color:var(--ink3)">—</span></div>
+      <div class="diag-row"><span class="lbl">⏱ Latência</span><span class="val" id="dLatenciaVal" style="color:var(--ink3)">—</span></div>
+      <div class="diag-row" id="dErroRow" style="display:none">
+        <span class="lbl">❌ Erro</span>
+        <span id="dErroTxt" style="font-size:10px;color:var(--err);word-break:break-all;flex:1;text-align:right">—</span>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <button class="btn btn-primary btn-sm" onclick="rodarDiagnostico()">🔄 Testar Novamente</button>
+      <button class="btn btn-err btn-sm" onclick="limparCacheTotal()">🗑 Limpar Cache</button>
+    </div>
+    <div id="diagLogs" style="display:none" class="card mb12">
+      <div style="padding:10px 14px;font-size:11px;font-weight:800;color:var(--ink3);border-bottom:1px solid var(--line)">LOGS DETALHADOS</div>
+      <div id="diagLogsBody" style="padding:12px 14px;font-family:ui-monospace,monospace;font-size:10px;color:var(--ink2);line-height:1.8;max-height:200px;overflow-y:auto"></div>
+    </div>
+    <button class="btn btn-ghost btn-full btn-sm mb12" onclick="toggleLogs()">📋 Ver / Ocultar Logs</button>
+
+    <div class="sep"></div>
+    <div class="sec-title" style="margin-left:0;margin-top:8px">Modo Offline</div>
+    <div class="card mb12 card-body" style="background:var(--warnbg);border-color:var(--warn)">
+      <div style="font-size:13px;font-weight:700;color:var(--warn)">📡 Dados Locais Salvos</div>
+      <div class="note mt8">Trabalhe offline e sincronize quando a conexão voltar.</div>
+      <button class="btn btn-ghost btn-sm mt12" style="width:auto">Ver dados locais</button>
+    </div>
+
+    <div class="sec-title" style="margin-left:0">Info</div>
+    <div class="card">
+      <div class="diag-row"><span class="lbl">Versão</span><span class="val">V25 · Build 2025.06</span></div>
+      <div class="diag-row"><span class="lbl">API esperada</span><span class="val">V21</span></div>
+      <div class="diag-row"><span class="lbl">Dados enviados</span><span class="val" id="dadosEnv">124</span></div>
+      <div class="diag-row"><span class="lbl">Dados recebidos</span><span class="val" id="dadosRec">87</span></div>
+    </div>
+  </div>
+</div>`;
+
+/* ---- IA DO ALMOXARIFE ---- */
+SCREENS.ia = `
+<div class="screen" data-screen="ia">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="hdr-icon" onclick="goBack()">‹</button>
+      <h1>IA do Almoxarife</h1>
+      <span class="pill ok" style="margin-left:4px;font-size:9px">NOVO</span>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="ai-card mb12">
+      <div class="ai-title">🤖 Análise Inteligente</div>
+      <div class="ai-text">Com base nos seus inventários recentes, detectei os seguintes pontos de atenção:</div>
+      <div class="ai-list" style="margin-top:12px">
+        <div class="ai-item">5 itens com estoque abaixo do mínimo — considere repor antes da próxima obra</div>
+        <div class="ai-item">3 materiais com alta taxa de giro — risco de ruptura em 15 dias</div>
+        <div class="ai-item">2 reservas em atraso precisam de aprovação do gerente</div>
+        <div class="ai-item">Acuracidade subiu 3,2% este mês — bom trabalho!</div>
+      </div>
+    </div>
+    <div class="sec-title" style="margin-left:0">Sugestões de Ação</div>
+    <div class="card mb12">
+      <div class="list-row">
+        <div class="thumb" style="background:var(--errbg);color:var(--err)">⚠️</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">Reabastecer: LUVA VAQUETA</div>
+          <div class="note">Estoque: 5 PAR · Mínimo: 20 PAR</div>
+        </div>
+        <button class="btn btn-soft btn-xs">Criar reserva</button>
+      </div>
+      <div class="list-row">
+        <div class="thumb" style="background:var(--warnbg);color:var(--warn)">📦</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">Conferir: CABO FLEXÍVEL 2,5MM</div>
+          <div class="note">Divergência de -5M no último ciclo</div>
+        </div>
+        <button class="btn btn-soft btn-xs">Ver item</button>
+      </div>
+    </div>
+    <div class="sec-title" style="margin-left:0">Pergunte à IA</div>
+    <div class="card mb12">
+      <div class="card-body">
+        <div class="field" style="margin-bottom:8px">
+          <input type="text" placeholder="Ex: Qual item teve mais divergência este mês?" id="iaQuery">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="perguntarIA()">🤖 Perguntar</button>
+        <div id="iaResp" class="note mt12" style="display:none"></div>
+      </div>
+    </div>
+  </div>
+</div>`;
+
+/* ---- ASSINATURA ---- */
+SCREENS.assinatura = `
+<div class="screen" data-screen="assinatura">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="hdr-icon" onclick="goBack()">‹</button>
+      <h1>Assinar Recebimento</h1>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="card mb12 card-body">
+      <div style="font-size:13px;font-weight:700;margin-bottom:4px">Reserva: OS 12345 – TRÊS LAGOAS</div>
+      <div class="note">Almoxarife confirma recebimento dos itens listados.</div>
+    </div>
+    <div class="sec-title" style="margin-left:0">Assinatura Almoxarife</div>
+    <div class="card mb12" style="overflow:hidden">
+      <canvas id="sigCanvas" width="380" height="160"
+        style="width:100%;display:block;background:#fafafa;touch-action:none;cursor:crosshair"></canvas>
+      <div style="padding:10px 14px;display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="clearSig()">🗑️ Limpar</button>
+        <button class="btn btn-primary btn-sm" onclick="confirmarAssinatura()">✓ Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>`;
+
+/* ---- MAIS ---- */
+SCREENS.mais = `
+<div class="screen" data-screen="mais">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="hdr-icon" onclick="goBack()">‹</button>
+      <h1>Mais</h1>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="card mb12">
+      <div class="list-row" onclick="go('conexaoApi')">
+        <div class="thumb" style="background:var(--bluebg);color:var(--blue)">🔌</div>
+        <div style="flex:1"><div style="font-weight:700">Conexão API</div><div class="note">Testar URL · Token · Inventário · Permissões</div></div>
+        <span class="pill blue" style="font-size:9px">NOVO</span>
+        <span style="color:var(--ink3);margin-left:4px">›</span>
+      </div>
+      <div class="list-row" onclick="go('sincronizacao')">
+        <div class="thumb">☁️</div>
+        <div style="flex:1"><div style="font-weight:700">Sincronização & Diagnóstico</div><div class="note">Diagnóstico V25, Modo Offline</div></div>
+        <span style="color:var(--ink3)">›</span>
+      </div>
+      <div class="list-row" onclick="go('kits')">
+        <div class="thumb">📦</div>
+        <div style="flex:1"><div style="font-weight:700">Kits Inteligentes</div><div class="note">Criar e gerenciar kits de materiais</div></div>
+        <span style="color:var(--ink3)">›</span>
+      </div>
+      <div class="list-row" onclick="go('ocorrencias')">
+        <div class="thumb">❗</div>
+        <div style="flex:1"><div style="font-weight:700">Ocorrências</div><div class="note">Registrar e acompanhar problemas</div></div>
+        <span style="color:var(--ink3)">›</span>
+      </div>
+      <div class="list-row" onclick="go('relatorio')">
+        <div class="thumb">📄</div>
+        <div style="flex:1"><div style="font-weight:700">Relatórios</div><div class="note">Gerar e exportar relatórios PDF</div></div>
+        <span style="color:var(--ink3)">›</span>
+      </div>
+      <div class="list-row" onclick="go('mapa')">
+        <div class="thumb">🗺️</div>
+        <div style="flex:1"><div style="font-weight:700">Mapa do Estoque</div><div class="note">Visualizar localizações</div></div>
+        <span style="color:var(--ink3)">›</span>
+      </div>
+      <div class="list-row" onclick="go('ia')">
+        <div class="thumb">🤖</div>
+        <div style="flex:1"><div style="font-weight:700">IA do Almoxarife</div><div class="note">Sugestões e análises inteligentes</div></div>
+        <span class="pill ok" style="font-size:9px">NOVO</span>
+        <span style="color:var(--ink3);margin-left:4px">›</span>
+      </div>
+      <div class="list-row" onclick="go('assinatura')">
+        <div class="thumb">✍️</div>
+        <div style="flex:1"><div style="font-weight:700">Assinar Recebimento</div><div class="note">Assinatura digital de recebimentos</div></div>
+        <span style="color:var(--ink3)">›</span>
+      </div>
+      <div class="list-row" onclick="go('conferencia')">
+        <div class="thumb">📑</div>
+        <div style="flex:1"><div style="font-weight:700">Conferência por Reserva</div><div class="note">Conferir itens por bipagem</div></div>
+        <span style="color:var(--ink3)">›</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="list-row">
+        <div class="thumb">👤</div>
+        <div style="flex:1"><div style="font-weight:700">Almoxarife</div><div class="note">Perfil: ALMOXARIFE · Obra: TRÊS LAGOAS</div></div>
+      </div>
+      <div class="list-row" style="cursor:pointer" onclick="alert('Saindo...')">
+        <div class="thumb" style="background:var(--errbg);color:var(--err)">↩</div>
+        <div style="flex:1;color:var(--err);font-weight:700">Sair</div>
+      </div>
+    </div>
+  </div>
+</div>`;
+
+
+/* ---- CONEXÃO API (módulo fetch puro) ---- */
+SCREENS.conexaoApi = `
+<div class="screen" data-screen="conexaoApi">
+  <div class="hdr">
+    <div class="hdr-row">
+      <button class="hdr-icon" onclick="goBack()">‹</button>
+      <h1>Conexão API</h1>
+    </div>
+  </div>
+  <div class="pad">
+
+    <!-- URL atual -->
+    <div class="card mb12">
+      <div class="card-body">
+        <div class="field" style="margin-bottom:8px">
+          <label>URL da API</label>
+          <input type="url" id="caUrlInput" placeholder="https://script.google.com/macros/s/SEU_ID/exec" autocomplete="off">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button class="btn btn-primary btn-sm" onclick="caSalvarUrl()">💾 Salvar</button>
+          <button class="btn btn-err btn-sm" onclick="caLimparCache()">🗑 Limpar Cache</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Passos de conexão -->
+    <div class="sec-title" style="margin-left:0">Passos da Conexão</div>
+    <div class="card mb12">
+      <!-- 1 -->
+      <div class="diag-row">
+        <div style="display:flex;align-items:center;gap:10px;flex:1">
+          <div style="width:24px;height:24px;border-radius:50%;background:var(--g050);color:var(--g600);font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0">1</div>
+          <span style="font-size:13px;font-weight:600">Testar URL</span>
+        </div>
+        <span id="caS1" style="font-size:12px;font-weight:700;color:var(--ink3)">—</span>
+        <button class="btn btn-soft btn-xs" style="margin-left:8px" onclick="caTestarUrl()">Testar</button>
+      </div>
+      <div class="row-sep"></div>
+      <!-- 2 -->
+      <div class="diag-row">
+        <div style="display:flex;align-items:center;gap:10px;flex:1">
+          <div style="width:24px;height:24px;border-radius:50%;background:var(--g050);color:var(--g600);font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0">2</div>
+          <span style="font-size:13px;font-weight:600">Testar Token</span>
+        </div>
+        <span id="caS2" style="font-size:12px;font-weight:700;color:var(--ink3)">—</span>
+        <button class="btn btn-soft btn-xs" style="margin-left:8px" onclick="caTestarToken()">Testar</button>
+      </div>
+      <div class="row-sep"></div>
+      <!-- 3 -->
+      <div class="diag-row">
+        <div style="display:flex;align-items:center;gap:10px;flex:1">
+          <div style="width:24px;height:24px;border-radius:50%;background:var(--g050);color:var(--g600);font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0">3</div>
+          <span style="font-size:13px;font-weight:600">Buscar Inventário</span>
+        </div>
+        <span id="caS3" style="font-size:12px;font-weight:700;color:var(--ink3)">—</span>
+        <button class="btn btn-soft btn-xs" style="margin-left:8px" onclick="caBuscarInventario()">Buscar</button>
+      </div>
+      <div class="row-sep"></div>
+      <!-- 4 -->
+      <div class="diag-row">
+        <div style="display:flex;align-items:center;gap:10px;flex:1">
+          <div style="width:24px;height:24px;border-radius:50%;background:var(--g050);color:var(--g600);font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0">4</div>
+          <span style="font-size:13px;font-weight:600">Buscar Localizações</span>
+        </div>
+        <span id="caS4" style="font-size:12px;font-weight:700;color:var(--ink3)">—</span>
+        <button class="btn btn-soft btn-xs" style="margin-left:8px" onclick="caBuscarLocalizacoes()">Buscar</button>
+      </div>
+      <div class="row-sep"></div>
+      <!-- 5 -->
+      <div class="diag-row">
+        <div style="display:flex;align-items:center;gap:10px;flex:1">
+          <div style="width:24px;height:24px;border-radius:50%;background:var(--g050);color:var(--g600);font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0">5</div>
+          <span style="font-size:13px;font-weight:600">Verificar Permissões</span>
+        </div>
+        <span id="caS5" style="font-size:12px;font-weight:700;color:var(--ink3)">—</span>
+        <button class="btn btn-soft btn-xs" style="margin-left:8px" onclick="caVerificarPermissoes()">Verificar</button>
+      </div>
+    </div>
+
+    <!-- Token -->
+    <div class="sec-title" style="margin-left:0">Token do Inventário</div>
+    <div class="card mb12 card-body">
+      <div class="field" style="margin-bottom:8px">
+        <label>Token</label>
+        <input type="text" id="caTokenInput" placeholder="Ex: 01" maxlength="6" autocomplete="off"
+          style="font-size:22px;font-weight:800;text-align:center;letter-spacing:.2em">
+      </div>
+      <button class="btn btn-primary btn-full" onclick="caCarregarTudo()">⚡ Carregar Inventário Completo</button>
+    </div>
+
+    <!-- Resultado / resposta bruta -->
+    <div class="sec-title" style="margin-left:0">Resposta da API</div>
+    <div class="card mb12">
+      <div id="caRespBox" style="padding:12px 14px;min-height:60px">
+        <div style="font-size:12px;color:var(--ink3)">Toque em um passo acima para ver a resposta.</div>
+      </div>
+    </div>
+
+    <!-- Logs -->
+    <div class="sec-title" style="margin-left:0">Logs</div>
+    <div class="card mb12" style="max-height:220px;overflow-y:auto">
+      <div id="caLogsBox" style="padding:12px 14px;font-family:ui-monospace,monospace;font-size:10px;color:var(--ink2);line-height:1.8">
+        Aguardando...
+      </div>
+    </div>
+
+    <button class="btn btn-ghost btn-full btn-sm" onclick="caLimparLogs()">🗑 Limpar Logs</button>
+  </div>
+</div>`;
+
+/* ============================================================
+   BUSINESS LOGIC
+   ============================================================ */
+
+/* --- Keypad (scanner) --- */
+var _scanVal = '';
+function kp(k) {
+  var el = document.getElementById('cntVal');
+  if (!el) return;
+  if (k === 'C') { _scanVal = '0'; }
+  else if (k === '⌫') { _scanVal = _scanVal.slice(0, -1) || '0'; }
+  else { if (_scanVal === '0') _scanVal = ''; _scanVal += k; }
+  el.textContent = _scanVal || '0';
+}
+function adjScan(d) {
+  var el = document.getElementById('cntVal');
+  if (!el) return;
+  var v = parseInt(el.textContent || '0', 10) + d;
+  if (v < 0) v = 0;
+  _scanVal = String(v);
+  el.textContent = _scanVal;
+}
+
+/* --- Keypad (contagem manual) --- */
+var _cntVal = '12';
+function kpM(k) {
+  var el = document.getElementById('cntManual');
+  if (!el) return;
+  if (k === 'C') { _cntVal = '0'; }
+  else if (k === '⌫') { _cntVal = _cntVal.slice(0, -1) || '0'; }
+  else { if (_cntVal === '0') _cntVal = ''; _cntVal += k; }
+  el.textContent = _cntVal || '0';
+  var btn = document.querySelector('[data-screen="contagem"] .btn-primary');
+  if (btn) btn.textContent = '✓ Adicionar (' + (_cntVal || '0') + ')';
+}
+function adjCnt(d) {
+  var el = document.getElementById('cntManual');
+  if (!el) return;
+  var v = parseInt(_cntVal || '0', 10) + d;
+  if (v < 0) v = 0;
+  _cntVal = String(v);
+  el.textContent = _cntVal;
+}
+
+/* --- Simular scan --- */
+function simularScan() {
+  var cods = ['7891234567890', '7891234567891', '7891234567892'];
+  var nms = ['CABO FLEXÍVEL 2,5MM', 'PARAFUSO SEXT 1/2X2.1/2', 'CAIXA DE PASSAGEM 4X2'];
+  var idx = Math.floor(Math.random() * 3);
+  document.getElementById('scanCode').textContent = cods[idx];
+  document.getElementById('scanItemNm').textContent = nms[idx];
+  document.getElementById('scanItemCod').textContent = 'Cód: ' + cods[idx];
+  document.getElementById('scanItemInfo').textContent = 'Local: A0' + (idx + 1) + '-B05-N1';
+  document.getElementById('scanResult').style.display = 'flex';
+}
+
+/* --- Salvar contagem --- */
+function salvarContagem() {
+  var v = document.getElementById('cntManual');
+  var cnt = parseInt(v ? v.textContent : '0', 10);
+  if (!getUrl()) { alert('Configure a URL da API em Sincronização.'); return; }
+  if (!State.token) { alert('Carregue um inventário via token primeiro.'); return; }
+  apiJsonp('lancarItemToken', {
+    token: State.token,
+    quantidadeContada: cnt,
+    lancadoPor: 'Coletor V25'
+  }, function (r) {
+    if (r && r.ok) { alert('Contagem salva com sucesso!'); _cntVal = '0'; if (v) v.textContent = '0'; }
+    else alert('Erro ao salvar. Verifique a conexão.');
   });
 }
 
-function adicionarContagem(){
-  var it=window._itemAtual;
-  if(!getUrl()){ alert('Configure a conexão em Sincronização.'); return; }
-  if(!window._tokenSel){ alert('Abra um inventário primeiro.'); return; }
-  if(!it){ alert('Nenhum item selecionado para contar.'); return; }
-  var cnt=(typeof window._getCnt==='function')?window._getCnt():parseInt(document.getElementById('cntVal').textContent||'0',10);
-  var btn=document.querySelector('[data-act="adicionarContagem"] #addLbl');
-  if(btn)btn.textContent='Salvando...';
-  apiJsonp('lancarItemToken',{
-    token: window._tokenSel,
-    codigoMaterial: it.cod,
-    descricao: it.nm,
+/* --- Adicionar contagem (scanner) --- */
+function adicionarContagem() {
+  var cnt = parseInt(document.getElementById('cntVal').textContent || '0', 10);
+  if (!getUrl()) { alert('Configure a URL da API em Sincronização.'); return; }
+  if (!State.token) { alert('Carregue um inventário via token primeiro.'); return; }
+  apiJsonp('lancarItemToken', {
+    token: State.token,
     quantidadeContada: cnt,
-    quantidadeSap: it.t,
-    valorUnitario: it.vu||0,
-    lancadoPor:'Coletor'
-  },function(r){
-    if(r&&r.ok){
-      if(window._setCnt)window._setCnt(0);
-      fillContagem(); // recarrega contadores e próximo item
+    lancadoPor: 'Coletor V25'
+  }, function (r) {
+    if (r && r.ok) {
+      State.scanCount++;
+      alert('✓ Item #' + State.scanCount + ' salvo!');
+      _scanVal = '0';
+      document.getElementById('cntVal').textContent = '0';
     } else {
-      alert('Não consegui salvar. Confira a conexão (Diagnóstico).');
-      if(btn)btn.textContent='Adicionar';
+      alert('Erro ao salvar. Verifique a conexão em Sincronização.');
     }
   });
 }
 
-function rodarDiagnostico(){
-  var out=document.getElementById('diagOut'); if(!out)return;
-  if(!getUrl()){ out.innerHTML='<div class="card pad" style="padding:16px"><div class="note" style="color:var(--pend)">Configure a URL em Sincronização primeiro.</div></div>'; return; }
-  out.innerHTML='<div class="card pad" style="padding:16px"><div class="note">Testando comunicação...</div></div>';
-  var t0=Date.now();
-  apiJsonp('diagnosticoApp',{},function(r){
-    var ms=Date.now()-t0;
-    if(!r||!r.ok){ out.innerHTML='<div class="card pad" style="padding:16px"><div class="note" style="color:var(--div)">Sem comunicação com o sistema. Confira a conexão em Sincronização.</div></div>'; return; }
-    var reg=r.registros||{},mods=r.modulos||{};
-    function lin(l,v,c){return '<div class="resline"><div class="lbl">'+l+'</div><div class="val" style="color:'+(c||'var(--ink)')+'">'+v+'</div></div>';}
-    var h='<div class="card mb12">'
-      +lin('Status','✓ Online','var(--ok)')
-      +lin('Tempo de resposta',ms+' ms',ms<1500?'var(--ok)':'var(--pend)')
-      +lin('Planilha',r.planilha||'—')
-      +lin('Última atualização',r.timestamp||'—')
-      +lin('Versão API',r.versaoApi||'—')
-      +'</div>';
-    h+='<div class="sec-title">Registros nas abas</div><div class="card mb12">';
-    Object.keys(reg).forEach(function(k){ h+=lin(k, reg[k].existe?reg[k].registros:'(não existe)', reg[k].existe?'var(--ink)':'var(--div)'); });
-    h+='</div><div class="sec-title">Módulos carregados</div><div class="card">';
-    Object.keys(mods).forEach(function(k){ h+=lin(k, mods[k]?'✓ OK':'✗ ausente', mods[k]?'var(--ok)':'var(--div)'); });
-    h+='</div>';
-    out.innerHTML=h;
+/* --- Login --- */
+function doLogin() {
+  var u = (document.getElementById('loginUser').value || '').trim();
+  var p = (document.getElementById('loginPass').value || '').trim();
+  if (!u || !p) { alert('Preencha usuário e senha.'); return; }
+  if (!getUrl()) { alert('Configure a URL da API primeiro em Sincronização.'); go('sincronizacao'); return; }
+  apiJsonp('login', { usuario: u, senha: p }, function (r) {
+    if (r && r.ok) {
+      State.user.nome = r.nome || u;
+      State.user.perfil = r.perfil || 'ALMOXARIFE';
+      State.obra = r.obra || 'TRÊS LAGOAS';
+      go('dashboard');
+    } else {
+      alert('Usuário ou senha incorretos.');
+    }
   });
 }
 
+function doToken() {
+  var t = (document.getElementById('loginToken').value || '').trim();
+  if (!t) { alert('Digite o token.'); return; }
+  State.token = t;
+  localStorage.setItem('almv25_token', t);
+  go('dashboard');
+}
+
+/* --- Token / carregar inventário --- */
+function carregarToken() {
+  var t = (document.getElementById('tokenInput').value || '').trim();
+  if (!t) { alert('Digite o token.'); return; }
+  if (!getUrl()) { alert('Salve a URL da API primeiro.'); return; }
+  apiJsonp('buscarToken', { token: t }, function (r) {
+    if (r && r.ok) {
+      State.token = t;
+      State.inventarioAtual = r.inventario || '';
+      State.obra = r.obra || State.obra;
+      localStorage.setItem('almv25_token', t);
+      alert('✓ Inventário ' + (r.inventario || t) + ' carregado!');
+      updateGreetObra();
+    } else {
+      alert('Token não encontrado ou inválido. Verifique no painel Admin.');
+    }
+  });
+}
+
+function updateGreetObra() {
+  var el = document.getElementById('greetObra');
+  if (el) el.textContent = '📍 ' + State.obra + ' · ⟳ Sincronizado agora';
+}
+
+/* --- URL / cache --- */
+function salvarUrl() {
+  var v = (document.getElementById('apiUrlInput').value || '').trim();
+  if (!v) { alert('Cole a URL da API.'); return; }
+  setUrl(v);
+  State.apiUrl = v;
+  alert('✓ URL salva!');
+}
+
+function limparCache() {
+  localStorage.removeItem('almv25_url');
+  localStorage.removeItem('almv25_token');
+  State.apiUrl = '';
+  State.token = '';
+  alert('Cache limpo. Insira a URL novamente.');
+}
+
+/* --- Sync status --- */
+function loadSyncStatus() {
+  var inp = document.getElementById('apiUrlInput');
+  if (inp) inp.value = getUrl();
+  var tk = document.getElementById('tokenInput');
+  if (tk) tk.value = State.token || localStorage.getItem('almv25_token') || '';
+}
+
+/* --- Diagnóstico --- */
+
+/* ============================================================
+   CONEXÃO API — módulo fetch puro
+   ============================================================ */
+var _caLogs = [];
+
+function caLog(msg) {
+  var ts = new Date().toLocaleTimeString('pt-BR');
+  _caLogs.unshift('[' + ts + '] ' + msg);
+  var box = document.getElementById('caLogsBox');
+  if (box) box.innerHTML = _caLogs.slice(0, 60).join('<br>');
+}
+
+function caStatus(id, icon, txt, cor) {
+  var el = document.getElementById(id);
+  if (el) { el.textContent = icon + ' ' + txt; el.style.color = cor; }
+}
+
+function caResp(titulo, obj, cor) {
+  var box = document.getElementById('caRespBox');
+  if (!box) return;
+  var json = typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2);
+  box.innerHTML =
+    '<div style="font-size:11px;font-weight:800;color:' + (cor||'var(--ink3)') + ';margin-bottom:6px">' + titulo + '</div>'
+    + '<pre style="font-size:10px;font-family:ui-monospace,monospace;color:var(--ink2);white-space:pre-wrap;word-break:break-all;margin:0;max-height:160px;overflow-y:auto">' + json + '</pre>';
+}
+
+function caGetUrl() {
+  var inp = document.getElementById('caUrlInput');
+  return (inp && inp.value.trim()) || getUrl();
+}
+
+function caSalvarUrl() {
+  var url = caGetUrl();
+  if (!url) { alert('Cole a URL da API.'); return; }
+  setUrl(url);
+  State.apiUrl = url;
+  caLog('URL salva: ' + url.substring(0, 60) + '...');
+  alert('✓ URL salva!');
+}
+
+function caLimparCache() {
+  localStorage.clear();
+  sessionStorage.clear();
+  State.apiUrl = ''; State.token = '';
+  var inp = document.getElementById('caUrlInput'); if (inp) inp.value = '';
+  var tk = document.getElementById('caTokenInput'); if (tk) tk.value = '';
+  _caLogs = [];
+  var box = document.getElementById('caLogsBox'); if (box) box.innerHTML = 'Cache limpo.';
+  caResp('Cache limpo', 'Insira a URL novamente e salve.', 'var(--warn)');
+  alert('✓ Cache limpo! Insira a URL nova.');
+}
+
+function caLimparLogs() {
+  _caLogs = [];
+  var box = document.getElementById('caLogsBox'); if (box) box.innerHTML = 'Logs limpos.';
+}
+
+/* PASSO 1 — Testar URL (fetch ping) */
+function caTestarUrl() {
+  var url = caGetUrl();
+  if (!url) { caStatus('caS1','🔴','Sem URL','var(--err)'); caLog('ERRO: URL não configurada'); return; }
+  caStatus('caS1','⏳','Testando...','var(--ink3)');
+  caLog('Testando URL: ' + url.substring(0,60) + '...');
+  var t0 = Date.now();
+  fetch(url + '?action=ping&_=' + Date.now())
+    .then(function(r) {
+      caLog('HTTP ' + r.status + ' ' + r.statusText);
+      return r.text();
+    })
+    .then(function(txt) {
+      var ms = Date.now() - t0;
+      caLog('Resposta em ' + ms + 'ms: ' + txt.substring(0, 120));
+      try {
+        var d = JSON.parse(txt);
+        if (d.ok || d.status === 'online') {
+          caStatus('caS1','🟢','Online · ' + ms + 'ms','var(--ok)');
+          caResp('✓ Ping OK (' + ms + 'ms)', d, 'var(--ok)');
+          caLog('OK: ok=' + d.ok + ' versaoApi=' + (d.versaoApi||'—'));
+        } else {
+          caStatus('caS1','🟡','Resposta sem ok=true','var(--warn)');
+          caResp('⚠ Resposta recebida mas ok≠true', d, 'var(--warn)');
+          caLog('AVISO: API respondeu mas ok=false');
+        }
+      } catch(e) {
+        caStatus('caS1','🟡','Resposta não-JSON · ' + ms + 'ms','var(--warn)');
+        caResp('⚠ Resposta não é JSON puro', txt.substring(0,300), 'var(--warn)');
+        caLog('Parse JSON falhou: ' + e.message);
+      }
+    })
+    .catch(function(e) {
+      caStatus('caS1','🔴','Erro: ' + e.message.substring(0,30),'var(--err)');
+      caResp('❌ Erro de conexão', e.message, 'var(--err)');
+      caLog('ERRO fetch: ' + e.message);
+    });
+}
+
+/* PASSO 2 — Testar Token */
+function caTestarToken() {
+  var url = caGetUrl();
+  var tok = (document.getElementById('caTokenInput') || {}).value || State.token || localStorage.getItem('almv25_token') || '';
+  if (!url) { caStatus('caS2','🔴','Sem URL','var(--err)'); return; }
+  if (!tok) { caStatus('caS2','🔴','Digite o token','var(--err)'); caLog('ERRO: token não informado'); return; }
+  caStatus('caS2','⏳','Testando token ' + tok + '...','var(--ink3)');
+  caLog('Testando token: ' + tok);
+  fetch(url + '?action=buscarToken&token=' + encodeURIComponent(tok) + '&_=' + Date.now())
+    .then(function(r) { return r.text(); })
+    .then(function(txt) {
+      caLog('buscarToken resposta: ' + txt.substring(0, 150));
+      try {
+        var d = JSON.parse(txt);
+        if (d.ok) {
+          caStatus('caS2','🟢','Token válido · ' + (d.inventario||''),'var(--ok)');
+          caResp('✓ Token ' + tok + ' encontrado', d, 'var(--ok)');
+          State.token = tok;
+          localStorage.setItem('almv25_token', tok);
+          caLog('Token OK: inventario=' + (d.inventario||'—') + ' obra=' + (d.obra||'—'));
+        } else {
+          caStatus('caS2','🔴','Token não encontrado','var(--err)');
+          caResp('❌ Token inválido', d, 'var(--err)');
+          caLog('Token FALHOU: ' + JSON.stringify(d));
+        }
+      } catch(e) {
+        caStatus('caS2','🟡','Resposta não-JSON','var(--warn)');
+        caResp('⚠ Resposta não-JSON', txt.substring(0,300), 'var(--warn)');
+        caLog('Parse falhou: ' + e.message);
+      }
+    })
+    .catch(function(e) {
+      caStatus('caS2','🔴','Erro: ' + e.message.substring(0,30),'var(--err)');
+      caResp('❌ Erro', e.message, 'var(--err)');
+      caLog('ERRO: ' + e.message);
+    });
+}
+
+/* PASSO 3 — Buscar Inventário */
+function caBuscarInventario() {
+  var url = caGetUrl();
+  var tok = (document.getElementById('caTokenInput') || {}).value || State.token || '';
+  if (!url) { caStatus('caS3','🔴','Sem URL','var(--err)'); return; }
+  if (!tok) { caStatus('caS3','🔴','Informe o token','var(--err)'); return; }
+  caStatus('caS3','⏳','Buscando...','var(--ink3)');
+  caLog('Buscando inventário token=' + tok);
+  fetch(url + '?action=carregarInventario&token=' + encodeURIComponent(tok) + '&_=' + Date.now())
+    .then(function(r) { return r.text(); })
+    .then(function(txt) {
+      caLog('carregarInventario: ' + txt.substring(0,150));
+      try {
+        var d = JSON.parse(txt);
+        if (d.ok) {
+          var qtd = (d.itens||[]).length;
+          caStatus('caS3','🟢', qtd + ' itens carregados','var(--ok)');
+          caResp('✓ Inventário carregado · ' + qtd + ' itens', d, 'var(--ok)');
+          caLog('Inventário OK: ' + qtd + ' itens, obra=' + (d.obra||'—'));
+        } else {
+          caStatus('caS3','🔴','Falhou','var(--err)');
+          caResp('❌ Inventário não carregado', d, 'var(--err)');
+          caLog('FALHOU: ' + JSON.stringify(d));
+        }
+      } catch(e) {
+        caStatus('caS3','🟡','Resposta não-JSON','var(--warn)');
+        caResp('⚠ Resposta não-JSON', txt.substring(0,400), 'var(--warn)');
+        caLog('Parse falhou: ' + e.message);
+      }
+    })
+    .catch(function(e) {
+      caStatus('caS3','🔴','Erro','var(--err)');
+      caResp('❌ Erro', e.message, 'var(--err)');
+      caLog('ERRO: ' + e.message);
+    });
+}
+
+/* PASSO 4 — Buscar Localizações */
+function caBuscarLocalizacoes() {
+  var url = caGetUrl();
+  if (!url) { caStatus('caS4','🔴','Sem URL','var(--err)'); return; }
+  caStatus('caS4','⏳','Buscando...','var(--ink3)');
+  caLog('Buscando localizações...');
+  fetch(url + '?action=buscarLocalizacao&_=' + Date.now())
+    .then(function(r) { return r.text(); })
+    .then(function(txt) {
+      caLog('buscarLocalizacao: ' + txt.substring(0,150));
+      try {
+        var d = JSON.parse(txt);
+        if (d.ok) {
+          var qtd = (d.locais||d.localizacoes||[]).length;
+          caStatus('caS4','🟢', qtd + ' locais','var(--ok)');
+          caResp('✓ Localizações · ' + qtd + ' locais', d, 'var(--ok)');
+          caLog('Localizações OK: ' + qtd);
+        } else {
+          caStatus('caS4','🔴','Falhou','var(--err)');
+          caResp('❌ Localizações não carregadas', d, 'var(--err)');
+          caLog('FALHOU: ' + JSON.stringify(d));
+        }
+      } catch(e) {
+        caStatus('caS4','🟡','Resposta não-JSON','var(--warn)');
+        caResp('⚠ Resposta bruta (pode ser correto):', txt.substring(0,400), 'var(--warn)');
+        caLog('Parse falhou — resposta: ' + txt.substring(0,100));
+      }
+    })
+    .catch(function(e) {
+      caStatus('caS4','🔴','Erro','var(--err)');
+      caResp('❌ Erro', e.message, 'var(--err)');
+      caLog('ERRO: ' + e.message);
+    });
+}
+
+/* PASSO 5 — Verificar Permissões (checa se retorna corretamente sem auth) */
+function caVerificarPermissoes() {
+  var url = caGetUrl();
+  if (!url) { caStatus('caS5','🔴','Sem URL','var(--err)'); return; }
+  caStatus('caS5','⏳','Verificando...','var(--ink3)');
+  caLog('Verificando permissões de acesso...');
+  // Testa sem parâmetros — se retornar algo = acesso público OK
+  fetch(url + '?action=ping&_=' + Date.now(), {
+    method: 'GET',
+    headers: { 'Accept': 'application/json' }
+  })
+    .then(function(r) {
+      caLog('HTTP ' + r.status + ' headers ok=' + r.ok);
+      if (r.status === 200) {
+        caStatus('caS5','🟢','Acesso público OK','var(--ok)');
+        caResp('✓ Permissão OK — script acessível publicamente', 'HTTP ' + r.status, 'var(--ok)');
+        caLog('Permissão OK: HTTP 200');
+      } else if (r.status === 302 || r.status === 401) {
+        caStatus('caS5','🔴','Não autorizado (302/401)','var(--err)');
+        caResp('❌ Acesso negado — reimplante como "Qualquer pessoa"', 'HTTP ' + r.status, 'var(--err)');
+        caLog('PERMISSÃO NEGADA: HTTP ' + r.status + ' → reimplante no Apps Script como "Qualquer pessoa"');
+      } else {
+        caStatus('caS5','🟡','HTTP ' + r.status,'var(--warn)');
+        caResp('⚠ HTTP ' + r.status + ' — verifique o script', 'HTTP ' + r.status, 'var(--warn)');
+        caLog('Status inesperado: HTTP ' + r.status);
+      }
+    })
+    .catch(function(e) {
+      caStatus('caS5','🔴','Erro CORS','var(--err)');
+      caResp('❌ Erro CORS — o script não permite requisições externas', e.message, 'var(--err)');
+      caLog('CORS ERROR: ' + e.message);
+    });
+}
+
+/* CARREGAR TUDO — executa passos 1→2→3 em sequência */
+function caCarregarTudo() {
+  var url = caGetUrl();
+  var tok = ((document.getElementById('caTokenInput') || {}).value || '').trim();
+  if (!url) { alert('Cole a URL da API e salve.'); return; }
+  if (!tok) { alert('Digite o token do inventário.'); return; }
+  setUrl(url); State.apiUrl = url;
+  State.token = tok; localStorage.setItem('almv25_token', tok);
+
+  caLog('=== CARREGAR COMPLETO ===');
+  caLog('URL: ' + url.substring(0,60) + '...');
+  caLog('Token: ' + tok);
+
+  // Passo 1: ping
+  caStatus('caS1','⏳','...','var(--ink3)');
+  caStatus('caS2','⏳','...','var(--ink3)');
+  caStatus('caS3','⏳','...','var(--ink3)');
+
+  fetch(url + '?action=ping&_=' + Date.now())
+    .then(function(r) { return r.text(); })
+    .then(function(txt) {
+      caLog('Ping: ' + txt.substring(0,80));
+      try {
+        var d = JSON.parse(txt);
+        if (d.ok || d.status === 'online') {
+          caStatus('caS1','🟢','OK','var(--ok)');
+          caLog('Ping OK versaoApi=' + (d.versaoApi||'—'));
+        } else { caStatus('caS1','🟡','Resposta estranha','var(--warn)'); }
+      } catch(e) { caStatus('caS1','🟡','Não-JSON','var(--warn)'); }
+
+      // Passo 2: token
+      return fetch(url + '?action=buscarToken&token=' + encodeURIComponent(tok) + '&_=' + Date.now());
+    })
+    .then(function(r) { return r.text(); })
+    .then(function(txt) {
+      caLog('Token: ' + txt.substring(0,80));
+      try {
+        var d = JSON.parse(txt);
+        if (d.ok) {
+          caStatus('caS2','🟢','Válido','var(--ok)');
+          caLog('Token OK: obra=' + (d.obra||'—'));
+          if (d.obra) State.obra = d.obra;
+        } else { caStatus('caS2','🔴','Inválido','var(--err)'); caLog('Token inválido: ' + JSON.stringify(d)); return Promise.reject('token_invalido'); }
+      } catch(e) { caStatus('caS2','🟡','Não-JSON','var(--warn)'); }
+
+      // Passo 3: inventário
+      return fetch(url + '?action=carregarInventario&token=' + encodeURIComponent(tok) + '&_=' + Date.now());
+    })
+    .then(function(r) { return r.text(); })
+    .then(function(txt) {
+      caLog('Inventário: ' + txt.substring(0,100));
+      try {
+        var d = JSON.parse(txt);
+        if (d.ok) {
+          var qtd = (d.itens||[]).length;
+          caStatus('caS3','🟢', qtd + ' itens','var(--ok)');
+          caResp('✅ Tudo carregado! ' + qtd + ' itens prontos.', d, 'var(--ok)');
+          caLog('SUCESSO: inventário com ' + qtd + ' itens');
+          alert('✅ Inventário carregado! ' + qtd + ' itens prontos para uso.');
+        } else {
+          caStatus('caS3','🔴','Falhou','var(--err)');
+          caResp('❌ Inventário vazio ou erro', d, 'var(--err)');
+          caLog('Inventário falhou: ' + JSON.stringify(d));
+        }
+      } catch(e) {
+        caStatus('caS3','🟡','Não-JSON','var(--warn)');
+        caResp('⚠ Resposta bruta do inventário', txt.substring(0,400), 'var(--warn)');
+        caLog('Parse falhou: ' + e.message + ' | Raw: ' + txt.substring(0,60));
+      }
+    })
+    .catch(function(e) {
+      if (e === 'token_invalido') return;
+      caLog('ERRO geral: ' + e.message || e);
+      caResp('❌ Erro na sequência', String(e), 'var(--err)');
+    });
+}
+
+/* Init da tela conexaoApi */
+function initConexaoApi() {
+  var inp = document.getElementById('caUrlInput');
+  if (inp) inp.value = getUrl();
+  var tk = document.getElementById('caTokenInput');
+  if (tk) tk.value = State.token || localStorage.getItem('almv25_token') || '';
+}
+
+/* ============================================================
+   DIAGNÓSTICO V25 — passo a passo com logs
+   ============================================================ */
+var _diagLogs = [];
+
+function diagSet(id, icon, txt, cor) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.style.color = cor || 'var(--ink)';
+  el.textContent = icon + ' ' + txt;
+}
+
+function diagLog(msg) {
+  var ts = new Date().toLocaleTimeString('pt-BR');
+  _diagLogs.push('[' + ts + '] ' + msg);
+  var lb = document.getElementById('diagLogsBody');
+  if (lb) lb.innerHTML = _diagLogs.map(function(l){ return l; }).join('<br>');
+}
+
+function toggleLogs() {
+  var el = document.getElementById('diagLogs');
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function limparCacheTotal() {
+  localStorage.clear();
+  sessionStorage.clear();
+  if ('caches' in window) {
+    caches.keys().then(function(names){
+      names.forEach(function(n){ caches.delete(n); });
+    });
+  }
+  State.apiUrl = '';
+  State.token = '';
+  var inp = document.getElementById('apiUrlInput');
+  if (inp) inp.value = '';
+  var tk = document.getElementById('tokenInput');
+  if (tk) tk.value = '';
+  alert('✓ Cache limpo! Cole a URL nova e salve.');
+}
+
+function rodarDiagnostico() {
+  _diagLogs = [];
+  var ok = 'var(--ok)', err = 'var(--err)', warn = 'var(--warn)', muted = 'var(--ink3)';
+
+  // Reset todos
+  ['dInternetVal','dUrlVal','dFetchVal','dJsonpVal','dApiVerVal','dTokenVal','dLatenciaVal'].forEach(function(id){
+    var e = document.getElementById(id); if(e){ e.style.color = muted; e.textContent = '⏳'; }
+  });
+  var errRow = document.getElementById('dErroRow'); if(errRow) errRow.style.display='none';
+
+  diagLog('Diagnóstico V25 iniciado');
+
+  // PASSO 1 — Internet
+  if (navigator.onLine) {
+    diagSet('dInternetVal','🟢','Conectado', ok);
+    diagLog('Internet: OK (navigator.onLine = true)');
+  } else {
+    diagSet('dInternetVal','🔴','Offline', err);
+    diagLog('Internet: FALHOU — dispositivo sem conexão');
+    return;
+  }
+
+  // PASSO 2 — URL
+  var url = getUrl();
+  if (!url) {
+    diagSet('dUrlVal','🔴','Não encontrada — salve a URL', err);
+    diagLog('URL: FALHOU — localStorage vazio e State.apiUrl vazio');
+    return;
+  }
+  diagSet('dUrlVal','🟢','Encontrada', ok);
+  diagLog('URL: ' + url);
+
+  // PASSO 3 — Fetch JSON (verifica CORS)
+  var t0 = Date.now();
+  diagSet('dFetchVal','⏳','Testando...', muted);
+  diagLog('Fetch: tentando ' + url + '?action=ping&_=' + Date.now());
+
+  fetch(url + '?action=ping&_=' + Date.now())
+    .then(function(resp) {
+      diagLog('Fetch: HTTP ' + resp.status + ' ' + resp.statusText);
+      return resp.text();
+    })
+    .then(function(txt) {
+      var ms = Date.now() - t0;
+      diagLog('Fetch: resposta bruta = ' + txt.substring(0,120));
+      // Tenta parsear como JSON
+      try {
+        var d = JSON.parse(txt);
+        diagSet('dFetchVal','🟢','JSON válido', ok);
+        diagLog('Fetch: JSON parseado OK. ok=' + d.ok + ' status=' + d.status);
+        diagSet('dApiVerVal', '', d.versaoApi || d.version || d.status || '—', ok);
+        diagLog('API versão: ' + (d.versaoApi || d.version || '—'));
+      } catch(e) {
+        // Pode ser JSONP — resposta com callback wrapping
+        if (txt.indexOf('(') > -1) {
+          diagSet('dFetchVal','🟡','Resposta JSONP (não JSON puro)', warn);
+          diagLog('Fetch: resposta não é JSON puro — é JSONP. Isso é normal se a API só suporta JSONP.');
+        } else {
+          diagSet('dFetchVal','🔴','Resposta inválida', err);
+          diagLog('Fetch: ERRO parse JSON — ' + e.message);
+          mostrarErro('Resposta inválida: ' + txt.substring(0,80));
+        }
+      }
+      diagSet('dLatenciaVal','', ms + ' ms', ms < 2000 ? ok : warn);
+    })
+    .catch(function(e) {
+      diagSet('dFetchVal','🔴','Erro CORS / rede', err);
+      diagLog('Fetch ERRO: ' + e.message);
+      diagLog('DICA: Se for CORS, o JSONP ainda pode funcionar. Testando...');
+      mostrarErro(e.message);
+    });
+
+  // PASSO 4 — JSONP (método principal do app)
+  diagSet('dJsonpVal','⏳','Testando...', muted);
+  var cbName = '_diagJsonp' + Date.now();
+  var t1 = Date.now();
+  var jsonpDone = false;
+  var jsonpTimer = setTimeout(function() {
+    if (!jsonpDone) {
+      jsonpDone = true;
+      diagSet('dJsonpVal','🔴','Timeout (8s) — sem resposta', err);
+      diagLog('JSONP: TIMEOUT — a API não respondeu em 8s');
+      diagLog('DICA 1: Reimplante o script como "Qualquer pessoa" no Apps Script');
+      diagLog('DICA 2: Verifique se a URL não está desatualizada (URL antiga salva)');
+      diagLog('DICA 3: Abra a URL no navegador e veja o que retorna');
+      mostrarErro('JSONP timeout — reimplante o Apps Script como "Qualquer pessoa"');
+      delete window[cbName];
+    }
+  }, 8000);
+
+  window[cbName] = function(d) {
+    clearTimeout(jsonpTimer);
+    if (jsonpDone) return;
+    jsonpDone = true;
+    var ms2 = Date.now() - t1;
+    delete window[cbName];
+    diagLog('JSONP: resposta recebida em ' + ms2 + 'ms. ok=' + d.ok + ' status=' + d.status);
+    if (d && (d.ok || d.status === 'online')) {
+      diagSet('dJsonpVal','🟢','Funcionando', ok);
+      diagSet('dApiVerVal','', d.versaoApi || d.version || d.status || '—', ok);
+      diagSet('dLatenciaVal','', ms2 + ' ms', ms2 < 2000 ? ok : warn);
+      diagLog('API OK! versão=' + (d.versaoApi||'—') + ' data=' + (d.data||'—'));
+      // Testa token se tiver
+      var tok = State.token || localStorage.getItem('almv25_token') || '';
+      if (tok) {
+        testarTokenDiag(tok);
+      } else {
+        diagSet('dTokenVal','🟡','Nenhum token salvo', warn);
+        diagLog('Token: nenhum token configurado');
+      }
+    } else {
+      diagSet('dJsonpVal','🔴','Resposta inválida', err);
+      diagLog('JSONP: resposta sem ok=true: ' + JSON.stringify(d).substring(0,100));
+      mostrarErro('API retornou ok=false. Verifique o código do Apps Script (ação ping).');
+    }
+  };
+
+  var s = document.createElement('script');
+  s.src = url + '?action=ping&callback=' + cbName + '&_=' + Date.now();
+  s.onerror = function() {
+    clearTimeout(jsonpTimer);
+    if (jsonpDone) return;
+    jsonpDone = true;
+    delete window[cbName];
+    diagSet('dJsonpVal','🔴','Erro ao carregar script', err);
+    diagLog('JSONP script.onerror — URL bloqueada ou inválida: ' + s.src);
+    mostrarErro('JSONP bloqueado. Verifique a URL e se o script está publicado.');
+  };
+  diagLog('JSONP: carregando ' + s.src.substring(0,80) + '...');
+  document.head.appendChild(s);
+}
+
+function testarTokenDiag(tok) {
+  var ok = 'var(--ok)', err = 'var(--err)', warn = 'var(--warn)';
+  diagSet('dTokenVal','⏳','Testando token ' + tok + '...', 'var(--ink3)');
+  diagLog('Token: testando token=' + tok);
+  apiJsonp('buscarToken', { token: tok }, function(r) {
+    if (r && r.ok) {
+      diagSet('dTokenVal','🟢','Token ' + tok + ' válido — ' + (r.inventario||''), ok);
+      diagLog('Token OK: inventario=' + (r.inventario||'—') + ' obra=' + (r.obra||'—'));
+    } else {
+      diagSet('dTokenVal','🔴','Token ' + tok + ' não encontrado', err);
+      diagLog('Token FALHOU: API retornou ' + JSON.stringify(r||{}).substring(0,60));
+    }
+  });
+}
+
+function mostrarErro(msg) {
+  var row = document.getElementById('dErroRow');
+  var txt = document.getElementById('dErroTxt');
+  if (row) row.style.display = 'flex';
+  if (txt) txt.textContent = msg;
+  diagLog('ERRO registrado: ' + msg);
+}
+
+/* --- Dashboard dinâmico --- */
+function loadDashboard() {
+  if (!getUrl()) return;
+  apiJsonp('dashboardApp', {}, function (r) {
+    if (!r || !r.ok) return;
+    var set = function (id, v) { var e = document.getElementById(id); if (e) e.textContent = v; };
+    set('ovInv', r.inventarios || 0);
+    set('ovRes', r.reservas || 0);
+    set('ovPend', r.pendencias || 0);
+    set('ovDiv', r.divergencias || 0);
+  });
+}
+
+/* --- Inventários --- */
+function loadInventarios() {
+  // dados locais já renderizados; API enriquece se disponível
+  if (!getUrl()) return;
+}
+
+function tabInv(btn, tab) {
+  document.querySelectorAll('[data-screen="inventarios"] .tab-btn').forEach(function (b) {
+    b.classList.remove('active');
+  });
+  btn.classList.add('active');
+}
+
+/* --- Reservas --- */
+var _resItems = [];
+function loadReservas() { /* dados estáticos para demo */ }
+
+function buscarItensReserva(termo) {
+  var out = document.getElementById('resBuscaOut');
+  if (!out) return;
+  if (!getUrl()) { out.innerHTML = '<div class="list-row"><div class="note" style="color:var(--warn)">Configure a URL da API em Sincronização.</div></div>'; return; }
+  if (!termo || termo.trim().length < 2) { out.innerHTML = '<div class="empty"><p>Digite ao menos 2 letras para buscar.</p></div>'; return; }
+  clearTimeout(window._resTmr);
+  window._resTmr = setTimeout(function () {
+    out.innerHTML = '<div class="list-row"><div class="note">Buscando...</div></div>';
+    apiJsonp('buscarItensReserva', { termo: termo.trim() }, function (r) {
+      if (!r || !r.ok || !r.itens || !r.itens.length) {
+        out.innerHTML = '<div class="empty"><p>Nenhum item encontrado para "' + termo + '".</p></div>';
+        return;
+      }
+      window._resLista = r.itens;
+      out.innerHTML = '<div class="card">' + r.itens.map(function (i) {
+        return '<div class="list-row" data-res-cod="' + i.cod + '" style="cursor:pointer">'
+          + '<div class="thumb sm">📦</div>'
+          + '<div style="flex:1"><div style="font-size:13px;font-weight:700">' + i.nm + '</div>'
+          + '<div class="code">Cód: ' + i.cod + (i.local ? ' · Local: ' + i.local : '') + '</div></div>'
+          + '<div style="font-size:12px;font-weight:700;color:var(--g600)">R$ ' + (i.vu || 0).toFixed(2) + '</div>'
+          + '</div>';
+      }).join('') + '</div>';
+    });
+  }, 350);
+}
+
+function adicionarResItem() {
+  var it = window._resItem;
+  if (!it) { alert('Selecione um item.'); return; }
+  var q = parseInt(document.getElementById('resQtd').value || '0', 10);
+  if (!q || q <= 0) { alert('Informe a quantidade.'); return; }
+  _resItems.push({ cod: it.cod, nm: it.nm, qtd: q, vu: it.vu || 0 });
+  renderResItens();
+  window._resItem = null;
+  document.getElementById('resSelCard').style.display = 'none';
+  var bi = document.getElementById('resBuscaInp');
+  if (bi) { bi.value = ''; bi.focus(); }
+  var bo = document.getElementById('resBuscaOut');
+  if (bo) bo.innerHTML = '<div class="empty"><p>Item adicionado! Continue buscando.</p></div>';
+}
+
+function renderResItens() {
+  var el = document.getElementById('resItensLista');
+  if (!el) return;
+  if (!_resItems.length) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="sec-title" style="margin-left:0">Itens adicionados (' + _resItems.length + ')</div>'
+    + '<div class="card mb12">' + _resItems.map(function (i, idx) {
+      return '<div class="list-row"><div class="thumb sm">📦</div>'
+        + '<div style="flex:1"><div style="font-size:13px;font-weight:700">' + i.nm + '</div>'
+        + '<div class="code">Qtd: ' + i.qtd + ' · R$ ' + (i.vu * i.qtd).toFixed(2) + '</div></div>'
+        + '<button class="btn btn-err btn-xs" onclick="removeResItem(' + idx + ')">✕</button></div>';
+    }).join('') + '</div>';
+}
+
+function removeResItem(idx) { _resItems.splice(idx, 1); renderResItens(); }
+
+function salvarReserva() {
+  var nome = (document.getElementById('resInventario') ? document.getElementById('resInventario').value : '').trim();
+  if (!nome) { alert('Informe o inventário / nome da reserva.'); return; }
+  if (!_resItems.length) { alert('Adicione ao menos um item.'); return; }
+  if (!getUrl()) { alert('Configure a URL da API em Sincronização.'); return; }
+  apiJsonp('salvarReserva', {
+    reserva: nome,
+    itens: JSON.stringify(_resItems),
+    solicitante: State.user.nome,
+    obra: State.obra
+  }, function (r) {
+    if (r && r.ok) {
+      alert('✓ Reserva salva com sucesso!');
+      _resItems = [];
+      go('reservas');
+    } else {
+      alert('Erro ao salvar. Verifique a conexão.');
+    }
+  });
+}
+
+/* --- Mapa --- */
+function buildMapa() {
+  var grid = document.getElementById('mapaGrid');
+  if (!grid) return;
+  var ruas = ['A', 'B', 'C', 'D'];
+  var cols = ['01', '02', '03', '04', '05'];
+  var estados = ['ok', 'ok', 'ok', 'warn', 'err', 'ok', '', 'ok', 'warn', 'ok', 'err', 'ok', '', 'ok', 'ok', 'ok', 'warn', 'ok', '', 'ok'];
+  var html = '';
+  ruas.forEach(function (r, ri) {
+    html += '<div style="display:flex;gap:4px;margin-bottom:4px;align-items:center">';
+    html += '<div style="font-size:10px;font-weight:800;color:var(--ink3);width:40px">RUA ' + r + '</div>';
+    cols.forEach(function (c, ci) {
+      var st = estados[ri * 5 + ci];
+      var bg = st === 'ok' ? 'var(--ok)' : st === 'warn' ? 'var(--warn)' : st === 'err' ? 'var(--err)' : 'var(--line)';
+      var txt = st === '' ? '' : r + c;
+      html += '<div style="flex:1;height:34px;border-radius:6px;background:' + bg + ';display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:' + (st ? '#fff' : 'var(--ink3)') + ';cursor:pointer" title="PRATELEIRA ' + r + ' - ' + c + '">' + txt + '</div>';
+    });
+    html += '</div>';
+  });
+  grid.innerHTML = html;
+}
+
+/* --- IA --- */
+function perguntarIA() {
+  var q = (document.getElementById('iaQuery').value || '').trim();
+  var resp = document.getElementById('iaResp');
+  if (!q || !resp) return;
+  resp.style.display = 'block';
+  resp.textContent = '🤖 Analisando...';
+  setTimeout(function () {
+    resp.textContent = '📊 Com base nos dados dos últimos 6 meses: o item com mais divergência foi CABO FLEXÍVEL 2,5MM (-47M acumulados). Recomendo revisão da contagem nas prateleiras A02 a A04.';
+  }, 1200);
+}
+
+/* --- Assinatura canvas --- */
+function initCanvas() {
+  var c = document.getElementById('sigCanvas');
+  if (!c) return;
+  var ctx = c.getContext('2d');
+  ctx.strokeStyle = '#14241B';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  var drawing = false, lx, ly;
+  function getPos(e) {
+    var r = c.getBoundingClientRect();
+    var src = e.touches ? e.touches[0] : e;
+    return { x: (src.clientX - r.left) * (c.width / r.width), y: (src.clientY - r.top) * (c.height / r.height) };
+  }
+  c.addEventListener('mousedown', function (e) { drawing = true; var p = getPos(e); lx = p.x; ly = p.y; });
+  c.addEventListener('mousemove', function (e) {
+    if (!drawing) return;
+    var p = getPos(e);
+    ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(p.x, p.y); ctx.stroke();
+    lx = p.x; ly = p.y;
+  });
+  c.addEventListener('mouseup', function () { drawing = false; });
+  c.addEventListener('touchstart', function (e) { e.preventDefault(); drawing = true; var p = getPos(e); lx = p.x; ly = p.y; }, { passive: false });
+  c.addEventListener('touchmove', function (e) {
+    e.preventDefault();
+    if (!drawing) return;
+    var p = getPos(e);
+    ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(p.x, p.y); ctx.stroke();
+    lx = p.x; ly = p.y;
+  }, { passive: false });
+  c.addEventListener('touchend', function () { drawing = false; });
+}
+function clearSig() { var c = document.getElementById('sigCanvas'); if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height); }
+function confirmarAssinatura() { alert('✓ Assinatura registrada!'); goBack(); }
+
+/* ============================================================
+   EVENT DELEGATION
+   ============================================================ */
+document.addEventListener('click', function (e) {
+  // nav buttons
+  var nav = e.target.closest('.nav-btn');
+  if (nav && nav.dataset.go) { go(nav.dataset.go); return; }
+
+  // go links
+  var goEl = e.target.closest('[data-go]');
+  if (goEl && !goEl.classList.contains('nav-btn')) { go(goEl.dataset.go); return; }
+
+  // back
+  if (e.target.closest('[data-back]')) { goBack(); return; }
+
+  // search item select
+  var resRow = e.target.closest('[data-res-cod]');
+  if (resRow) {
+    var cod = resRow.getAttribute('data-res-cod');
+    var it = (window._resLista || []).find(function (x) { return String(x.cod) === String(cod); });
+    if (it) {
+      window._resItem = it;
+      document.getElementById('resSelNm').textContent = it.nm;
+      document.getElementById('resSelInfo').textContent = 'Cód: ' + it.cod + (it.local ? ' · Local: ' + it.local : '') + ' · R$ ' + (it.vu || 0).toFixed(2);
+      document.getElementById('resSelCard').style.display = 'block';
+      var qEl = document.getElementById('resQtd');
+      if (qEl) { qEl.value = ''; qEl.focus(); }
+    }
+  }
+});
+
+/* ============================================================
+   SCREEN LIFECYCLE — chamado em go()
+   ============================================================ */
+function onScreenActivated(id) {
+  if (id === 'conexaoApi') setTimeout(initConexaoApi, 30);
+  if (id === 'mapa') setTimeout(buildMapa, 30);
+  if (id === 'assinatura') setTimeout(initCanvas, 80);
+  if (id === 'sincronizacao') setTimeout(loadSyncStatus, 30);
+  if (id === 'dashboard') setTimeout(loadDashboard, 30);
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+loadSavedUrl();
+buildScreens();
 go('dashboard');
+
+// Restore token
+var savedToken = localStorage.getItem('almv25_token');
+if (savedToken) State.token = savedToken;
 </script>
 </body>
 </html>
