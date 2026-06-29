@@ -485,7 +485,7 @@ var State = {
   user: { nome: 'Almoxarife', perfil: 'ALMOXARIFE' },
   obra: localStorage.getItem('almv25_obra') || '',
   online: true,
-  apiUrl: '',
+  apiUrl: 'https://script.google.com/macros/s/AKfycbx4ezeMZbS-qlIiyWi665_luw21uNx92TURglQiSwHOzbrg3DL3Kc7fbBsQ-ckNB_byLQ/exec',
   token: '',
   inventarioAtual: null,
   scanCount: 0,
@@ -569,7 +569,12 @@ function apiJsonp(action, params, cb) {
 
 function getUrl() { return State.apiUrl || localStorage.getItem('almv25_url') || ''; }
 function setUrl(u) { State.apiUrl = u; if (u) localStorage.setItem('almv25_url', u); }
-function loadSavedUrl() { var u = localStorage.getItem('almv25_url'); if (u) State.apiUrl = u; }
+function loadSavedUrl() {
+  var DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbx4ezeMZbS-qlIiyWi665_luw21uNx92TURglQiSwHOzbrg3DL3Kc7fbBsQ-ckNB_byLQ/exec';
+  var u = localStorage.getItem('almv25_url');
+  State.apiUrl = u || DEFAULT_URL;
+  if (!u) localStorage.setItem('almv25_url', DEFAULT_URL);
+}
 
 /* ============================================================
    SCREEN ROUTER
@@ -833,7 +838,8 @@ SCREENS.inventResultado = `
     <div id="invItensList">
       <div class="empty"><p>Carregando itens...</p></div>
     </div>
-    <button class="btn btn-primary btn-full mt12" onclick="go('relatorio')">📄 Gerar Relatório Completo</button>
+    <button onclick="mostrarResumoConferencias()" style="width:100%;padding:12px;background:rgba(180,83,9,.1);border:1px solid rgba(180,83,9,.3);border-radius:12px;color:#b45309;font-size:13px;font-weight:800;cursor:pointer;margin-bottom:8px;font-family:Inter,sans-serif">📊 Resumo e Próxima Conferência</button>
+    <button class="btn btn-primary btn-full" onclick="go('relatorio')">📄 Gerar Relatório Completo</button>
   </div>
 </div>`;
 
@@ -2309,6 +2315,9 @@ function caTestarToken() {
           caResp('✓ Token ' + tok + ' encontrado', d, 'var(--ok)');
           State.token = tok;
           localStorage.setItem('almv25_token', tok);
+          // Reseta nível de conferência ao carregar novo token
+          localStorage.removeItem('conf_nivel_' + tok);
+          _confAtual = 1;
           caLog('Token OK: inventario=' + (d.inventario||'--') + ' obra=' + (d.obra||'--'));
         } else {
           caStatus('caS2','🔴','Token não encontrado','var(--err)');
@@ -3754,6 +3763,358 @@ var savedObra = localStorage.getItem('almv25_obra');
 if (savedObra) State.obra = savedObra;
 // Update greeting after short delay (DOM ready)
 setTimeout(updateGreetObra, 100);
+
+// ══════════════════════════════════════════════════════════════
+// FLUXO DE 3 CONFERÊNCIAS
+// ══════════════════════════════════════════════════════════════
+
+var _confAtual = 1; // 1, 2 ou 3
+var _operadorAtual = '';
+var _itensConf2 = []; // Só divergentes da 1ª conf
+var _historico = {}; // { cod: { conf1: qtd, conf2: qtd, conf3: qtd, op1, op2, op3 } }
+
+function getConfAtual() {
+  var tok = State.token || localStorage.getItem('almv25_token') || '';
+  return parseInt(localStorage.getItem('conf_nivel_' + tok) || '1');
+}
+
+function resetConfAtual() {
+  var tok = State.token || localStorage.getItem('almv25_token') || '';
+  localStorage.removeItem('conf_nivel_' + tok);
+  localStorage.removeItem('conf_hist_' + tok);
+  _confAtual = 1;
+}
+
+function setConfAtual(n) {
+  var tok = State.token || localStorage.getItem('almv25_token') || '';
+  localStorage.setItem('conf_nivel_' + tok, n);
+  _confAtual = n;
+}
+
+function getHistorico() {
+  var tok = State.token || localStorage.getItem('almv25_token') || '';
+  try { return JSON.parse(localStorage.getItem('conf_hist_' + tok) || '{}'); } catch(e) { return {}; }
+}
+
+function setHistorico(h) {
+  var tok = State.token || localStorage.getItem('almv25_token') || '';
+  localStorage.setItem('conf_hist_' + tok, JSON.stringify(h));
+}
+
+// Abre modal com badge de conferência
+function abrirContagemItemConf(idx) {
+  var it = _itensInv[idx];
+  if (!it) return;
+  var conf = getConfAtual();
+  var hist = getHistorico();
+  var hItem = hist[it.cod] || {};
+  
+  window._itemContAtual = { it: it, idx: idx };
+
+  var modal = document.getElementById('modalContagem');
+  if (modal) modal.remove();
+
+  // Badge de conferência
+  var badgeCor = conf===1?'#1e6b45':conf===2?'#b45309':'#7c3aed';
+  var badgeTxt = conf+'ª Conferência';
+
+  var m = document.createElement('div');
+  m.id = 'modalContagem';
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:999;display:flex;align-items:flex-end;justify-content:center';
+  
+  var histHtml = '';
+  if (hItem.conf1 !== undefined) histHtml += '<div style="display:flex;justify-content:space-between;font-size:11px;padding:3px 0"><span style="color:#888">1ª Conf. ('+(hItem.op1||'?')+')</span><b>'+hItem.conf1+' '+(it.un||'UN')+'</b></div>';
+  if (hItem.conf2 !== undefined) histHtml += '<div style="display:flex;justify-content:space-between;font-size:11px;padding:3px 0"><span style="color:#888">2ª Conf. ('+(hItem.op2||'?')+')</span><b>'+hItem.conf2+' '+(it.un||'UN')+'</b></div>';
+  if (hItem.conf3 !== undefined) histHtml += '<div style="display:flex;justify-content:space-between;font-size:11px;padding:3px 0"><span style="color:#888">3ª Conf. ('+(hItem.op3||'?')+')</span><b>'+hItem.conf3+' '+(it.un||'UN')+'</b></div>';
+
+  var valAtual = hItem['conf'+conf] !== undefined ? hItem['conf'+conf] : (it.c || 0);
+
+  m.innerHTML = '<div style="background:#fff;width:100%;max-width:430px;border-radius:20px 20px 0 0;padding:20px 18px 32px">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'
+    + '<span style="background:'+badgeCor+';color:#fff;font-size:11px;font-weight:800;padding:4px 12px;border-radius:20px">'+badgeTxt+'</span>'
+    + '<button onclick="fecharModal()" style="background:#fff0f0;border:none;border-radius:8px;width:32px;height:32px;font-size:18px;cursor:pointer;color:#e53">✕</button>'
+    + '</div>'
+    + '<div style="font-size:15px;font-weight:800;color:#1a1a1a;margin-bottom:4px">' + (it.nm || it.cod) + '</div>'
+    + '<div style="font-size:12px;color:#888;margin-bottom:8px">Cód: <b>'+it.cod+'</b> · SAP: <b>'+it.t+' '+(it.un||'UN')+'</b></div>'
+    + (histHtml ? '<div style="background:#f8f8f8;border-radius:10px;padding:10px 12px;margin-bottom:12px">'+histHtml+'</div>' : '')
+    + '<div style="height:1px;background:#eee;margin-bottom:12px"></div>'
+    + '<div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Quantidade contada</div>'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+    + '<button onclick="adjModalCnt(-1)" style="width:52px;height:52px;border-radius:50%;border:1.5px solid #e0e0e0;background:#fff;font-size:26px;font-weight:700;color:#1e6b45;cursor:pointer">−</button>'
+    + '<div style="text-align:center">'
+    + '<div id="modalCntVal" style="font-size:48px;font-family:Syne,sans-serif;font-weight:900;color:#1a1a1a;line-height:1">'+valAtual+'</div>'
+    + '<div style="font-size:11px;color:#888;font-weight:700;letter-spacing:.1em">'+(it.un||'UN')+'</div>'
+    + '</div>'
+    + '<button onclick="adjModalCnt(1)" style="width:52px;height:52px;border-radius:50%;border:1.5px solid #e0e0e0;background:#fff;font-size:26px;font-weight:700;color:#1e6b45;cursor:pointer">+</button>'
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">'
+    + [1,2,3,4,5,6,7,8,9,'C',0,'⌫'].map(function(k) {
+        var cor = k==='C'?'color:#e53':k==='⌫'?'color:#f59e0b':'';
+        return '<button onclick="kpModal(\'' + k + '\')" style="background:#fff;border:1.5px solid #e0e0e0;border-radius:12px;padding:14px 0;font-size:20px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;'+cor+'">' + k + '</button>';
+      }).join('')
+    + '</div>'
+    + '<div style="margin-bottom:12px">'
+    + '<div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Quem está contando ('+badgeTxt+')</div>'
+    + '<input id="modalContador" type="text" placeholder="Seu nome" value="'+(localStorage.getItem('almv25_nome')||'')+'" style="width:100%;border:1.5px solid #e0e0e0;border-radius:10px;padding:10px 13px;font-size:14px;font-family:Inter,sans-serif;outline:none">'
+    + '</div>'
+    + '<div style="margin-bottom:12px">'
+    + '<div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:8px">Indicador IT 7.2.7</div>'
+    + '<select id="modalItIndicador" style="width:100%;background:#fff;border:1.5px solid #e0e0e0;border-radius:10px;padding:10px 13px;font-size:13px;font-family:Inter,sans-serif;outline:none">'
+    + '<option value="">— Sem divergência / Conforme</option>'
+    + '<option value="B">B · Erro de contagem incorreta</option>'
+    + '<option value="C">C · Item em local incorreto</option>'
+    + '<option value="D">D · Peça entregue não baixada</option>'
+    + '<option value="E">E · Falta lançamento de NF</option>'
+    + '<option value="F">F · Material sobrando</option>'
+    + '<option value="G">G · Material faltando</option>'
+    + '<option value="H">H · Material avariado</option>'
+    + '<option value="I">I · Lançamento incorreto NF</option>'
+    + '<option value="J">J · Item vencido</option>'
+    + '</select>'
+    + '</div>'
+    + '<button onclick="salvarContagemItem()" style="width:100%;background:linear-gradient(150deg,'+badgeCor+','+badgeCor+'dd);color:#fff;border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;font-family:Inter,sans-serif;box-shadow:0 4px 12px rgba(0,0,0,.2)">✓ Confirmar '+badgeTxt+'</button>'
+    + '</div>';
+
+  document.body.appendChild(m);
+  m.addEventListener('click', function(e) { if (e.target === m) fecharModal(); });
+  window._modalCntStr = String(valAtual);
+}
+
+// Botão de resumo de conferências + iniciar próxima
+function mostrarResumoConferencias() {
+  var conf = getConfAtual();
+  var hist = getHistorico();
+  var itens = _itensInv || [];
+  
+  var contados = itens.filter(function(it) {
+    var h = hist[it.cod] || {};
+    // Usa histórico novo OU contagem já existente no item
+    return h['conf'+conf] !== undefined || (conf === 1 && it.c > 0);
+  }).length;
+  
+  var divergentes = itens.filter(function(it) {
+    var h = hist[it.cod] || {};
+    var c1 = h.conf1 !== undefined ? h.conf1 : it.c;
+    var c2 = h.conf2;
+    if (conf >= 2 && c1 !== undefined && c2 !== undefined) return c1 !== c2;
+    if (conf === 1) {
+      var qtdC = h.conf1 !== undefined ? h.conf1 : it.c;
+      return qtdC !== undefined && qtdC !== it.t;
+    }
+    return false;
+  });
+
+  var old = document.getElementById('modalResumoConf');
+  if (old) old.remove();
+
+  var m = document.createElement('div');
+  m.id = 'modalResumoConf';
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:999;display:flex;align-items:center;justify-content:center;padding:16px';
+
+  var proxBtn = '';
+  if (conf === 1 && divergentes.length > 0) {
+    proxBtn = '<button onclick="iniciarProxConferencia()" style="width:100%;background:#b45309;color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:800;cursor:pointer;margin-top:8px">📋 Iniciar 2ª Conferência ('+divergentes.length+' divergentes)</button>';
+  } else if (conf === 2 && divergentes.length > 0) {
+    proxBtn = '<button onclick="iniciarProxConferencia()" style="width:100%;background:#7c3aed;color:#fff;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:800;cursor:pointer;margin-top:8px">📋 Iniciar 3ª Conferência ('+divergentes.length+' persistem)</button>';
+  } else if (divergentes.length === 0) {
+    proxBtn = '<div style="background:#d1fae5;border-radius:12px;padding:14px;text-align:center;font-weight:700;color:#1e6b45;margin-top:8px">✅ Sem divergências! Inventário conforme.</div>';
+  }
+
+  m.innerHTML = '<div style="background:#fff;border-radius:20px;width:100%;max-width:400px;padding:24px">'
+    + '<div style="font-size:18px;font-weight:800;margin-bottom:16px">📊 Resumo — '+conf+'ª Conferência</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">'
+    + '<div style="background:#f0fdf4;border-radius:12px;padding:12px;text-align:center"><div style="font-size:28px;font-weight:900;color:#1e6b45">'+contados+'</div><div style="font-size:11px;color:#888">CONTADOS</div></div>'
+    + '<div style="background:#fff7ed;border-radius:12px;padding:12px;text-align:center"><div style="font-size:28px;font-weight:900;color:#b45309">'+divergentes.length+'</div><div style="font-size:11px;color:#888">DIVERGENTES</div></div>'
+    + '</div>'
+    + (divergentes.length > 0 ? '<div style="background:#fff7ed;border-radius:12px;padding:12px;margin-bottom:12px;max-height:200px;overflow-y:auto">'
+      + divergentes.map(function(it) {
+          var h = hist[it.cod] || {};
+          return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #fee;font-size:12px">'
+            + '<span style="font-weight:600">'+it.cod+'</span>'
+            + '<span style="color:#888">SAP:'+it.t+' C1:'+(h.conf1||'—')+(h.conf2!==undefined?' C2:'+h.conf2:'')+(h.conf3!==undefined?' C3:'+h.conf3:'')+'</span>'
+            + '</div>';
+        }).join('')
+      + '</div>' : '')
+    + proxBtn
+    + '<button onclick="document.getElementById(\'modalResumoConf\').remove()" style="width:100%;background:#f3f4f6;border:none;border-radius:12px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px;color:#666">Fechar</button>'
+    + '</div>';
+
+  document.body.appendChild(m);
+}
+
+function iniciarProxConferencia() {
+  var conf = getConfAtual();
+  var hist = getHistorico();
+  
+  // Filtra só divergentes
+  var divergentes = (_itensInv || []).filter(function(it) {
+    var h = hist[it.cod] || {};
+    var c1 = h.conf1 !== undefined ? h.conf1 : it.c;
+    var c2 = h.conf2;
+    if (conf === 1) return c1 !== undefined && c1 !== it.t;
+    if (conf === 2 && c1 !== undefined && c2 !== undefined) return c1 !== c2;
+    return true;
+  });
+
+  setConfAtual(conf + 1);
+  var novaConf = conf + 1;
+  _itensInv = divergentes;
+
+  var old2 = document.getElementById('modalResumoConf');
+  if (old2) old2.remove();
+
+  // Mostra tela de nova conferência
+  mostrarTelaConferencia(novaConf, divergentes);
+}
+
+function mostrarTelaConferencia(novaConf, itens) {
+  var old = document.getElementById('telaConferencia');
+  if (old) old.remove();
+
+  var corBg = novaConf===2 ? '#b45309' : '#7c3aed';
+  var corLight = novaConf===2 ? '#fff7ed' : '#f5f3ff';
+  var corBorder = novaConf===2 ? '#fed7aa' : '#ddd6fe';
+
+  var tela = document.createElement('div');
+  tela.id = 'telaConferencia';
+  tela.style.cssText = 'position:fixed;inset:0;background:#f5f5f0;z-index:9000;overflow-y:auto;display:flex;flex-direction:column';
+
+  // Header
+  var header = '<div style="background:'+corBg+';color:#fff;padding:16px 16px 12px;position:sticky;top:0;z-index:10">'
+    + '<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">'
+    + '<button onclick="fecharTelaConferencia()" style="background:rgba(255,255,255,.2);border:none;border-radius:8px;width:36px;height:36px;color:#fff;font-size:18px;cursor:pointer">←</button>'
+    + '<div>'
+    + '<div style="font-size:17px;font-weight:800">'+novaConf+'ª Conferência</div>'
+    + '<div style="font-size:11px;opacity:.8">'+itens.length+' itens divergentes · Operador diferente</div>'
+    + '</div>'
+    + '</div>'
+    // Aviso operador diferente
+    + '<div style="background:rgba(255,255,255,.15);border-radius:8px;padding:8px 12px;font-size:12px;display:flex;align-items:center;gap:8px">'
+    + '<span style="font-size:16px">⚠️</span>'
+    + '<span>Um operador <b>diferente</b> da '+( novaConf-1)+'ª conferência deve realizar esta contagem</span>'
+    + '</div>'
+    + '</div>';
+
+  // Lista itens
+  var listaHtml = '<div style="padding:12px;display:flex;flex-direction:column;gap:8px">';
+  itens.forEach(function(it, idx) {
+    var hist = getHistorico();
+    var h = hist[it.cod] || {};
+    var c1 = h.conf1 !== undefined ? h.conf1 : it.c;
+    var dif1 = c1 - it.t;
+    listaHtml += '<div onclick="abrirContagemItem('+idx+')" style="background:#fff;border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;border-left:4px solid '+corBg+'">'
+      + '<div style="font-size:28px">📦</div>'
+      + '<div style="flex:1">'
+      + '<div style="font-size:13px;font-weight:700;color:#1a1a1a">'+(it.nm||it.cod)+'</div>'
+      + '<div style="font-size:11px;color:#888;margin-top:2px">'+it.cod+'</div>'
+      + '<div style="display:flex;gap:12px;margin-top:6px;font-size:11px">'
+      + '<span>SAP: <b>'+it.t+'</b></span>'
+      + '<span style="color:'+corBg+'">1ª Conf: <b>'+c1+'</b></span>'
+      + '<span style="color:#e53">Dif: <b>'+(dif1>0?'+':'')+dif1+'</b></span>'
+      + '</div>'
+      + '</div>'
+      + '<div style="text-align:right">'
+      + (h['conf'+novaConf]!==undefined
+        ? '<div style="font-size:18px;font-weight:900;color:#1e6b45">✓</div><div style="font-size:10px;color:#888">'+h['conf'+novaConf]+' UN</div>'
+        : '<div style="font-size:12px;color:#ccc;font-weight:700">Contar</div>')
+      + '</div>'
+      + '</div>';
+  });
+  listaHtml += '</div>';
+
+  tela.innerHTML = header + listaHtml;
+  document.body.appendChild(tela);
+}
+
+function fecharTelaConferencia() {
+  var t = document.getElementById('telaConferencia');
+  if (t) t.remove();
+  renderIndicadores(_itensInv);
+}
+
+// Override salvarContagemItem para registrar histórico
+var _salvarOriginal = salvarContagemItem;
+salvarContagemItem = function() {
+  var info = window._itemContAtual;
+  if (!info) return;
+  var it  = info.it;
+  var idx = info.idx;
+  var qtd = parseInt(window._modalCntStr || '0', 10);
+  var conf = getConfAtual();
+  var tok = State.token || localStorage.getItem('almv25_token') || '';
+  var lancadoPor  = (document.getElementById('modalContador')||{}).value || localStorage.getItem('almv25_nome') || 'App';
+  var indicadorIt = (document.getElementById('modalItIndicador')||{}).value || '';
+  
+  if (lancadoPor) localStorage.setItem('almv25_nome', lancadoPor);
+
+  if (!getUrl()) { alert('Configure a URL da API.'); return; }
+  if (!tok)      { alert('Carregue o inventário primeiro.'); return; }
+
+  var btn = document.querySelector('#modalContagem button:last-child');
+  if (btn) btn.textContent = 'Salvando...';
+
+  // Salva histórico local
+  var hist = getHistorico();
+  if (!hist[it.cod]) hist[it.cod] = {};
+  hist[it.cod]['conf'+conf] = qtd;
+  hist[it.cod]['op'+conf] = lancadoPor;
+  setHistorico(hist);
+
+  apiJsonp('lancarItemToken', {
+    token:             tok,
+    codigoMaterial:    it.cod,
+    descricao:         it.nm || '',
+    quantidadeContada: qtd,
+    quantidadeSap:     it.t  || 0,
+    valorUnitario:     it.vu || 0,
+    unidade:           it.un || 'UN',
+    local:             it.local || '',
+    lancadoPor:        lancadoPor + ' ('+conf+'ªConf)',
+    indicadorIt:       indicadorIt,
+    numeroConferencia: conf
+  }, function(r) {
+    if (r && r.ok) {
+      _itensInv[idx].c   = qtd;
+      _itensInv[idx].dif = qtd - (it.t || 0);
+      fecharModal();
+      // Atualiza tela de conferência se estiver aberta
+      var telaConf = document.getElementById('telaConferencia');
+      if (telaConf) {
+        mostrarTelaConferencia(getConfAtual(), _itensInv);
+      } else {
+        renderIndicadores(_itensInv);
+      }
+    } else {
+      if (btn) btn.textContent = '✓ Confirmar Contagem';
+      alert('Erro ao salvar. Verifique a conexão.');
+    }
+  });
+};
+
+// Substitui abrirContagemItem pelo que mostra histórico
+var _abrirOriginal = abrirContagemItem;
+abrirContagemItem = function(idx) {
+  var conf = getConfAtual();
+  var it = _itensInv[idx];
+  if (!it) return;
+  
+  // Na 2ª e 3ª conferência — bloqueia itens sem divergência
+  if (conf >= 2) {
+    var hist = getHistorico();
+    var h = hist[it.cod] || {};
+    var c1 = h.conf1 !== undefined ? h.conf1 : it.c;
+    var isDivergente = c1 !== it.t;
+    if (!isDivergente) {
+      // Mostra aviso mas não abre modal
+      if (window.App && App.toast) {
+        App.toast('✅ Item conforme na 1ª conferência', 'ok');
+      }
+      return;
+    }
+  }
+  abrirContagemItemConf(idx);
+};
+
 </script>
 </body>
 </html>
