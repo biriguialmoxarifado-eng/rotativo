@@ -976,7 +976,16 @@ SCREENS.scanner = `
       </div>
     </div>
     <div class="mt12">
-      <button class="btn btn-ghost btn-full btn-sm" onclick="simularScan()">🔲 Simular Leitura (Teste)</button>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button class="btn btn-primary" style="flex:1" id="btnCamera" onclick="iniciarCamera()">📷 Câmera</button>
+        <button class="btn btn-ghost btn-full btn-sm" style="flex:1" onclick="simularScan()">🔲 Simular</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="scanManualInput" placeholder="Digite ou cole o código..." 
+          style="flex:1;background:var(--ink8);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:14px;color:var(--ink);font-family:Inter,sans-serif;outline:none"
+          onkeydown="if(event.key==='Enter') lerCodigoManual()">
+        <button class="btn btn-primary" onclick="lerCodigoManual()" style="padding:10px 16px">▶</button>
+      </div>
     </div>
   </div>
 </div>`;
@@ -1953,15 +1962,122 @@ function adjCnt(d) {
 }
 
 /* --- Simular scan --- */
+// ── Câmera real ──────────────────────────────────────────────
+var _scanStream = null;
+var _scanFrame  = null;
+
+function iniciarCamera() {
+  if (_scanStream) { pararCamera(); return; }
+  var video = document.getElementById('scanVideo');
+  if (!video) {
+    // Cria elemento video na tela do scanner
+    var sv = document.querySelector('.scanner-view');
+    if (sv) {
+      video = document.createElement('video');
+      video.id = 'scanVideo';
+      video.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:12px;z-index:0';
+      video.setAttribute('playsinline', '');
+      video.setAttribute('autoplay', '');
+      video.setAttribute('muted', '');
+      sv.insertBefore(video, sv.firstChild);
+    }
+  }
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(function(stream) {
+      _scanStream = stream;
+      if (video) { video.srcObject = stream; video.play(); }
+      var btn = document.getElementById('btnCamera');
+      if (btn) btn.textContent = '⏹ Parar Câmera';
+      _loopScan();
+    })
+    .catch(function(err) {
+      alert('Camera indisponivel: ' + err.message + '\n\nUse o campo de codigo manual abaixo.');
+    });
+}
+
+function pararCamera() {
+  if (_scanFrame) { cancelAnimationFrame(_scanFrame); _scanFrame = null; }
+  if (_scanStream) { _scanStream.getTracks().forEach(function(t){ t.stop(); }); _scanStream = null; }
+  var btn = document.getElementById('btnCamera');
+  if (btn) btn.textContent = '📷 Câmera';
+}
+
+function _loopScan() {
+  var video = document.getElementById('scanVideo');
+  if (!video || !_scanStream) return;
+  if (window.BarcodeDetector) {
+    var bd = new BarcodeDetector({ formats: ['ean_13','ean_8','code_128','code_39','qr_code','upc_a'] });
+    bd.detect(video).then(function(barcodes) {
+      if (barcodes.length > 0) {
+        var cod = barcodes[0].rawValue;
+        pararCamera();
+        processarCodigoLido(cod);
+        return;
+      }
+      _scanFrame = requestAnimationFrame(_loopScan);
+    }).catch(function() {
+      _scanFrame = requestAnimationFrame(_loopScan);
+    });
+  } else {
+    // BarcodeDetector não disponível — mostra campo manual
+    var sc = document.getElementById('scanCode');
+    if (sc) sc.textContent = 'Digite o código abaixo';
+    _scanFrame = requestAnimationFrame(_loopScan);
+  }
+}
+
+function processarCodigoLido(cod) {
+  // Mostra o código lido
+  var sc = document.getElementById('scanCode');
+  if (sc) sc.textContent = cod;
+
+  // Procura o item no inventário carregado
+  var item = null;
+  var idx  = -1;
+  if (_itensInv && _itensInv.length) {
+    for (var i = 0; i < _itensInv.length; i++) {
+      var it = _itensInv[i];
+      if (String(it.cod || '').toUpperCase() === cod.toUpperCase() ||
+          String(it.nm  || '').toUpperCase().indexOf(cod.toUpperCase()) >= 0) {
+        item = it; idx = i; break;
+      }
+    }
+  }
+
+  if (item) {
+    // Encontrou — mostra resultado e abre modal de contagem
+    document.getElementById('scanItemNm').textContent  = item.nm || item.cod;
+    document.getElementById('scanItemCod').textContent = 'Cód: ' + item.cod;
+    document.getElementById('scanItemInfo').textContent = 'SAP: ' + item.t + ' · Local: ' + (item.local || '—');
+    document.getElementById('scanResult').style.display = 'flex';
+    // Abre modal de contagem após 500ms
+    setTimeout(function() { abrirContagemItem(idx); }, 500);
+  } else {
+    // Não encontrou no inventário
+    document.getElementById('scanItemNm').textContent  = 'Código: ' + cod;
+    document.getElementById('scanItemCod').textContent = 'Item não encontrado no inventário';
+    document.getElementById('scanItemInfo').textContent = 'Verifique o token carregado';
+    document.getElementById('scanResult').style.display = 'flex';
+  }
+}
+
+// Leitura manual pelo campo de texto
+function lerCodigoManual() {
+  var inp = document.getElementById('scanManualInput');
+  var cod = inp ? inp.value.trim() : '';
+  if (!cod) { alert('Digite o código do item'); return; }
+  processarCodigoLido(cod);
+  if (inp) inp.value = '';
+}
+
 function simularScan() {
-  var cods = ['7891234567890', '7891234567891', '7891234567892'];
-  var nms = ['CABO FLEXÍVEL 2,5MM', 'PARAFUSO SEXT 1/2X2.1/2', 'CAIXA DE PASSAGEM 4X2'];
-  var idx = Math.floor(Math.random() * 3);
-  document.getElementById('scanCode').textContent = cods[idx];
-  document.getElementById('scanItemNm').textContent = nms[idx];
-  document.getElementById('scanItemCod').textContent = 'Cód: ' + cods[idx];
-  document.getElementById('scanItemInfo').textContent = 'Local: A0' + (idx + 1) + '-B05-N1';
-  document.getElementById('scanResult').style.display = 'flex';
+  if (!_itensInv || !_itensInv.length) {
+    alert('Carregue um inventario primeiro.\nVa em Inventarios e toque em um inventario.');
+    return;
+  }
+  var idx = Math.floor(Math.random() * _itensInv.length);
+  var it  = _itensInv[idx];
+  processarCodigoLido(it.cod || 'SEM-COD');
 }
 
 /* --- Salvar contagem --- */
@@ -3175,31 +3291,72 @@ function renderIndicadores(itens) {
   el = document.getElementById('invResDivs');      if (el) el.textContent = divs.length;
   el = document.getElementById('invResPct');       if (el) { el.textContent = pct + '%'; el.style.color = pct>=90?'var(--ok)':pct>=50?'var(--warn)':'var(--err)'; }
 
-  // Renderiza lista de itens
+  // Renderiza lista agrupada por localização/depósito
   var box = document.getElementById('invItensList');
   if (!box) return;
   if (!itens.length) {
     box.innerHTML = '<div class="empty"><p>Nenhum item encontrado neste inventário.</p></div>';
     return;
   }
-  box.innerHTML = '<div class="card">' + itens.map(function(it, idx) {
-    var dif = it.dif !== undefined ? it.dif : (it.c - it.t);
-    var difCor = dif === 0 ? 'var(--ok)' : dif > 0 ? 'var(--warn)' : 'var(--err)';
-    var difTxt = dif === 0 ? '✓' : (dif > 0 ? '+' + dif : String(dif));
-    var bg = it.c > 0 ? 'background:var(--okbg);' : '';
-    return '<div class="list-row item-cont" data-item-idx="' + idx + '" style="cursor:pointer;' + bg + '">'
-      + '<div class="thumb sm">📦</div>'
-      + '<div style="flex:1">'
-      + '<div style="font-size:13px;font-weight:700">' + (it.nm || it.cod) + '</div>'
-      + '<div class="code">' + it.cod + (it.local ? ' · ' + it.local : '') + '</div>'
-      + '<div style="font-size:11px;margin-top:3px">SAP: <b>' + it.t + '</b> · Contado: <b style="color:' + (it.c>0?'var(--ok)':'var(--ink3)') + '">' + it.c + '</b></div>'
-      + '</div>'
-      + '<div style="text-align:right">'
-      + '<div style="font-size:18px;font-weight:900;color:' + difCor + '">' + difTxt + '</div>'
-      + '<div style="font-size:10px;color:var(--ink3)">' + (it.un || 'UN') + '</div>'
-      + '</div></div>';
-  }).join('') + '</div>';
+
+  // Agrupa por depósito (prefixo da localização)
+  var grupos = {};
+  itens.forEach(function(it, idx) {
+    var loc = String(it.local || it.loc || '').trim();
+    var dep = loc ? (loc.split('-')[0].split('/')[0].substring(0,6).trim() || 'SEM LOCAL') : 'SEM LOCAL';
+    if (!grupos[dep]) grupos[dep] = [];
+    grupos[dep].push({ it: it, idx: idx });
+  });
+
+  var depKeys = Object.keys(grupos).sort();
+  var html = '';
+
+  depKeys.forEach(function(dep) {
+    var grupo = grupos[dep];
+    var totalG = grupo.length;
+    var contG  = grupo.filter(function(g){ return g.it.c > 0; }).length;
+    var divG   = grupo.filter(function(g){ var d=g.it.dif!==undefined?g.it.dif:(g.it.c-g.it.t); return d!==0&&g.it.c>0; }).length;
+    var pctG   = totalG > 0 ? Math.round(contG/totalG*100) : 0;
+    var corG   = pctG>=90?'#1e6b45':pctG>=50?'#b45309':'#b91c1c';
+
+    html += '<div style="margin-bottom:6px">';
+    html += '<div onclick="(function(el){var nx=el.nextElementSibling;var ar=el.querySelector(\'.gar\');if(nx){var ab=nx.style.display!==\'none\';nx.style.display=ab?\'none\':\'block\';if(ar)ar.textContent=ab?\'▶\':\'▼\';};})(this)" style="background:var(--g600);color:#fff;padding:9px 14px;border-radius:10px;display:flex;align-items:center;justify-content:space-between;cursor:pointer">';
+    html += '<div style="font-weight:800;font-size:13px">📍 Depósito: ' + dep + '</div>';
+    html += '<div style="display:flex;align-items:center;gap:8px;font-size:11px">';
+    html += contG + '/' + totalG + ' contados';
+    if (divG>0) html += ' &nbsp;<span style="background:rgba(255,255,255,.3);border-radius:5px;padding:1px 6px">' + divG + ' div.</span>';
+    html += ' &nbsp;<b>' + pctG + '%</b>';
+    html += ' &nbsp;<span class="gar">▼</span>';
+    html += '</div></div>';
+    html += '<div class="card" style="margin-top:2px">';
+
+    grupo.forEach(function(g) {
+      var it = g.it; var i = g.idx;
+      var dif = it.dif !== undefined ? it.dif : (it.c - it.t);
+      var difCor = dif===0?'var(--ok)':dif>0?'var(--warn)':'var(--err)';
+      var difTxt = dif===0?'✓':(dif>0?'+'+dif:String(dif));
+      var bloq = it._bloqueado;
+      var bg = bloq?'background:#fff3cd;':(it.c>0?'background:var(--okbg);':'');
+      var onclick = bloq
+        ? 'alert(\'🔒 Item sendo contado por ' + (it._bloqueadoPor||'outro operador') + '\')'
+        : 'abrirContagemItem(' + i + ')';
+      html += '<div class="list-row item-cont" data-item-idx="' + i + '" onclick="' + onclick + '" style="cursor:' + (bloq?'not-allowed':'pointer') + ';' + bg + '">';
+      html += '<div class="thumb sm">' + (bloq?'🔒':'📦') + '</div>';
+      html += '<div style="flex:1">';
+      html += '<div style="font-size:13px;font-weight:700">' + (it.nm||it.cod) + '</div>';
+      html += '<div class="code">' + it.cod + (it.local?' · '+it.local:'') + (bloq?' · <span style="color:#b45309">🔒 '+( it._bloqueadoPor||'Bloqueado')+'</span>':'') + '</div>';
+      html += '<div style="font-size:11px;margin-top:3px">SAP: <b>' + it.t + '</b> · Contado: <b style="color:' + (it.c>0?'var(--ok)':'var(--ink3)') + '">' + it.c + '</b></div>';
+      html += '</div>';
+      html += '<div style="text-align:right"><div style="font-size:18px;font-weight:900;color:' + difCor + '">' + difTxt + '</div><div style="font-size:10px;color:var(--ink3)">' + (it.un||'UN') + '</div></div>';
+      html += '</div>';
+    });
+
+    html += '</div></div>';
+  });
+
+  box.innerHTML = html;
 }
+
 
 /* --- Modal de contagem do item --- */
 function abrirContagemItem(idx) {
@@ -3242,6 +3399,21 @@ function abrirContagemItem(idx) {
     + '<div style="margin-bottom:12px">'
     + '<div style="font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px">Quem está contando</div>'
     + '<input id="modalContador" type="text" placeholder="Seu nome" value="' + (localStorage.getItem('almv25_nome')||'') + '" style="width:100%;border:1.5px solid var(--line);border-radius:10px;padding:10px 13px;font-size:14px;font-family:Inter,sans-serif;outline:none">'
+    + '</div>'
+    + '<div style="margin-bottom:12px">'
+    + '<div style="font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Indicador IT 7.2.7 (opcional)</div>'
+    + '<select id="modalItIndicador" style="width:100%;background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:10px 13px;font-size:13px;font-family:Inter,sans-serif;outline:none;color:var(--ink)">'
+    + '<option value="">— Sem divergência / Conforme</option>'
+    + '<option value="B">B · Erro de contagem incorreta</option>'
+    + '<option value="C">C · Item em local incorreto</option>'
+    + '<option value="D">D · Peça entregue não baixada</option>'
+    + '<option value="E">E · Falta lançamento de NF</option>'
+    + '<option value="F">F · Material sobrando</option>'
+    + '<option value="G">G · Material faltando</option>'
+    + '<option value="H">H · Material avariado</option>'
+    + '<option value="I">I · Lançamento incorreto NF</option>'
+    + '<option value="J">J · Item vencido</option>'
+    + '</select>'
     + '</div>'
     + '<button onclick="salvarContagemItem()" style="width:100%;background:linear-gradient(150deg,var(--g500),var(--g700));color:#fff;border:none;border-radius:12px;padding:15px;font-size:15px;font-weight:800;cursor:pointer;font-family:Inter,sans-serif;box-shadow:0 4px 12px rgba(30,107,69,.3)">✓ Confirmar Contagem</button>'
     + '</div>';
@@ -3298,7 +3470,8 @@ function salvarContagemItem() {
     valorUnitario:     it.vu || 0,
     unidade:           it.un || 'UN',
     local:             it.local || '',
-    lancadoPor:        (document.getElementById('modalContador')||{}).value || localStorage.getItem('almv25_nome') || 'App'
+    lancadoPor:        lancadoPor,
+    indicadorIt:       indicadorIt
   }, function(r) {
     if (r && r.ok) {
       // Atualiza localmente
@@ -3553,6 +3726,13 @@ function onScreenActivated(id) {
     if(el) el.textContent = (obra ? 'Obra: ' + obra : '') + (tok ? ' · Token: ' + tok : '');
   }
   if (id === 'conexaoApi') setTimeout(initConexaoApi, 30);
+  if (id !== 'scanner') pararCamera();
+  if (id === 'scanner') {
+    var sc = document.getElementById('scanResult');
+    if (sc) sc.style.display = 'none';
+    var code = document.getElementById('scanCode');
+    if (code) code.textContent = 'Aponte para o código de barras';
+  }
   if (id === 'relatorio') setTimeout(gerarRelatorio, 100);
   if (id === 'mapa') setTimeout(buildMapa, 30);
   if (id === 'assinatura') setTimeout(initCanvas, 80);
